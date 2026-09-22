@@ -1,0 +1,213 @@
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+  HttpParams,
+} from '@angular/common/http';
+import { computed, Injectable, Signal, signal, inject } from '@angular/core';
+import { catchError, map, Observable, of, Subject, switchMap } from 'rxjs';
+import { Employee } from '../interfaces/employee-response';
+import { environment } from '../../environments/environment';
+import { GenericResponse } from '../interfaces/generic-response';
+import { PagedResponse } from '../interfaces/paged-response';
+import { HttpHeaderService } from './http-header-service';
+
+export interface LoadEmployeesParams {
+  pageNumber: number;
+  pageSize: number;
+  searchTerm?: string;
+  sortColumn?: 'name' | 'email' | 'msisdn';
+  sortDirection?: 'asc' | 'desc';
+}
+
+const DEFAULT_PAGE_SIZE = 10;
+
+@Injectable({
+  providedIn: 'root',
+})
+export class GetEmployeeService {
+  private readonly API_URL_GET_ALL = `${environment.EmployeeManagementSystemAPI}/api/Employee/all`;
+  private readonly API_URL_GET_SINGLE = `${environment.EmployeeManagementSystemAPI}/api/Employee/get`;
+
+  private readonly state = signal({
+    employees: [] as Employee[],
+    selectedEmployee: null as Employee | null,
+    loading: false,
+    error: null as string | null,
+    pageNumber: 1,
+    pageSize: DEFAULT_PAGE_SIZE,
+    totalItems: 0,
+  });
+
+  // Computed signals
+  public readonly employeesSignal = computed(() => this.state().employees);
+  public readonly selectedEmployeeSignal = computed(
+    () => this.state().selectedEmployee,
+  );
+  public readonly loadingSignal = computed(() => this.state().loading);
+  public readonly errorSignal = computed(() => this.state().error);
+  public readonly pageNumberSignal = computed(() => this.state().pageNumber);
+  public readonly pageSizeSignal = computed(() => this.state().pageSize);
+  public readonly totalItemsSignal = computed(() => this.state().totalItems);
+
+  // Routed through switchMap so a new loadEmployees() call cancels whatever request is
+  // still in flight — without this, a slower earlier response (e.g. a stale page/search)
+  // can land after a faster later one and overwrite it with stale data.
+  private readonly loadEmployeesParams$ = new Subject<LoadEmployeesParams>();
+
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
+
+  constructor() {
+    this.loadEmployeesParams$
+      .pipe(
+        switchMap((params) => {
+          const headers = this.httpHeaderService.getHeadersWithTokenSet();
+          let httpParams = new HttpParams()
+            .set('pageNumber', params.pageNumber)
+            .set('pageSize', params.pageSize)
+            .set('sortColumn', params.sortColumn ?? 'name')
+            .set('sortDirection', params.sortDirection ?? 'asc');
+
+          if (params.searchTerm) {
+            httpParams = httpParams.set('searchTerm', params.searchTerm);
+          }
+
+          return this.http
+            .get<GenericResponse<PagedResponse<Employee>>>(
+              this.API_URL_GET_ALL,
+              { headers, params: httpParams },
+            )
+            .pipe(
+              map((response) => ({ response, requestedParams: params })),
+              catchError((error: HttpErrorResponse) => {
+                this.handleError(error);
+                return of(null);
+              }),
+            );
+        }),
+      )
+      .subscribe((result) => {
+        if (!result || !result.response) return;
+
+        const { response, requestedParams } = result;
+        const paged = response.data;
+        this.state.update((state) => ({
+          ...state,
+          employees: paged?.items ?? [],
+          pageNumber: paged?.pageNumber ?? requestedParams.pageNumber,
+          pageSize: paged?.pageSize ?? requestedParams.pageSize,
+          totalItems: paged?.totalItems ?? 0,
+          loading: false,
+          error: null,
+        }));
+      });
+  }
+
+  // Pagination, search, and sorting are all server-side: each call re-fetches
+  // just the requested page from the API rather than filtering/sorting an
+  // already-loaded full list in memory.
+  public loadEmployees(params: LoadEmployeesParams): void {
+    this.setLoading(true);
+    this.loadEmployeesParams$.next(params);
+  }
+
+  getEmployee(queryString: string): void {
+    this.setLoading(true);
+
+    const headers = this.httpHeaderService.getHeadersWithTokenSet();
+    const params = new HttpParams().set('searchVariable', queryString);
+
+    this.http
+      .get<GenericResponse<Employee>>(this.API_URL_GET_SINGLE, {
+        headers,
+        params,
+      })
+      .subscribe({
+        next: (response) => {
+          this.state.update((state) => ({
+            ...state,
+            selectedEmployee: response?.data ?? null,
+            loading: false,
+            error: null,
+          }));
+        },
+        error: (error: HttpErrorResponse) => this.handleError(error),
+      });
+  }
+
+  /**
+   * Looks a employee up by email and returns its GUID, without touching any of this
+   * service's signals (unlike {@link getEmployee}, which drives the details page's state).
+   * Registration doesn't return the new employee's server-generated GUID, so bulk callers
+   * (test-data generation) use this to find it afterwards.
+   */
+  findEmployeeGuid(email: string): Observable<string> {
+    const headers = this.httpHeaderService.getHeadersWithTokenSet();
+    const params = new HttpParams().set('searchVariable', email);
+
+    return this.http
+      .get<GenericResponse<Employee>>(this.API_URL_GET_SINGLE, {
+        headers,
+        params,
+      })
+      .pipe(
+        map((response) => {
+          const guid = response?.data?.guid;
+          if (!guid) throw new Error(`No employee found for ${email}.`);
+          return guid;
+        }),
+      );
+  }
+
+  updateEmployeeLocally(updatedEmployee: Employee): void {
+    this.state.update((state) => ({
+      ...state,
+      employees: state.employees.map((c) =>
+        c.guid === updatedEmployee.guid ? updatedEmployee : c,
+      ),
+      selectedEmployee:
+        state.selectedEmployee?.guid === updatedEmployee.guid
+          ? updatedEmployee
+          : state.selectedEmployee,
+    }));
+  }
+
+  removeEmployeeLocally(employeeGUID: string): void {
+    this.state.update((state) => ({
+      ...state,
+      employees: state.employees.filter((c) => c.guid !== employeeGUID),
+      selectedEmployee:
+        state.selectedEmployee?.guid === employeeGUID
+          ? null
+          : state.selectedEmployee,
+    }));
+  }
+
+  private setLoading(loading: boolean): void {
+    this.state.update((state) => ({
+      ...state,
+      loading,
+      error: loading ? state.error : null, // Clear error only if loading is false
+    }));
+  }
+
+  private handleError(error: HttpErrorResponse): void {
+    let errorMessage = 'An unknown error occurred';
+
+    if (error.status === 0) {
+      errorMessage = 'Network error - please check your connection.';
+    } else if (error.status >= 400 && error.status < 500) {
+      errorMessage = error.error?.message || 'Client-side error occurred.';
+    } else if (error.status >= 500) {
+      errorMessage = 'Server error - please try again later.';
+    }
+
+    console.error('EmployeeService Error:', errorMessage);
+    this.state.update((state) => ({
+      ...state,
+      loading: false,
+      error: errorMessage,
+    }));
+  }
+}

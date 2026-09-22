@@ -1,0 +1,62 @@
+.gradient-custom {
+  /* Stops at --spectrumColor2: white text on --spectrumColor3 is only 3.9:1. */
+  background: linear-gradient(
+    to right,
+    var(--spectrumColor1),
+    var(--spectrumColor2)
+  );
+  box-shadow: 0 2px 10px rgba(19, 59, 54, 0.25);
+}
+
+#navbarBrand {
+  width: 48px;
+  /* The logo is a black glyph; flip it to white so it reads on the dark gradient. */
+  filter: brightness(0) invert(1);
+}
+
+.hoverBrand {
+  display: inline-block;
+  transition: transform 0.2s;
+  transform-origin: 50% 50%;
+}
+
+.hoverBrand:hover {
+  transform: scale(1.12);
+}
+
+.nav-link {
+  position: relative;
+  margin: 0 0.25rem;
+  font-family: var(--regularFont);
+  font-size: 1.1rem;
+  color: #fff;
+  transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #fff;
+}
+
+.nav-link:hover:not(.active) {
+  text-decoration: underline;
+}
+
+/* Active-page underline; hidden on the collapsed (stacked) mobile menu. */
+@media (min-width: 576px) {
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.15rem;
+    left: 0.5rem;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--spectrumColor4);
+  }
+}
+
+.nav-logout {
+  cursor: pointer;
+  text-align: left;
+}

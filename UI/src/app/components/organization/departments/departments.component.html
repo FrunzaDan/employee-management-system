@@ -1,0 +1,137 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Departments</h1>
+      <p class="page-subtitle">Manage the company's departments.</p>
+    </div>
+    <button type="button" class="btn btn-primary shadow-none" (click)="startAdd()">
+      Add department
+    </button>
+  </div>
+
+  @if (deleteError(); as error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  }
+
+  @if (draft(); as d) {
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="card-title">{{ d.guid ? 'Edit department' : 'New department' }}</h2>
+
+        @if (saveError(); as error) {
+          <div class="alert alert-danger" role="alert">{{ error }}</div>
+        }
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="departmentName">Name</label>
+            <input
+              id="departmentName"
+              type="text"
+              class="form-control"
+              [value]="d.departmentName"
+              (input)="updateDraft($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+          <button
+            type="button"
+            class="btn btn-primary shadow-none"
+            [disabled]="saving()"
+            (click)="save()"
+          >
+            Save
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="app-card loading-state" role="status">
+      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading departments…
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+  } @else if (departments().length === 0) {
+    <div class="app-card empty-state">No departments yet.</div>
+  } @else {
+    <div class="app-card table-card">
+      <div class="table-responsive" role="region" aria-label="Departments table" tabindex="0">
+        <table class="table table-themed table-striped table-hover">
+          <caption class="visually-hidden">List of departments</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="text-center">Name</th>
+              <th scope="col" class="w-25 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (department of departments(); track department.guid) {
+              <tr>
+                <td class="align-middle text-center">
+                  <a class="plain-Links hoverItem" routerLink="/departmentDetails" [queryParams]="{ id: department.guid }">
+                    {{ department.departmentName }}
+                  </a>
+                </td>
+                <td class="align-middle text-center">
+                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + department.departmentName">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm shadow-none"
+                      [attr.aria-expanded]="expandedDepartmentGuid() === department.guid"
+                      (click)="toggleEmployees(department)"
+                    >
+                      {{ expandedDepartmentGuid() === department.guid ? 'Hide employees' : 'Quickly view employees' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm shadow-none"
+                      (click)="startEdit(department)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm shadow-none"
+                      (click)="deleteDepartment(department)"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              @if (expandedDepartmentGuid() === department.guid) {
+                <tr>
+                  <td colspan="2" class="bg-body-tertiary">
+                    @if (expandedEmployeesLoading()) {
+                      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
+                    } @else if (expandedEmployeesError(); as error) {
+                      <span class="text-danger">{{ error }}</span>
+                    } @else if (expandedEmployees().length === 0) {
+                      <span class="text-muted">No employees assigned to this department.</span>
+                    } @else {
+                      <ul class="list-unstyled mb-0">
+                        @for (employee of expandedEmployees(); track employee.guid) {
+                          <li>
+                            <a class="plain-Links hoverItem" routerLink="/employeeDetails" [queryParams]="{ id: employee.guid }">
+                              {{ employee.firstName }} {{ employee.lastName }}
+                            </a>
+                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.employeeStatus) }})</span>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

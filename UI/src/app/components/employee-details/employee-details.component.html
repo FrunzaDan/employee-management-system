@@ -1,0 +1,356 @@
+@if (!isLoading()) {
+  @if (errorMessage(); as error) {
+    <div class="page">
+      <div class="alert alert-danger" role="alert">{{ error }}</div>
+      <a routerLink="/employees" class="btn btn-primary">Back to employees</a>
+    </div>
+  } @else {
+    <div class="page">
+      <div class="page-header">
+        <div>
+          <a routerLink="/employees" class="back-link"
+            ><span aria-hidden="true">←</span> Back to employees</a
+          >
+          <h1 class="page-title">Employee details</h1>
+          <p class="page-subtitle">
+            Full record and audit history for this employee.
+          </p>
+        </div>
+
+        <div class="header-actions">
+          <div
+            class="d-flex flex-wrap gap-2"
+            role="group"
+            aria-label="Employee actions"
+          >
+            <a
+              class="btn btn-primary shadow-none"
+              routerLink="/editEmployee"
+              [queryParams]="{ id: employee()?.guid }"
+              >Edit</a
+            >
+
+            @if (
+              employee()?.employeeStatus === EmployeeStatus.Active ||
+              employee()?.employeeStatus === EmployeeStatus.Test
+            ) {
+              <button
+                (click)="deactivateEmployee()"
+                type="button"
+                class="btn btn-danger"
+                [disabled]="activationLoading() || deleting()"
+              >
+                Deactivate
+              </button>
+            }
+            @if (employee()?.employeeStatus === EmployeeStatus.Deactivated) {
+              <button
+                (click)="reactivateEmployee()"
+                type="button"
+                class="btn btn-primary shadow-none"
+                [disabled]="activationLoading() || deleting()"
+              >
+                Reactivate
+              </button>
+            }
+
+            <button
+              (click)="deleteEmployee()"
+              type="button"
+              class="btn btn-danger shadow-none"
+              [disabled]="!canDelete() || activationLoading() || deleting()"
+              [attr.aria-describedby]="!canDelete() ? 'delete-hint' : null"
+            >
+              Delete
+            </button>
+          </div>
+
+          @if (!canDelete()) {
+            <p class="form-note mb-0" id="delete-hint">
+              Deactivate this employee before deleting it.
+            </p>
+          }
+        </div>
+      </div>
+
+      @if (activationError(); as error) {
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      }
+      @if (deleteError(); as error) {
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      }
+
+      <div class="row g-4">
+        <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+          <div class="card app-card">
+            <div class="card-body">
+              <div class="profile-header">
+                <img
+                  [src]="
+                    employee()?.gender === 2
+                      ? '/assets/avatar_female.jpg'
+                      : '/assets/avatar_male.jpg'
+                  "
+                  class="avatar"
+                  alt=""
+                />
+                <div class="profile-heading">
+                  <h2 class="profile-name">
+                    {{ employee()?.firstName }} {{ employee()?.lastName }}
+                  </h2>
+                  <span
+                    class="badge rounded-pill"
+                    [class.bg-success]="
+                      employee()?.employeeStatus === EmployeeStatus.Active
+                    "
+                    [class.bg-secondary]="
+                      employee()?.employeeStatus === EmployeeStatus.Deactivated
+                    "
+                    [class.bg-warning]="
+                      employee()?.employeeStatus === EmployeeStatus.Test
+                    "
+                    [class.text-dark]="
+                      employee()?.employeeStatus === EmployeeStatus.Test
+                    "
+                  >
+                    {{ employeeStatusLabel() }}
+                  </span>
+                </div>
+              </div>
+
+              <h2 class="card-title">Basic info</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>First name</dt>
+                  <dd>{{ employee()?.firstName || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Last name</dt>
+                  <dd>{{ employee()?.lastName || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Gender</dt>
+                  <dd class="text-capitalize">{{ employeeGender() || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Birthdate</dt>
+                  <dd>{{ employee()?.birthdate || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Internal GUID</dt>
+                  <dd class="guid">{{ employee()?.guid || '—' }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Contact</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>E-mail</dt>
+                  <dd>{{ employee()?.email || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Phone</dt>
+                  <dd>{{ employee()?.msisdn || '—' }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Job information</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>Hire date</dt>
+                  <dd>{{ employee()?.hireDate || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Office</dt>
+                  <dd>{{ employee()?.officeName || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Department</dt>
+                  <dd>{{ employee()?.departmentName || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Cost center</dt>
+                  <dd>{{ employee()?.costCenterName || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Current brutto salary</dt>
+                  <dd>{{ employee()?.currentBruttoSalary ?? '—' }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Address</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>Country</dt>
+                  <dd>{{ employee()?.address?.country || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>County</dt>
+                  <dd>{{ employee()?.address?.county || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Town</dt>
+                  <dd>{{ employee()?.address?.town || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Street</dt>
+                  <dd>{{ employee()?.address?.street || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Number</dt>
+                  <dd>{{ employee()?.address?.number || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>ZIP</dt>
+                  <dd>{{ employee()?.address?.zip || '—' }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Account</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>Created</dt>
+                  <dd>{{ employee()?.creationDate || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Last interaction</dt>
+                  <dd>{{ employee()?.interactionDate || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Status</dt>
+                  <dd>
+                    {{ employeeStatusLabel() }}
+                    <span class="text-muted small"
+                      >({{ employee()?.employeeStatus }})</span
+                    >
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Salary history</h2>
+              @if (salaryHistoryLoading()) {
+                <p class="text-muted mb-0" role="status">Loading salary history…</p>
+              } @else if (salaryHistoryError()) {
+                <p class="text-danger mb-0" role="alert">{{ salaryHistoryError() }}</p>
+              } @else if (salaryHistory().length === 0) {
+                <p class="text-muted mb-0">No salary entries yet.</p>
+              } @else {
+                <ul class="audit-list">
+                  @for (entry of salaryHistory(); track entry.salaryGuid) {
+                    <li class="audit-item">
+                      <div class="audit-action">{{ entry.bruttoSalary }}</div>
+                      <div class="audit-meta">effective {{ entry.effectiveDate }}</div>
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (addSalaryError(); as error) {
+                <div class="alert alert-danger mt-2" role="alert">{{ error }}</div>
+              }
+
+              <div class="row g-2 align-items-end mt-2">
+                <div class="col-12 col-sm-5">
+                  <label class="form-label" for="newSalaryAmount">Brutto salary</label>
+                  <input
+                    id="newSalaryAmount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="form-control"
+                    [value]="newSalaryAmount()"
+                    (input)="newSalaryAmount.set($any($event.target).value)"
+                  />
+                </div>
+                <div class="col-12 col-sm-5">
+                  <label class="form-label" for="newSalaryEffectiveDate">Effective date</label>
+                  <input
+                    id="newSalaryEffectiveDate"
+                    type="date"
+                    class="form-control"
+                    [value]="newSalaryEffectiveDate()"
+                    (input)="newSalaryEffectiveDate.set($any($event.target).value)"
+                  />
+                </div>
+                <div class="col-12 col-sm-2">
+                  <button
+                    type="button"
+                    class="btn btn-primary shadow-none w-100"
+                    [disabled]="addingSalary()"
+                    (click)="addSalary()"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Audit trail</h2>
+              @if (auditLogLoading()) {
+                <p class="text-muted mb-0" role="status">
+                  Loading audit trail…
+                </p>
+              } @else if (auditLogError()) {
+                <p class="text-danger mb-0" role="alert">
+                  {{ auditLogError() }}
+                </p>
+              } @else if (auditLog().length === 0) {
+                <p class="text-muted mb-0">No recorded actions yet.</p>
+              } @else {
+                <ul class="audit-list">
+                  @for (entry of auditLog(); track entry.auditId) {
+                    <li class="audit-item">
+                      <div class="audit-action">{{ entry.action }}</div>
+                      <div class="audit-meta">
+                        by {{ entry.employerId }} ·
+                        {{ entry.actionDate | date: 'medium' }}
+                      </div>
+                      @if (entry.details) {
+                        <div class="audit-details">{{ entry.details }}</div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+} @else {
+  <div class="page">
+    <div class="app-card loading-state" role="status">
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading employee…
+    </div>
+  </div>
+}

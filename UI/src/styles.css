@@ -1,0 +1,433 @@
+/* You can add global styles to this file, and also import other style files */
+:root {
+  --spectrumColor1: #133b36;
+  --spectrumColor2: #037874;
+  --spectrumColor3: #00917c;
+  --spectrumColor4: #a5f0c5;
+  --dangerColor1: #a45a82;
+  --secondaryColor: #007a68;
+  --mutedText: #5a6268;
+  --focusColor: #133b36;
+  --regularFont: 'JostRegular', sans-serif;
+  --extralightFont: 'JostExtraLight', sans-serif;
+}
+
+@font-face {
+  font-family: 'JostRegular';
+  src: url('/assets/fonts/Jost-Regular.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JostExtraLight';
+  src: url('/assets/fonts/Jost-ExtraLight.ttf');
+  font-display: swap;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  margin: 0;
+  padding: auto;
+  font-family: var(--regularFont);
+}
+
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 0px;
+}
+
+a {
+  color: var(--spectrumColor1);
+}
+
+.btn-link {
+  color: var(--spectrumColor2);
+}
+
+.btn-link:hover {
+  color: var(--spectrumColor1);
+}
+
+.btn-primary,
+.btn-primary:active,
+.btn-primary:visited {
+  background-color: var(--spectrumColor2) !important;
+  box-shadow: none;
+  border-color: var(--spectrumColor2);
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  filter: brightness(90%);
+}
+
+.btn-secondary,
+.btn-secondary:active,
+.btn-secondary:visited {
+  background-color: var(--secondaryColor) !important;
+  box-shadow: none;
+  border-color: var(--secondaryColor);
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  filter: brightness(90%);
+}
+
+.btn-danger,
+.btn-danger:active,
+.btn-danger:visited {
+  background-color: var(--dangerColor1) !important;
+  box-shadow: none;
+  border-color: var(--dangerColor1);
+  transition: all 0.3s;
+}
+
+.btn-danger:hover {
+  filter: brightness(90%);
+}
+
+.hoverItem {
+  display: inline-block;
+  transition: transform 0.3s;
+  transform-origin: 50% 50%;
+}
+
+.hoverItem:hover {
+  transform: scale(1.06);
+  cursor: pointer;
+}
+
+.card-header {
+  background-color: var(--spectrumColor4);
+}
+
+/* ---------------------------------------------------------------------
+   Shared design language — used by every routed page so they read as one
+   app: page shell, page header, cards, tables, empty states, form bits.
+   --------------------------------------------------------------------- */
+
+/* Page shell: navbar on top, footer pinned to the bottom of short pages. */
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+app-footer {
+  display: block;
+  margin-top: auto;
+}
+
+.page {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.page-narrow {
+  max-width: 960px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  margin: 0;
+  color: var(--spectrumColor1);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--mutedText);
+}
+
+/* Cards */
+.app-card {
+  background-color: #fff;
+  border: 1px solid rgba(19, 59, 54, 0.1);
+  border-radius: 0.875rem;
+  box-shadow: 0 2px 10px rgba(19, 59, 54, 0.06);
+}
+
+.app-card > .card-body {
+  padding: 1.5rem 1.75rem;
+}
+
+.app-card .card-title {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--spectrumColor4);
+  color: var(--spectrumColor1);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 575.98px) {
+  .app-card > .card-body {
+    padding: 1.25rem;
+  }
+}
+
+/* Tables (employee list, global audit log) */
+.table-card {
+  overflow: hidden;
+}
+
+/* Bootstrap's .table-responsive sets only overflow-x: auto, but the browser then computes
+   overflow-y as auto too, making the table its own vertical scroll container: the mouse wheel
+   gets captured over the table (even by a 1px overflow) and the page stops scrolling. Only the
+   horizontal (phone) scroll is wanted; vertical scrolling always belongs to the page. */
+.table-responsive {
+  overflow-y: hidden;
+}
+
+.table-themed {
+  /* Inside .table-responsive: scroll sideways on phones rather than squeezing
+     every column into a 4-line wrap. */
+  min-width: 760px;
+  --bs-table-striped-bg: rgba(165, 240, 197, 0.3);
+  --bs-table-hover-bg: rgba(165, 240, 197, 0.55);
+  margin-bottom: 0;
+}
+
+/* Column-sort control: a real <button> (keyboard + screen-reader operable)
+   styled to look like the header text it replaces (employee list). */
+.sort-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  text-decoration: underline;
+}
+
+.table-themed > thead > tr > th {
+  padding: 0.85rem 0.75rem;
+  border-bottom: 0;
+  background-color: var(--spectrumColor1);
+  color: #fff;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.table-themed > tbody > tr > td {
+  padding: 0.75rem;
+}
+
+.table-themed > caption {
+  padding: 0.75rem 1rem;
+  color: var(--mutedText);
+  font-size: 0.85rem;
+}
+
+.plain-Links {
+  color: var(--spectrumColor1);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.plain-Links:hover {
+  text-decoration-thickness: 2px;
+}
+
+.empty-state {
+  padding: 3rem 1rem;
+  color: var(--mutedText);
+  text-align: center;
+}
+
+.loading-state {
+  padding: 3rem 1rem;
+  color: var(--mutedText);
+  text-align: center;
+}
+
+/* Palette-aligned bits of Bootstrap that otherwise show its default blue/green */
+.badge.bg-success {
+  background-color: var(--spectrumColor2) !important;
+}
+
+.form-control,
+.form-select {
+  border-color: #767676;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--spectrumColor2);
+  box-shadow: 0 0 0 0.25rem rgba(3, 120, 116, 0.2);
+}
+
+/* Native checkboxes are ~13px; WCAG 2.2 (2.5.8) wants targets of at least 24px
+   or enough spacing around them. */
+input[type='checkbox'] {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--spectrumColor2);
+  cursor: pointer;
+}
+
+code {
+  color: var(--spectrumColor2);
+}
+
+.form-label {
+  color: var(--spectrumColor1);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ---------------------------------------------------------------------
+   Accessibility
+   --------------------------------------------------------------------- */
+
+/* Visible keyboard focus everywhere (WCAG 2.4.7 / 2.4.11). Deliberately an
+   outline, not a box-shadow: Bootstrap's `.shadow-none` on buttons would
+   otherwise wipe the indicator out. Dark surfaces flip it to white. */
+:focus-visible {
+  outline: 3px solid var(--focusColor);
+  outline-offset: 2px;
+}
+
+.navbar :focus-visible,
+.app-footer :focus-visible,
+.table-themed > thead :focus-visible {
+  outline-color: #fff;
+}
+
+/* Programmatic focus target after route changes — not an interactive control. */
+main:focus,
+main [tabindex='-1']:focus {
+  outline: none;
+}
+
+/* Skip link: first tab stop on every page, hidden until focused (WCAG 2.4.1). */
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2000;
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--spectrumColor1);
+  border-radius: 0.5rem;
+  background-color: #fff;
+  color: var(--spectrumColor1);
+  font-weight: 500;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  color: var(--spectrumColor1);
+}
+
+/* Respect the OS "reduce motion" setting (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .hoverItem:hover,
+  .hoverBrand:hover {
+    transform: none;
+  }
+}
+
+.form-note {
+  margin-bottom: 1rem;
+  color: var(--mutedText);
+  font-size: 0.9rem;
+}
+
+/* Detail pages: back link above the title, label/value rows in an info card
+   (employee details, office/department/cost-center details). */
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: var(--spectrumColor2);
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: var(--spectrumColor1);
+}
+
+.detail-list {
+  margin: 0;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 35%) 1fr;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(19, 59, 54, 0.08);
+}
+
+.detail-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.detail-row dt {
+  color: #6c757d;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.detail-row dd {
+  margin: 0;
+  color: #212529;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.guid {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 575.98px) {
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+}

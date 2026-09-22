@@ -1,0 +1,149 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Cost centers</h1>
+      <p class="page-subtitle">Manage the company's cost centers.</p>
+    </div>
+    <button type="button" class="btn btn-primary shadow-none" (click)="startAdd()">
+      Add cost center
+    </button>
+  </div>
+
+  @if (deleteError(); as error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  }
+
+  @if (draft(); as d) {
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="card-title">{{ d.guid ? 'Edit cost center' : 'New cost center' }}</h2>
+
+        @if (saveError(); as error) {
+          <div class="alert alert-danger" role="alert">{{ error }}</div>
+        }
+
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="costCenterCode">Code</label>
+            <input
+              id="costCenterCode"
+              type="text"
+              class="form-control"
+              [value]="d.costCenterCode"
+              (input)="updateDraft('costCenterCode', $any($event.target).value)"
+            />
+          </div>
+          <div class="col-12 col-md-8">
+            <label class="form-label" for="costCenterName">Name</label>
+            <input
+              id="costCenterName"
+              type="text"
+              class="form-control"
+              [value]="d.costCenterName"
+              (input)="updateDraft('costCenterName', $any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+          <button
+            type="button"
+            class="btn btn-primary shadow-none"
+            [disabled]="saving()"
+            (click)="save()"
+          >
+            Save
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="app-card loading-state" role="status">
+      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading cost centers…
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+  } @else if (costCenters().length === 0) {
+    <div class="app-card empty-state">No cost centers yet.</div>
+  } @else {
+    <div class="app-card table-card">
+      <div class="table-responsive" role="region" aria-label="Cost centers table" tabindex="0">
+        <table class="table table-themed table-striped table-hover">
+          <caption class="visually-hidden">List of cost centers</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="text-center">Code</th>
+              <th scope="col" class="text-center">Name</th>
+              <th scope="col" class="w-25 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (costCenter of costCenters(); track costCenter.guid) {
+              <tr>
+                <td class="align-middle text-center">
+                  <a class="plain-Links hoverItem" routerLink="/costCenterDetails" [queryParams]="{ id: costCenter.guid }">
+                    {{ costCenter.costCenterCode }}
+                  </a>
+                </td>
+                <td class="align-middle text-center">{{ costCenter.costCenterName || '—' }}</td>
+                <td class="align-middle text-center">
+                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + costCenter.costCenterCode">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm shadow-none"
+                      [attr.aria-expanded]="expandedCostCenterGuid() === costCenter.guid"
+                      (click)="toggleEmployees(costCenter)"
+                    >
+                      {{ expandedCostCenterGuid() === costCenter.guid ? 'Hide employees' : 'Quickly view employees' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm shadow-none"
+                      (click)="startEdit(costCenter)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm shadow-none"
+                      (click)="deleteCostCenter(costCenter)"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              @if (expandedCostCenterGuid() === costCenter.guid) {
+                <tr>
+                  <td colspan="3" class="bg-body-tertiary">
+                    @if (expandedEmployeesLoading()) {
+                      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
+                    } @else if (expandedEmployeesError(); as error) {
+                      <span class="text-danger">{{ error }}</span>
+                    } @else if (expandedEmployees().length === 0) {
+                      <span class="text-muted">No employees assigned to this cost center.</span>
+                    } @else {
+                      <ul class="list-unstyled mb-0">
+                        @for (employee of expandedEmployees(); track employee.guid) {
+                          <li>
+                            <a class="plain-Links hoverItem" routerLink="/employeeDetails" [queryParams]="{ id: employee.guid }">
+                              {{ employee.firstName }} {{ employee.lastName }}
+                            </a>
+                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.employeeStatus) }})</span>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

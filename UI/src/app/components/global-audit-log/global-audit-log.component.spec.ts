@@ -1,0 +1,112 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
+import { GlobalAuditLogService } from '../../services/global-audit-log.service';
+import { GlobalAuditLogComponent } from './global-audit-log.component';
+
+describe('GlobalAuditLogComponent', () => {
+  let component: GlobalAuditLogComponent;
+  let loadAllAuditLog: ReturnType<typeof vi.fn>;
+  let navigate: ReturnType<typeof vi.fn>;
+  let totalItems: ReturnType<typeof signal<number>>;
+
+  const buildEntry = (
+    overrides: Partial<GlobalAuditLogEntry> = {},
+  ): GlobalAuditLogEntry => ({
+    auditId: 1,
+    employeeGuid: 'guid-1',
+    employeeFirstName: 'Dan',
+    employeeLastName: 'Frunza',
+    employerId: 'TestEmployerID',
+    action: 'Created',
+    details: '',
+    actionDate: '2026-01-01T00:00:00Z',
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    loadAllAuditLog = vi.fn();
+    navigate = vi.fn();
+    totalItems = signal(0);
+
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: GlobalAuditLogService,
+          useValue: {
+            entriesSignal: signal([]),
+            loadingSignal: signal(false),
+            errorSignal: signal<string | null>(null),
+            totalItemsSignal: totalItems,
+            loadAllAuditLog,
+          },
+        },
+        { provide: Router, useValue: { navigate } },
+      ],
+    });
+
+    component = TestBed.runInInjectionContext(
+      () => new GlobalAuditLogComponent(),
+    );
+  });
+
+  it('fetches page 1 on init', () => {
+    component.ngOnInit();
+
+    expect(loadAllAuditLog).toHaveBeenCalledWith({
+      pageNumber: 1,
+      pageSize: 50,
+    });
+  });
+
+  describe('goToPage', () => {
+    it('clamps above the last page down to totalPages', () => {
+      totalItems.set(120); // 120 items / 50 per page = 3 pages
+      loadAllAuditLog.mockClear();
+
+      component.goToPage(10);
+
+      expect(component.currentPage()).toBe(3);
+      expect(loadAllAuditLog).toHaveBeenCalledWith({
+        pageNumber: 3,
+        pageSize: 50,
+      });
+    });
+
+    it('clamps below page 1 up to 1', () => {
+      totalItems.set(120);
+      component.currentPage.set(3);
+      loadAllAuditLog.mockClear();
+
+      component.goToPage(0);
+
+      expect(component.currentPage()).toBe(1);
+    });
+
+    it('does nothing when the target page equals the current page', () => {
+      loadAllAuditLog.mockClear();
+
+      component.goToPage(1);
+
+      expect(loadAllAuditLog).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('employeeLabel', () => {
+    it('joins first and last name when the employee still exists', () => {
+      expect(component.employeeLabel(buildEntry())).toBe('Dan Frunza');
+    });
+
+    it('labels a deleted employee by GUID instead of a blank name', () => {
+      const entry = buildEntry({
+        employeeFirstName: null,
+        employeeLastName: null,
+      });
+
+      expect(component.employeeLabel(entry)).toBe(
+        '(deleted employee guid-1)',
+      );
+    });
+  });
+});

@@ -1,0 +1,29 @@
+using EmployeeManagementSystem.BusinessLogic.Services;
+using EmployeeManagementSystem.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+
+namespace EmployeeManagementSystem.WebAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthenticationController(IAuthService authService) : ControllerBase
+{
+    [HttpPost("access-token")]
+    [EnableRateLimiting("login")]
+    public async Task<IActionResult> GetAccessToken([FromBody] EmployerCredentials employerCredentials,
+        CancellationToken cancellationToken)
+    {
+        var response = await authService.GetAccessToken(employerCredentials, cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
+
+    [Authorize]
+    [HttpGet("verify-token")]
+    public ActionResult<ResponseModel<object>> VerifyToken()
+    {
+        // Reaching this point means the [Authorize] middleware already validated the bearer token.
+        return Ok(new ResponseModel<object>(200, "Authorized: Valid claims."));
+    }
+}

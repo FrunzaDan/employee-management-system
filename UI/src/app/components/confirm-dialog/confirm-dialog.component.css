@@ -1,0 +1,87 @@
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  animation: confirm-overlay-fade-in 0.2s ease forwards;
+}
+
+.confirm-overlay.closing {
+  animation: confirm-overlay-fade-out 0.15s ease forwards;
+}
+
+.confirm-card {
+  background-color: #fff;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: confirm-card-zoom-in 0.2s ease-out forwards;
+}
+
+.confirm-card.closing {
+  animation: confirm-card-zoom-out 0.15s ease-in forwards;
+}
+
+.confirm-title {
+  margin: 0 0 0.75rem;
+  color: var(--spectrumColor1);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.confirm-message {
+  margin: 0 0 1.25rem;
+  white-space: pre-line;
+  color: var(--spectrumColor1);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@keyframes confirm-overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes confirm-overlay-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes confirm-card-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes confirm-card-zoom-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}

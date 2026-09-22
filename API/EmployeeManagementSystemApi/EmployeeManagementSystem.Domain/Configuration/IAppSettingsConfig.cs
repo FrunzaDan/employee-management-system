@@ -1,0 +1,11 @@
+﻿namespace EmployeeManagementSystem.Domain.Configuration;
+
+public interface IAppSettingsConfig
+{
+    string SecureJwtKey { get; }
+    string JwtIssuer { get; }
+    string JwtAudience { get; }
+    string AccessTokenTimeout { get; }
+    string EmployeeManagementSystemDbWindows { get; }
+    string EmployeeManagementSystemDbDocker { get; }
+}

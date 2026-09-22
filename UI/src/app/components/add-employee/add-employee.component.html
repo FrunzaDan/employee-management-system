@@ -1,0 +1,29 @@
+<form [formRoot]="employeeForm">
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Register employee</h1>
+        <p class="page-subtitle">Enter the employee's personal details and address.</p>
+      </div>
+    </div>
+
+    @if (invalidSummary(); as summary) {
+    <div class="alert alert-danger" role="alert">{{ summary }}</div>
+    }
+
+    <app-employee-form-fields [form]="employeeForm" />
+
+    <div class="form-actions mt-4">
+      <button type="submit" class="btn btn-primary" [disabled]="employeeForm().submitting()">
+        @if (employeeForm().submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+        } Add Employee
+      </button>
+      <a routerLink="/employees" class="btn btn-link">Cancel</a>
+    </div>
+
+    @if (errorMessage(); as error) {
+    <div class="alert alert-danger mt-3" role="alert">{{ error }}</div>
+    }
+  </div>
+</form>
