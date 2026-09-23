@@ -1,5 +1,5 @@
 CREATE PROCEDURE [dbo].[usp_editDepartment]
-    @var_Guid NVARCHAR(50),
+    @var_Guid UNIQUEIDENTIFIER,
     @var_DepartmentName NVARCHAR(100) = NULL
 AS
 BEGIN

@@ -1,4 +1,4 @@
-using EmployeeManagementSystem.BusinessLogic.Constants;
+using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.BusinessLogic.Validations;
 using EmployeeManagementSystem.Domain.Models;
 
@@ -80,5 +80,29 @@ public class AddressValidationTests
         address.Number = new string('a', FieldLengthConstants.Number + 1);
 
         Assert.Equal("Number is too long.", AddressValidation.ValidateLengths(address));
+    }
+
+    [Theory]
+    [InlineData("400001")]
+    [InlineData("SW1A 1AA")]
+    [InlineData("12345-6789")]
+    public void ValidateLengths_AcceptsRealWorldPostalCodes(string zip)
+    {
+        var address = ValidAddress();
+        address.Zip = zip;
+
+        Assert.Null(AddressValidation.ValidateLengths(address));
+    }
+
+    [Theory]
+    [InlineData("4000é1")]
+    [InlineData("400_001")]
+    public void ValidateLengths_RejectsAZipThatWouldBeMangledByTheVarcharColumn(string zip)
+    {
+        var address = ValidAddress();
+        address.Zip = zip;
+
+        Assert.Equal("Zip may only contain letters, digits, spaces and hyphens.",
+            AddressValidation.ValidateLengths(address));
     }
 }

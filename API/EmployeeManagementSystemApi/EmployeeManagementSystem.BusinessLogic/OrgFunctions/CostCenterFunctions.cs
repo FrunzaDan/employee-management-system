@@ -1,5 +1,4 @@
-using EmployeeManagementSystem.BusinessLogic.Constants;
-using EmployeeManagementSystem.BusinessLogic.Validations;
+using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
 
@@ -18,15 +17,15 @@ public class CostCenterFunctions(IDbUtils dbUtils)
             request.CostCenterName.Length > FieldLengthConstants.CostCenterName)
             return new ResponseModel<object>(400, "Cost center name is too long.");
 
-        request.Guid = Guid.NewGuid().ToString();
+        request.Guid = SequentialGuid.NewGuid();
 
         return await dbUtils.CreateCostCenter(request, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetCostCenterFunction(string guid,
+    public async Task<ResponseModel<object>> GetCostCenterFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid cost center GUID is required.");
 
         return await dbUtils.GetCostCenter(guid, cancellationToken);
@@ -38,7 +37,7 @@ public class CostCenterFunctions(IDbUtils dbUtils)
     public async Task<ResponseModel<object>> EditCostCenterFunction(CostCenterModel request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(request.Guid) || !GuidValidation.ValidateGuid(request.Guid))
+        if (request.Guid is null || request.Guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid cost center GUID is required.");
         if (!string.IsNullOrEmpty(request.CostCenterCode) &&
             request.CostCenterCode.Length > FieldLengthConstants.CostCenterCode)
@@ -50,19 +49,19 @@ public class CostCenterFunctions(IDbUtils dbUtils)
         return await dbUtils.EditCostCenter(request, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> DeleteCostCenterFunction(string guid,
+    public async Task<ResponseModel<object>> DeleteCostCenterFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid cost center GUID is required.");
 
         return await dbUtils.DeleteCostCenter(guid, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetEmployeesByCostCenterFunction(string guid,
+    public async Task<ResponseModel<object>> GetEmployeesByCostCenterFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid cost center GUID is required.");
 
         return await dbUtils.GetEmployeesByCostCenter(guid, cancellationToken);

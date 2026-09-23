@@ -7,4 +7,5 @@ public static class RegexConstants
     public const string GuidRegex = @"^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?\z";
     public const string MsisdnRegex = @"^[0-9]{9,12}\z";
     public const string EmailRegex = @"^[^\s@]+@[^\s@]+\.[^\s@]+\z";
+    public const string ZipRegex = @"^[A-Za-z0-9 -]+\z";
 }

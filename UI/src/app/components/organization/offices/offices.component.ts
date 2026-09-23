@@ -62,8 +62,8 @@ export class OfficesComponent implements OnInit {
     this.draft.set({
       guid: office.guid,
       officeName: office.officeName,
-      city: office.city,
-      country: office.country,
+      city: office.city ?? '',
+      country: office.country ?? '',
     });
   }
 

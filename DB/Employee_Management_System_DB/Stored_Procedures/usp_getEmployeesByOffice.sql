@@ -1,7 +1,7 @@
 -- Unpaginated, same reasoning as usp_getEmployeeSalaryHistory: bounded by how
 -- many employees a single office realistically has, not a growing top-level list.
 CREATE PROCEDURE [dbo].[usp_getEmployeesByOffice]
-    @var_Guid NVARCHAR(50)
+    @var_Guid UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;

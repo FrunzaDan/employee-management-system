@@ -37,10 +37,11 @@ public class EmployeeGettingTests
     }
 
     [Theory]
-    [InlineData("3fa85f64-5717-4562-b3fc-2c963f66afa6", 1)] // GUID
-    [InlineData("123456789", 2)] // MSISDN
-    [InlineData("dan@example.com", 3)] // Email
-    public async Task GetEmployeeFunction_DetectsTheSearchOptionFromTheSearchVariableShape(string searchVariable, int expectedSearchOption)
+    [InlineData("3fa85f64-5717-4562-b3fc-2c963f66afa6", EmployeeSearchOption.Guid)]
+    [InlineData("123456789", EmployeeSearchOption.Msisdn)]
+    [InlineData("dan@example.com", EmployeeSearchOption.Email)]
+    public async Task GetEmployeeFunction_DetectsTheSearchOptionFromTheSearchVariableShape(string searchVariable,
+        EmployeeSearchOption expectedSearchOption)
     {
         var dbUtils = new Mock<IDbUtils>();
         GetEmployeeRequest? capturedRequest = null;
@@ -218,7 +219,7 @@ public class EmployeeGettingTests
     public async Task GetEmployeesForExportFunction_ReturnsCsvBuiltFromTheDbLayersPagedItems()
     {
         var dbUtils = new Mock<IDbUtils>();
-        var employee = new EmployeeModel { Guid = "g1", FirstName = "Dan", LastName = "Frunza" };
+        var employee = new EmployeeModel { Guid = Guid.NewGuid(), FirstName = "Dan", LastName = "Frunza" };
         dbUtils.Setup(d => d.GetEmployees(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!",
                 new PagedResponse<EmployeeModel>([employee], 1, 1, 5000)));

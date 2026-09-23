@@ -2,7 +2,7 @@
 
 public class EmployeeModel
 {
-    public string? Guid { get; set; }
+    public Guid? Guid { get; set; }
 
     public string? FirstName { get; set; }
 
@@ -12,29 +12,31 @@ public class EmployeeModel
 
     public string? Email { get; set; }
 
-    public int? EmployeeStatus { get; set; }
+    public EmployeeStatus? EmployeeStatus { get; set; }
 
-    public string? CreationDate { get; set; }
+    // UTC (DATETIME2 in the DB); serialized as ISO 8601 with a trailing "Z".
+    public DateTime? CreationDate { get; set; }
 
-    public string? InteractionDate { get; set; }
+    public DateTime? InteractionDate { get; set; }
 
-    public int? Gender { get; set; }
+    public Gender? Gender { get; set; }
 
-    public string? Birthdate { get; set; }
+    // Calendar dates, no time/zone component — serialized as "yyyy-MM-dd".
+    public DateOnly? Birthdate { get; set; }
 
     public AddressModel? Address { get; set; }
 
-    public string? HireDate { get; set; }
+    public DateOnly? HireDate { get; set; }
 
-    public string? OfficeGuid { get; set; }
+    public Guid? OfficeGuid { get; set; }
 
     public string? OfficeName { get; set; }
 
-    public string? DepartmentGuid { get; set; }
+    public Guid? DepartmentGuid { get; set; }
 
     public string? DepartmentName { get; set; }
 
-    public string? CostCenterGuid { get; set; }
+    public Guid? CostCenterGuid { get; set; }
 
     public string? CostCenterName { get; set; }
 
@@ -44,8 +46,18 @@ public class EmployeeModel
     public decimal? CurrentBruttoSalary { get; set; }
 }
 
+// Which usp_getEmployee parameter a free-text lookup maps to — detected from the
+// search term's shape by EmployeeGetting, never supplied by the caller.
+public enum EmployeeSearchOption
+{
+    None = 0,
+    Guid = 1,
+    Msisdn = 2,
+    Email = 3
+}
+
 public class GetEmployeeRequest
 {
-    public int SearchOption { get; set; }
+    public EmployeeSearchOption SearchOption { get; set; }
     public string? SearchVariable { get; set; }
 }

@@ -9,7 +9,7 @@ namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 // swallowed and logged instead.
 public class EmployeeAuditLogger(IDbUtils dbUtils, ILogger<EmployeeAuditLogger> logger) : IEmployeeAuditLogger
 {
-    public async Task Log(string employeeGuid, string employerId, string action, string? details = null,
+    public async Task Log(Guid employeeGuid, string employerId, string action, string? details = null,
         CancellationToken cancellationToken = default)
     {
         try

@@ -18,7 +18,7 @@ public class CostCenterController(ICostCenterService costCenterService) : Contro
     }
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetCostCenter([FromQuery] string guid, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCostCenter([FromQuery] Guid guid, CancellationToken cancellationToken)
     {
         var response = await costCenterService.GetCostCenter(guid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
@@ -41,14 +41,14 @@ public class CostCenterController(ICostCenterService costCenterService) : Contro
     }
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteCostCenter([FromQuery] string guid, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteCostCenter([FromQuery] Guid guid, CancellationToken cancellationToken)
     {
         var response = await costCenterService.DeleteCostCenter(guid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("employees")]
-    public async Task<IActionResult> GetEmployeesByCostCenter([FromQuery] string guid,
+    public async Task<IActionResult> GetEmployeesByCostCenter([FromQuery] Guid guid,
         CancellationToken cancellationToken)
     {
         var response = await costCenterService.GetEmployeesByCostCenter(guid, cancellationToken);

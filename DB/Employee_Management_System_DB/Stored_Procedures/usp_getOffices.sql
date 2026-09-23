@@ -22,7 +22,7 @@ BEGIN
         SELECT TOP 1 brutto_salary
         FROM dbo.tbl_employee_salary_history
         WHERE FK_employee_guid = e.PK_employee_guid
-        ORDER BY effective_Date DESC
+        ORDER BY effective_Date DESC, created_Date DESC
     ) AS s
     GROUP BY o.PK_office_guid, o.office_name, o.city, o.country
     ORDER BY o.office_name;

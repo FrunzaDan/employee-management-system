@@ -1,7 +1,7 @@
 export interface CostCenter {
   guid: string;
   costCenterCode: string;
-  costCenterName: string;
+  costCenterName?: string;
   employeeCount: number;
   totalBruttoSalary: number;
 }

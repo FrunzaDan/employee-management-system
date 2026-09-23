@@ -1,5 +1,5 @@
 CREATE PROCEDURE [dbo].[usp_getEmployeeAuditLog]
-    @var_EmployeeGuid NVARCHAR(50)
+    @var_EmployeeGuid UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;

@@ -12,7 +12,7 @@ public class EmployeeDeletionTests
     [Fact]
     public async Task DeleteEmployee_DelegatesToTheDbLayerWithTheGivenGuid_AndLogsAnAuditEntry()
     {
-        const string guid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+        var guid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var expected = new ResponseModel<object>(200, "Employee deleted successfully.");
@@ -30,7 +30,7 @@ public class EmployeeDeletionTests
     public async Task DeleteEmployee_PropagatesABusinessRuleRejection_WithoutModifyingIt()
     {
         // Mirrors the real usp_deleteEmployee rule: an active employee can't be deleted directly.
-        const string guid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+        var guid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var expected = new ResponseModel<object>(409, "Employee must be deactivated before it can be deleted.");
@@ -41,7 +41,7 @@ public class EmployeeDeletionTests
 
         Assert.Equal(409, result.Status);
         Assert.Equal(expected.ResponseMessage, result.ResponseMessage);
-        auditLogger.Verify(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+        auditLogger.Verify(a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

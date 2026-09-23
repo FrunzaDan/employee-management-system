@@ -4,7 +4,7 @@ import { EmployeeActivationStatus } from '../interfaces/employee-response';
 // outside the main employee list (which keeps its own Map for historical
 // reasons) — e.g. the organization admin pages' "employees in this office/
 // department/cost center" lists.
-export function employeeStatusLabel(status: number): string {
+export function employeeStatusLabel(status: EmployeeActivationStatus): string {
   switch (status) {
     case EmployeeActivationStatus.Active:
       return 'Active';

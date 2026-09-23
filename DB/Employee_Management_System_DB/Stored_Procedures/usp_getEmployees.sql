@@ -53,7 +53,7 @@ BEGIN
         SELECT TOP 1 brutto_salary
         FROM tbl_employee_salary_history
         WHERE FK_employee_guid = c.PK_employee_guid
-        ORDER BY effective_Date DESC
+        ORDER BY effective_Date DESC, created_Date DESC
     ) AS s
     WHERE
         @SearchTerm IS NULL

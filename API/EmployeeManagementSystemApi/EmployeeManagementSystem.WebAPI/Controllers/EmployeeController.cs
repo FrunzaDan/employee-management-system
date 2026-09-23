@@ -59,12 +59,9 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     }
 
     [HttpGet("auditLog")]
-    public async Task<IActionResult> GetEmployeeAuditLog([FromQuery] string employeeGuid,
+    public async Task<IActionResult> GetEmployeeAuditLog([FromQuery] Guid employeeGuid,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(employeeGuid))
-            return BadRequest(new { Message = "Employee GUID cannot be null or empty." });
-
         var response = await employeeService.GetEmployeeAuditLog(employeeGuid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
@@ -86,45 +83,33 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     }
 
     [HttpPatch("deactivate")]
-    public async Task<IActionResult> DeactivateEmployee([FromQuery] string employeeGuid,
+    public async Task<IActionResult> DeactivateEmployee([FromQuery] Guid employeeGuid,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(employeeGuid))
-            return BadRequest(new { Message = "Employee GUID cannot be null or empty." });
-
         var response = await employeeService.DeactivateEmployee(employeeGuid, EmployerId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpPatch("reactivate")]
-    public async Task<IActionResult> ReactivateEmployee([FromQuery] string employeeGuid,
+    public async Task<IActionResult> ReactivateEmployee([FromQuery] Guid employeeGuid,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(employeeGuid))
-            return BadRequest(new { Message = "Employee GUID cannot be null or empty." });
-
         var response = await employeeService.ReactivateEmployee(employeeGuid, EmployerId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteEmployee([FromQuery] string employeeGuid,
+    public async Task<IActionResult> DeleteEmployee([FromQuery] Guid employeeGuid,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(employeeGuid))
-            return BadRequest(new { Message = "Employee GUID cannot be null or empty." });
-
         var response = await employeeService.DeleteEmployee(employeeGuid, EmployerId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("salaryHistory")]
-    public async Task<IActionResult> GetEmployeeSalaryHistory([FromQuery] string employeeGuid,
+    public async Task<IActionResult> GetEmployeeSalaryHistory([FromQuery] Guid employeeGuid,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(employeeGuid))
-            return BadRequest(new { Message = "Employee GUID cannot be null or empty." });
-
         var response = await employeeService.GetEmployeeSalaryHistory(employeeGuid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }

@@ -9,7 +9,7 @@ public class CostCenterService(CostCenterFunctions costCenterFunctions) : ICostC
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.CreateCostCenterFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetCostCenter(string guid,
+    public async Task<ResponseModel<object>> GetCostCenter(Guid guid,
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.GetCostCenterFunction(guid, cancellationToken);
 
@@ -20,11 +20,11 @@ public class CostCenterService(CostCenterFunctions costCenterFunctions) : ICostC
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.EditCostCenterFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteCostCenter(string guid,
+    public async Task<ResponseModel<object>> DeleteCostCenter(Guid guid,
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.DeleteCostCenterFunction(guid, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeesByCostCenter(string guid,
+    public async Task<ResponseModel<object>> GetEmployeesByCostCenter(Guid guid,
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.GetEmployeesByCostCenterFunction(guid, cancellationToken);
 }

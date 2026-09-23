@@ -1,6 +1,6 @@
 CREATE TABLE [dbo].[tbl_departments]
 (
-    [PK_department_guid] NVARCHAR (50) NOT NULL,
+    [PK_department_guid] UNIQUEIDENTIFIER NOT NULL,
     [department_name] NVARCHAR (100) NOT NULL,
-    PRIMARY KEY (PK_department_guid)
+    CONSTRAINT [PK_tbl_departments] PRIMARY KEY CLUSTERED ([PK_department_guid])
 );

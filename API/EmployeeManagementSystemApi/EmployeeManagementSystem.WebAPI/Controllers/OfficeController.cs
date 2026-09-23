@@ -18,7 +18,7 @@ public class OfficeController(IOfficeService officeService) : ControllerBase
     }
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetOffice([FromQuery] string guid, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetOffice([FromQuery] Guid guid, CancellationToken cancellationToken)
     {
         var response = await officeService.GetOffice(guid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
@@ -39,14 +39,14 @@ public class OfficeController(IOfficeService officeService) : ControllerBase
     }
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteOffice([FromQuery] string guid, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteOffice([FromQuery] Guid guid, CancellationToken cancellationToken)
     {
         var response = await officeService.DeleteOffice(guid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("employees")]
-    public async Task<IActionResult> GetEmployeesByOffice([FromQuery] string guid, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetEmployeesByOffice([FromQuery] Guid guid, CancellationToken cancellationToken)
     {
         var response = await officeService.GetEmployeesByOffice(guid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);

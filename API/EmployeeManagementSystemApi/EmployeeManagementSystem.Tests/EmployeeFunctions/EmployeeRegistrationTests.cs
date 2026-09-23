@@ -89,10 +89,12 @@ public class EmployeeRegistrationTests
     }
 
     [Theory]
-    [InlineData("not-a-date")]
-    [InlineData("2020-13-40")]
-    public async Task RegisterEmployeeFunction_RejectsInvalidHireDate_WithoutTouchingTheDb(string hireDate)
+    [InlineData(3)]
+    [InlineData(255)]
+    public async Task RegisterEmployeeFunction_RejectsAnUndefinedGenderCode_WithoutTouchingTheDb(byte gender)
     {
+        // Malformed dates no longer reach this layer (DateOnly model binding rejects them), but
+        // JSON-to-enum binding accepts any integer — Gender is the check that's still ours.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var registration = new EmployeeRegistration(dbUtils.Object, auditLogger.Object);
@@ -103,13 +105,13 @@ public class EmployeeRegistrationTests
             Email = "dan@example.com",
             Msisdn = "123456789",
             Address = new AddressModel { Country = "Romania" },
-            HireDate = hireDate,
+            Gender = (Gender)gender,
         };
 
         var result = await registration.RegisterEmployeeFunction(request, EmployerId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        Assert.Contains("Hire date", result.ResponseMessage);
+        Assert.Contains("Gender", result.ResponseMessage);
         dbUtils.Verify(d => d.RegisterEmployee(It.IsAny<EmployeeModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -135,7 +137,7 @@ public class EmployeeRegistrationTests
         var result = await registration.RegisterEmployeeFunction(request, EmployerId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
-        Assert.Equal(EmployeeStatusCodes.Active, capturedRequest!.EmployeeStatus);
+        Assert.Equal(EmployeeStatus.Active, capturedRequest!.EmployeeStatus);
     }
 
     [Fact]
@@ -156,19 +158,19 @@ public class EmployeeRegistrationTests
             Email = "dan@example.com",
             Msisdn = "123456789",
             Address = new AddressModel { Country = "Romania" },
-            EmployeeStatus = EmployeeStatusCodes.Test,
+            EmployeeStatus = EmployeeStatus.Test,
         };
 
         var result = await registration.RegisterEmployeeFunction(request, EmployerId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
-        Assert.Equal(EmployeeStatusCodes.Test, capturedRequest!.EmployeeStatus);
+        Assert.Equal(EmployeeStatus.Test, capturedRequest!.EmployeeStatus);
     }
 
     [Theory]
     [InlineData(1903)]
     [InlineData(1)]
-    public async Task RegisterEmployeeFunction_RejectsAnyOtherStatus_WithoutTouchingTheDb(int status)
+    public async Task RegisterEmployeeFunction_RejectsAnyOtherStatus_WithoutTouchingTheDb(short status)
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
@@ -178,7 +180,7 @@ public class EmployeeRegistrationTests
             Email = "dan@example.com",
             Msisdn = "123456789",
             Address = new AddressModel { Country = "Romania" },
-            EmployeeStatus = status,
+            EmployeeStatus = (EmployeeStatus)status,
         };
 
         var result = await registration.RegisterEmployeeFunction(request, EmployerId, TestContext.Current.CancellationToken);
@@ -197,7 +199,7 @@ public class EmployeeRegistrationTests
             .Callback<EmployeeModel, CancellationToken>((c, _) => capturedRequest = c)
             .ReturnsAsync(new ResponseModel<object>(200, "Employee created successfully."));
         var registration = new EmployeeRegistration(dbUtils.Object, auditLogger.Object);
-        const string clientSuppliedGuid = "11111111-1111-1111-1111-111111111111";
+        var clientSuppliedGuid = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var request = new EmployeeModel
         {
             Guid = clientSuppliedGuid,
@@ -214,9 +216,9 @@ public class EmployeeRegistrationTests
         dbUtils.Verify(d => d.RegisterEmployee(It.IsAny<EmployeeModel>(), It.IsAny<CancellationToken>()), Times.Once);
         Assert.NotNull(capturedRequest!.Guid);
         Assert.NotEqual(clientSuppliedGuid, capturedRequest.Guid);
-        Assert.True(Guid.TryParse(capturedRequest.Guid, out _));
+        Assert.NotEqual(Guid.Empty, capturedRequest.Guid);
         auditLogger.Verify(
-            a => a.Log(capturedRequest.Guid!, EmployerId, "Created", "Email: dan@example.com, MSISDN: 123456789",
+            a => a.Log(capturedRequest.Guid!.Value, EmployerId, "Created", "Email: dan@example.com, MSISDN: 123456789",
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

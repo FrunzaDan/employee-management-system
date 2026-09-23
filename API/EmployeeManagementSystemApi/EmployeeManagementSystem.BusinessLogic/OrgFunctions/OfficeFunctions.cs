@@ -1,5 +1,4 @@
-using EmployeeManagementSystem.BusinessLogic.Constants;
-using EmployeeManagementSystem.BusinessLogic.Validations;
+using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
 
@@ -21,15 +20,15 @@ public class OfficeFunctions(IDbUtils dbUtils)
 
         // An office's identifier is always generated server-side, same as every other
         // GUID in this app (see database.md's glossary entry).
-        request.Guid = Guid.NewGuid().ToString();
+        request.Guid = SequentialGuid.NewGuid();
 
         return await dbUtils.CreateOffice(request, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetOfficeFunction(string guid,
+    public async Task<ResponseModel<object>> GetOfficeFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid office GUID is required.");
 
         return await dbUtils.GetOffice(guid, cancellationToken);
@@ -41,7 +40,7 @@ public class OfficeFunctions(IDbUtils dbUtils)
     public async Task<ResponseModel<object>> EditOfficeFunction(OfficeModel request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(request.Guid) || !GuidValidation.ValidateGuid(request.Guid))
+        if (request.Guid is null || request.Guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid office GUID is required.");
         if (!string.IsNullOrEmpty(request.OfficeName) && request.OfficeName.Length > FieldLengthConstants.OfficeName)
             return new ResponseModel<object>(400, "Office name is too long.");
@@ -53,19 +52,19 @@ public class OfficeFunctions(IDbUtils dbUtils)
         return await dbUtils.EditOffice(request, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> DeleteOfficeFunction(string guid,
+    public async Task<ResponseModel<object>> DeleteOfficeFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid office GUID is required.");
 
         return await dbUtils.DeleteOffice(guid, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetEmployeesByOfficeFunction(string guid,
+    public async Task<ResponseModel<object>> GetEmployeesByOfficeFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid office GUID is required.");
 
         return await dbUtils.GetEmployeesByOffice(guid, cancellationToken);

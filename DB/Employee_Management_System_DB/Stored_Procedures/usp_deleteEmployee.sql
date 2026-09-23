@@ -1,5 +1,5 @@
 CREATE PROCEDURE [dbo].[usp_deleteEmployee]
-    @var_Guid NVARCHAR(50)
+    @var_Guid UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;

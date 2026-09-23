@@ -7,19 +7,20 @@ namespace EmployeeManagementSystem.Tests.EmployeeFunctions;
 
 public class EmployeeEditingTests
 {
-    private const string ValidGuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+    private static readonly Guid ValidGuid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     private const string EmployerId = "TestEmployerID";
 
+    // A malformed GUID string never reaches this layer (model binding rejects it — see
+    // Program.cs), so the only invalid values left to check here are missing and all-zero.
     [Theory]
     [InlineData(null)]
-    [InlineData("")]
-    [InlineData("not-a-guid")]
-    public async Task EditEmployeeFunction_RejectsInvalidGuid_WithoutTouchingTheDb(string? guid)
+    [InlineData("00000000-0000-0000-0000-000000000000")]
+    public async Task EditEmployeeFunction_RejectsAMissingOrEmptyGuid_WithoutTouchingTheDb(string? guid)
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var editing = new EmployeeEditing(dbUtils.Object, auditLogger.Object);
-        var request = new EmployeeModel { Guid = guid };
+        var request = new EmployeeModel { Guid = guid is null ? null : Guid.Parse(guid) };
 
         var result = await editing.EditEmployeeFunction(request, EmployerId, TestContext.Current.CancellationToken);
 
@@ -59,17 +60,18 @@ public class EmployeeEditingTests
     }
 
     [Fact]
-    public async Task EditEmployeeFunction_RejectsInvalidHireDate_WithoutTouchingTheDb()
+    public async Task EditEmployeeFunction_RejectsAnUndefinedGenderCode_WithoutTouchingTheDb()
     {
+        // JSON-to-enum binding accepts any integer, so this is the one Gender check left to us.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var editing = new EmployeeEditing(dbUtils.Object, auditLogger.Object);
-        var request = new EmployeeModel { Guid = ValidGuid, HireDate = "not-a-date" };
+        var request = new EmployeeModel { Guid = ValidGuid, Gender = (Gender)7 };
 
         var result = await editing.EditEmployeeFunction(request, EmployerId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        Assert.Contains("Hire date", result.ResponseMessage);
+        Assert.Contains("Gender", result.ResponseMessage);
         dbUtils.Verify(d => d.EditEmployee(It.IsAny<EmployeeModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

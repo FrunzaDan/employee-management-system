@@ -1,4 +1,4 @@
-﻿using EmployeeManagementSystem.BusinessLogic.Constants;
+﻿using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.BusinessLogic.Validations;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
@@ -39,22 +39,11 @@ public class EmployeeRegistration
         if (string.IsNullOrEmpty(request.Msisdn) || MsisdnValidation.ValidateMsisdn(request.Msisdn) == false)
             return new ResponseModel<object>(400, "Invalid or empty MSISDN.");
 
-        if (request.Birthdate is not null)
-        {
-            if (request.Birthdate.Length > FieldLengthConstants.Birthdate
-                || !DateOnly.TryParse(request.Birthdate, out _))
-                return new ResponseModel<object>(400, "Invalid Birthdate format.");
-        }
-
-        if (request.Gender is not null && request.Gender is not (0 or 1 or 2))
+        // Birthdate/HireDate need no format check here: they're DateOnly, so a malformed date
+        // never gets past model binding (see Program.cs's InvalidModelStateResponseFactory).
+        // Gender does: JSON-to-enum binding accepts any integer, not just the defined ones.
+        if (request.Gender is { } gender && !Enum.IsDefined(gender))
             return new ResponseModel<object>(400, "Invalid Gender value.");
-
-        if (request.HireDate is not null)
-        {
-            if (request.HireDate.Length > FieldLengthConstants.HireDate
-                || !DateOnly.TryParse(request.HireDate, out _))
-                return new ResponseModel<object>(400, "Invalid Hire date format.");
-        }
 
         // usp_createEmployee's address parameters have no SQL-side defaults, so a missing
         // Address would otherwise surface as an opaque 500 instead of a validation error.
@@ -66,18 +55,16 @@ public class EmployeeRegistration
             return new ResponseModel<object>(400, addressLengthError);
 
         // A new employee's identifier is always generated server-side; a client-supplied GUID is never trusted.
-        request.Guid = Guid.NewGuid().ToString();
+        request.Guid = SequentialGuid.NewGuid();
 
         // A new employee is active by default. The only other status a caller may request at
         // creation time is Test (used by the About page's bulk test-data generator) — anything
         // else (e.g. Deactivated) would bypass the deactivate/reactivate/delete lifecycle rules
         // that are otherwise enforced by the stored procedures.
-        if (request.EmployeeStatus is not null
-            && request.EmployeeStatus != EmployeeStatusCodes.Active
-            && request.EmployeeStatus != EmployeeStatusCodes.Test)
+        if (request.EmployeeStatus is not (null or EmployeeStatus.Active or EmployeeStatus.Test))
             return new ResponseModel<object>(400, "Invalid employee status.");
 
-        request.EmployeeStatus ??= EmployeeStatusCodes.Active;
+        request.EmployeeStatus ??= EmployeeStatus.Active;
 
         var response = await _dbUtils.RegisterEmployee(request, cancellationToken);
 
@@ -86,7 +73,7 @@ public class EmployeeRegistration
         // triggered it has since disconnected — same best-effort guarantee EmployeeAuditLogger
         // already gives on write failures, just not conditional on the caller still being there.
         if (response.Status == 200)
-            await _auditLogger.Log(request.Guid, employerId, "Created",
+            await _auditLogger.Log(request.Guid.Value, employerId, "Created",
                 $"Email: {request.Email}, MSISDN: {request.Msisdn}");
 
         return response;

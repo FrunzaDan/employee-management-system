@@ -1,5 +1,4 @@
-using EmployeeManagementSystem.BusinessLogic.Constants;
-using EmployeeManagementSystem.BusinessLogic.Validations;
+using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
 
@@ -15,15 +14,15 @@ public class DepartmentFunctions(IDbUtils dbUtils)
         if (request.DepartmentName.Length > FieldLengthConstants.DepartmentName)
             return new ResponseModel<object>(400, "Department name is too long.");
 
-        request.Guid = Guid.NewGuid().ToString();
+        request.Guid = SequentialGuid.NewGuid();
 
         return await dbUtils.CreateDepartment(request, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetDepartmentFunction(string guid,
+    public async Task<ResponseModel<object>> GetDepartmentFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid department GUID is required.");
 
         return await dbUtils.GetDepartment(guid, cancellationToken);
@@ -35,7 +34,7 @@ public class DepartmentFunctions(IDbUtils dbUtils)
     public async Task<ResponseModel<object>> EditDepartmentFunction(DepartmentModel request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(request.Guid) || !GuidValidation.ValidateGuid(request.Guid))
+        if (request.Guid is null || request.Guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid department GUID is required.");
         if (!string.IsNullOrEmpty(request.DepartmentName) &&
             request.DepartmentName.Length > FieldLengthConstants.DepartmentName)
@@ -44,19 +43,19 @@ public class DepartmentFunctions(IDbUtils dbUtils)
         return await dbUtils.EditDepartment(request, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> DeleteDepartmentFunction(string guid,
+    public async Task<ResponseModel<object>> DeleteDepartmentFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid department GUID is required.");
 
         return await dbUtils.DeleteDepartment(guid, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetEmployeesByDepartmentFunction(string guid,
+    public async Task<ResponseModel<object>> GetEmployeesByDepartmentFunction(Guid guid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || !GuidValidation.ValidateGuid(guid))
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid department GUID is required.");
 
         return await dbUtils.GetEmployeesByDepartment(guid, cancellationToken);

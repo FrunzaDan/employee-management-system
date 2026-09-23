@@ -52,7 +52,7 @@ public class JwtCreation
                 Data = new AccessTokenResponse
                 {
                     AccessToken = token,
-                    ValidUntil = DateTime.UtcNow.AddMinutes(timeoutMinutes).ToString("o")
+                    ValidUntil = DateTime.UtcNow.AddMinutes(timeoutMinutes)
                 }
             };
         }

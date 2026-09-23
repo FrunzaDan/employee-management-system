@@ -9,7 +9,7 @@ public class OfficeService(OfficeFunctions officeFunctions) : IOfficeService
         CancellationToken cancellationToken = default) =>
         await officeFunctions.CreateOfficeFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetOffice(string guid,
+    public async Task<ResponseModel<object>> GetOffice(Guid guid,
         CancellationToken cancellationToken = default) =>
         await officeFunctions.GetOfficeFunction(guid, cancellationToken);
 
@@ -20,11 +20,11 @@ public class OfficeService(OfficeFunctions officeFunctions) : IOfficeService
         CancellationToken cancellationToken = default) =>
         await officeFunctions.EditOfficeFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteOffice(string guid,
+    public async Task<ResponseModel<object>> DeleteOffice(Guid guid,
         CancellationToken cancellationToken = default) =>
         await officeFunctions.DeleteOfficeFunction(guid, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeesByOffice(string guid,
+    public async Task<ResponseModel<object>> GetEmployeesByOffice(Guid guid,
         CancellationToken cancellationToken = default) =>
         await officeFunctions.GetEmployeesByOfficeFunction(guid, cancellationToken);
 }

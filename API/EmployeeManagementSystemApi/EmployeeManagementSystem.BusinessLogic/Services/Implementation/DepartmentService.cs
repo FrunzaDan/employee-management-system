@@ -9,7 +9,7 @@ public class DepartmentService(DepartmentFunctions departmentFunctions) : IDepar
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.CreateDepartmentFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetDepartment(string guid,
+    public async Task<ResponseModel<object>> GetDepartment(Guid guid,
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.GetDepartmentFunction(guid, cancellationToken);
 
@@ -20,11 +20,11 @@ public class DepartmentService(DepartmentFunctions departmentFunctions) : IDepar
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.EditDepartmentFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteDepartment(string guid,
+    public async Task<ResponseModel<object>> DeleteDepartment(Guid guid,
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.DeleteDepartmentFunction(guid, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeesByDepartment(string guid,
+    public async Task<ResponseModel<object>> GetEmployeesByDepartment(Guid guid,
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.GetEmployeesByDepartmentFunction(guid, cancellationToken);
 }

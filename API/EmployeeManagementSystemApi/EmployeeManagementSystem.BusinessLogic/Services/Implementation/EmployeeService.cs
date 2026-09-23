@@ -16,19 +16,19 @@ public class EmployeeService(
         CancellationToken cancellationToken = default) =>
         await employeeSalary.AddSalaryFunction(request, employerId, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeeSalaryHistory(string employeeGuid,
+    public async Task<ResponseModel<object>> GetEmployeeSalaryHistory(Guid employeeGuid,
         CancellationToken cancellationToken = default) =>
         await employeeSalary.GetSalaryHistoryFunction(employeeGuid, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeactivateEmployee(string employeeGuid, string employerId,
+    public async Task<ResponseModel<object>> DeactivateEmployee(Guid employeeGuid, string employerId,
         CancellationToken cancellationToken = default) =>
         await employeeActivation.DeactivateEmployee(employeeGuid, employerId, cancellationToken);
 
-    public async Task<ResponseModel<object>> ReactivateEmployee(string employeeGuid, string employerId,
+    public async Task<ResponseModel<object>> ReactivateEmployee(Guid employeeGuid, string employerId,
         CancellationToken cancellationToken = default) =>
         await employeeActivation.ReactivateEmployee(employeeGuid, employerId, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteEmployee(string employeeGuid, string employerId,
+    public async Task<ResponseModel<object>> DeleteEmployee(Guid employeeGuid, string employerId,
         CancellationToken cancellationToken = default) =>
         await employeeDeletion.DeleteEmployee(employeeGuid, employerId, cancellationToken);
 
@@ -40,7 +40,7 @@ public class EmployeeService(
         CancellationToken cancellationToken = default) =>
         await employeeGetting.GetEmployeeFunction(getEmployeeRqst, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeeAuditLog(string employeeGuid,
+    public async Task<ResponseModel<object>> GetEmployeeAuditLog(Guid employeeGuid,
         CancellationToken cancellationToken = default) =>
         await employeeGetting.GetEmployeeAuditLogFunction(employeeGuid, cancellationToken);
 

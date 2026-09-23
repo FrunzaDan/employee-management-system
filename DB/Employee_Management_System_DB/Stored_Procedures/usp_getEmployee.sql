@@ -1,6 +1,11 @@
 CREATE PROCEDURE [dbo].[usp_getEmployee]
-    @var_SearchVariable NVARCHAR(50),
-    @var_SearchOption INT
+    -- Exactly one is supplied (EmployeeGetting detects which from the search term's shape).
+    -- Each is typed like the column it's compared to, so every comparison is a straight
+    -- index seek with no implicit conversion — and an email longer than 50 characters is
+    -- no longer silently truncated before the lookup, as the old NVARCHAR(50) catch-all was.
+    @var_Guid UNIQUEIDENTIFIER = NULL,
+    @var_MSISDN VARCHAR(15) = NULL,
+    @var_Email NVARCHAR(254) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -8,7 +13,7 @@ BEGIN
     -- Split by search type (instead of one query with an OR across all three) so the
     -- optimizer can seek the specific unique index for whichever branch actually runs,
     -- rather than compiling one plan that has to cover all three possible predicates.
-    IF @var_SearchOption = 1
+    IF @var_Guid IS NOT NULL
     BEGIN
         SELECT
             c.PK_employee_guid,
@@ -47,12 +52,12 @@ BEGIN
             SELECT TOP 1 brutto_salary
             FROM tbl_employee_salary_history
             WHERE FK_employee_guid = c.PK_employee_guid
-            ORDER BY effective_Date DESC
+            ORDER BY effective_Date DESC, created_Date DESC
         ) AS s
         WHERE
-            c.PK_employee_guid = @var_SearchVariable;
+            c.PK_employee_guid = @var_Guid;
     END
-    ELSE IF @var_SearchOption = 2
+    ELSE IF @var_MSISDN IS NOT NULL
     BEGIN
         SELECT
             c.PK_employee_guid,
@@ -91,12 +96,12 @@ BEGIN
             SELECT TOP 1 brutto_salary
             FROM tbl_employee_salary_history
             WHERE FK_employee_guid = c.PK_employee_guid
-            ORDER BY effective_Date DESC
+            ORDER BY effective_Date DESC, created_Date DESC
         ) AS s
         WHERE
-            c.msisdn = @var_SearchVariable;
+            c.msisdn = @var_MSISDN;
     END
-    ELSE IF @var_SearchOption = 3
+    ELSE IF @var_Email IS NOT NULL
     BEGIN
         SELECT
             c.PK_employee_guid,
@@ -135,9 +140,9 @@ BEGIN
             SELECT TOP 1 brutto_salary
             FROM tbl_employee_salary_history
             WHERE FK_employee_guid = c.PK_employee_guid
-            ORDER BY effective_Date DESC
+            ORDER BY effective_Date DESC, created_Date DESC
         ) AS s
         WHERE
-            c.email = @var_SearchVariable;
+            c.email = @var_Email;
     END
 END

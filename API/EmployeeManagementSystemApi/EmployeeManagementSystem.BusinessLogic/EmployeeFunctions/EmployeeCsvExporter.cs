@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using EmployeeManagementSystem.Domain.Models;
 
@@ -27,16 +28,16 @@ public static class EmployeeCsvExporter
         {
             var fields = new[]
             {
-                employee.Guid,
+                employee.Guid?.ToString(),
                 employee.FirstName,
                 employee.LastName,
                 employee.Email,
                 employee.Msisdn,
                 GenderLabel(employee.Gender),
-                employee.Birthdate,
+                employee.Birthdate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 StatusLabel(employee.EmployeeStatus),
-                employee.CreationDate,
-                employee.InteractionDate,
+                FormatTimestamp(employee.CreationDate),
+                FormatTimestamp(employee.InteractionDate),
                 employee.Address?.Country,
                 employee.Address?.County,
                 employee.Address?.Town,
@@ -51,22 +52,26 @@ public static class EmployeeCsvExporter
         return builder.ToString();
     }
 
-    private static string GenderLabel(int? gender) => gender switch
+    private static string GenderLabel(Gender? gender) => gender switch
     {
-        0 => "not declared",
-        1 => "male",
-        2 => "female",
+        Gender.NotDeclared => "not declared",
+        Gender.Male => "male",
+        Gender.Female => "female",
         _ => string.Empty
     };
 
-    // tbl_employees.employee_Status codes — see ai_docs/database.md.
-    private static string StatusLabel(int? status) => status switch
+    private static string StatusLabel(EmployeeStatus? status) => status switch
     {
-        1901 => "Active",
-        1903 => "Deactivated",
-        1904 => "Test",
+        EmployeeStatus.Active => "Active",
+        EmployeeStatus.Deactivated => "Deactivated",
+        EmployeeStatus.Test => "Test",
         _ => string.Empty
     };
+
+    // ISO 8601 UTC ("2026-09-23T10:15:00Z"): unambiguous in any locale, and sorts correctly
+    // as text if the sheet treats it as a string.
+    private static string? FormatTimestamp(DateTime? value) =>
+        value?.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 
     // RFC 4180 quoting, plus a leading apostrophe on any field that starts with a
     // formula-trigger character (=, +, -, @) so a spreadsheet app never executes

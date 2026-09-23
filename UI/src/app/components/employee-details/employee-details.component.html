@@ -87,7 +87,7 @@
               <div class="profile-header">
                 <img
                   [src]="
-                    employee()?.gender === 2
+                    employee()?.gender === Gender.Female
                       ? '/assets/avatar_female.jpg'
                       : '/assets/avatar_male.jpg'
                   "
@@ -228,11 +228,11 @@
               <dl class="detail-list">
                 <div class="detail-row">
                   <dt>Created</dt>
-                  <dd>{{ employee()?.creationDate || '—' }}</dd>
+                  <dd>{{ (employee()?.creationDate | date: 'medium') || '—' }}</dd>
                 </div>
                 <div class="detail-row">
                   <dt>Last interaction</dt>
-                  <dd>{{ employee()?.interactionDate || '—' }}</dd>
+                  <dd>{{ (employee()?.interactionDate | date: 'medium') || '—' }}</dd>
                 </div>
                 <div class="detail-row">
                   <dt>Status</dt>

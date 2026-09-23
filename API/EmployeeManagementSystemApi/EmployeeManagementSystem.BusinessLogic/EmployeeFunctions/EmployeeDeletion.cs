@@ -1,15 +1,14 @@
-﻿using EmployeeManagementSystem.BusinessLogic.Validations;
-using EmployeeManagementSystem.DataAccess.DBConnection;
+﻿using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 
 public class EmployeeDeletion(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> DeleteEmployee(string guid, string employerId,
+    public async Task<ResponseModel<object>> DeleteEmployee(Guid guid, string employerId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || GuidValidation.ValidateGuid(guid) == false)
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "Invalid or empty Guid.");
 
         var response = await dbUtils.DeleteEmployee(guid, cancellationToken);

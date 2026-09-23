@@ -1,8 +1,8 @@
 CREATE TABLE [dbo].[tbl_offices]
 (
-    [PK_office_guid] NVARCHAR (50) NOT NULL,
+    [PK_office_guid] UNIQUEIDENTIFIER NOT NULL,
     [office_name] NVARCHAR (100) NOT NULL,
-    [city] NVARCHAR (50) NULL,
+    [city] NVARCHAR (100) NULL,
     [country] NVARCHAR (100) NULL,
-    PRIMARY KEY (PK_office_guid)
+    CONSTRAINT [PK_tbl_offices] PRIMARY KEY CLUSTERED ([PK_office_guid])
 );

@@ -55,7 +55,7 @@ export class CostCentersComponent implements OnInit {
     this.draft.set({
       guid: costCenter.guid,
       costCenterCode: costCenter.costCenterCode,
-      costCenterName: costCenter.costCenterName,
+      costCenterName: costCenter.costCenterName ?? '',
     });
   }
 

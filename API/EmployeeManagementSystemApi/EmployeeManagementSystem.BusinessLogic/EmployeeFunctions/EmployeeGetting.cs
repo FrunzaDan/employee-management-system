@@ -1,5 +1,6 @@
 ﻿using EmployeeManagementSystem.BusinessLogic.Validations;
 using EmployeeManagementSystem.DataAccess.DBConnection;
+using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
@@ -31,7 +32,7 @@ public class EmployeeGetting
 
         request.SearchOption = DetermineSearchOption(request.SearchVariable);
 
-        if (request.SearchOption == 0)
+        if (request.SearchOption == EmployeeSearchOption.None)
             return new ResponseModel<object>(404,
                 "No valid search variable was provided! It must be a GUID, MSISDN, or Email.");
 
@@ -101,10 +102,10 @@ public class EmployeeGetting
         return null;
     }
 
-    public async Task<ResponseModel<object>> GetEmployeeAuditLogFunction(string employeeGuid,
+    public async Task<ResponseModel<object>> GetEmployeeAuditLogFunction(Guid employeeGuid,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(employeeGuid) || !GuidValidation.ValidateGuid(employeeGuid))
+        if (employeeGuid == Guid.Empty)
             return new ResponseModel<object>(400, "A valid employee GUID is required.");
 
         return await _dbUtils.GetEmployeeAuditLog(employeeGuid, cancellationToken);
@@ -122,11 +123,12 @@ public class EmployeeGetting
         return await _dbUtils.GetAllEmployeeAuditLog(pageNumber, pageSize, cancellationToken);
     }
 
-    private static int DetermineSearchOption(string searchVariable)
+    private static EmployeeSearchOption DetermineSearchOption(string searchVariable)
     {
-        return GuidValidation.ValidateGuid(searchVariable) ? 1 :
-            MsisdnValidation.ValidateMsisdn(searchVariable) ? 2 :
-            EmailValidation.ValidateEmail(searchVariable) ? 3 :
-            0;
+        return GuidValidation.ValidateGuid(searchVariable) ? EmployeeSearchOption.Guid :
+            MsisdnValidation.ValidateMsisdn(searchVariable) ? EmployeeSearchOption.Msisdn :
+            EmailValidation.ValidateEmail(searchVariable) && searchVariable.Length <= FieldLengthConstants.Email
+                ? EmployeeSearchOption.Email :
+            EmployeeSearchOption.None;
     }
 }

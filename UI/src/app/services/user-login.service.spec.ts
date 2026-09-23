@@ -57,13 +57,13 @@ describe('UserLoginService', () => {
 
   it('posts the credentials to the access-token endpoint', () => {
     service
-      .login({ employerID: 'TestEmployerID', employerPassword: 'Employer123' })
+      .login({ employerId: 'TestEmployerID', employerPassword: 'Employer123' })
       .subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
-      employerID: 'TestEmployerID',
+      employerId: 'TestEmployerID',
       employerPassword: 'Employer123',
     });
 

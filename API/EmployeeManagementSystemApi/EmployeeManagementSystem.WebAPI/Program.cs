@@ -2,8 +2,10 @@
 using System.Threading.RateLimiting;
 using EmployeeManagementSystem.BusinessLogic;
 using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
+using EmployeeManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -18,6 +20,18 @@ builder.Services.AddBusinessLogic();
 builder.Services.AddControllers();
 builder.Services.AddMvc()
     .AddNewtonsoftJson(options => options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore);
+
+// Request models use real types (Guid, DateOnly, enums), so a malformed value — "not-a-guid",
+// "2026-02-30" — is now rejected by model binding, before any controller code runs. By default
+// [ApiController] answers that with its own ValidationProblemDetails shape; this keeps it in the
+// same ResponseModel envelope every other 400 in this API uses, naming the offending field.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var field = context.ModelState.FirstOrDefault(entry => entry.Value?.Errors.Count > 0).Key;
+        var message = string.IsNullOrEmpty(field) ? "Invalid request body." : $"Invalid value for '{field}'.";
+        return new BadRequestObjectResult(new ResponseModel<object>(400, message));
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setup =>
 {

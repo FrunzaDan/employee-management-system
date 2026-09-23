@@ -38,7 +38,7 @@ public class JwtCreationTests
         Assert.Equal(200, result.Status);
         var data = Assert.IsType<AccessTokenResponse>(result.Data);
         Assert.False(string.IsNullOrWhiteSpace(data.AccessToken));
-        Assert.True(DateTime.Parse(data.ValidUntil!) > DateTime.UtcNow);
+        Assert.True(data.ValidUntil > DateTime.UtcNow);
     }
 
     [Fact]

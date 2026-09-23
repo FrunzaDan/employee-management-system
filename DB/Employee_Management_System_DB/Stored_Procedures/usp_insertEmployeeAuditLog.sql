@@ -1,7 +1,7 @@
 CREATE PROCEDURE [dbo].[usp_insertEmployeeAuditLog]
-    @var_EmployeeGuid NVARCHAR(50),
+    @var_EmployeeGuid UNIQUEIDENTIFIER,
     @var_EmployerID NVARCHAR(50),
-    @var_Action NVARCHAR(50),
+    @var_Action VARCHAR(50),
     @var_Details NVARCHAR(500) = NULL
 AS
 BEGIN
@@ -16,7 +16,7 @@ BEGIN
     )
     VALUES
     (
-        @var_EmployeeGuid, @var_EmployerID, @var_Action, @var_Details, GETDATE()
+        @var_EmployeeGuid, @var_EmployerID, @var_Action, @var_Details, SYSUTCDATETIME()
     );
 
     SET @result = 0;

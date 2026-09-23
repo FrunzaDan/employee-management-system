@@ -18,7 +18,7 @@ public class DepartmentController(IDepartmentService departmentService) : Contro
     }
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetDepartment([FromQuery] string guid, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDepartment([FromQuery] Guid guid, CancellationToken cancellationToken)
     {
         var response = await departmentService.GetDepartment(guid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
@@ -41,14 +41,14 @@ public class DepartmentController(IDepartmentService departmentService) : Contro
     }
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteDepartment([FromQuery] string guid, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteDepartment([FromQuery] Guid guid, CancellationToken cancellationToken)
     {
         var response = await departmentService.DeleteDepartment(guid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("employees")]
-    public async Task<IActionResult> GetEmployeesByDepartment([FromQuery] string guid,
+    public async Task<IActionResult> GetEmployeesByDepartment([FromQuery] Guid guid,
         CancellationToken cancellationToken)
     {
         var response = await departmentService.GetEmployeesByDepartment(guid, cancellationToken);

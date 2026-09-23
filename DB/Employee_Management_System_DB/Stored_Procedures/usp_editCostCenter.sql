@@ -1,5 +1,5 @@
 CREATE PROCEDURE [dbo].[usp_editCostCenter]
-    @var_Guid NVARCHAR(50),
+    @var_Guid UNIQUEIDENTIFIER,
     @var_CostCenterCode NVARCHAR(50) = NULL,
     @var_CostCenterName NVARCHAR(100) = NULL
 AS

@@ -1,29 +1,29 @@
 CREATE PROCEDURE [dbo].[usp_createEmployee]
-    @var_Guid NVARCHAR(50),
+    @var_Guid UNIQUEIDENTIFIER,
     @var_FirstName NVARCHAR(50),
     @var_LastName NVARCHAR(50),
-    @var_Email NVARCHAR(50),
-    @var_MSISDN NVARCHAR(50),
-    @var_Gender INT,
-    @var_Birthdate NVARCHAR(50),
+    @var_Email NVARCHAR(254),
+    @var_MSISDN VARCHAR(15),
+    @var_Gender TINYINT,
+    @var_Birthdate DATE,
     @var_Country NVARCHAR(100),
     @var_County NVARCHAR(100),
-    @var_Town NVARCHAR(50),
-    @var_ZIP NVARCHAR(50),
+    @var_Town NVARCHAR(100),
+    @var_ZIP VARCHAR(20),
     @var_Street NVARCHAR(100),
     @var_Number NVARCHAR(50),
-    @var_EmployeeStatus INT = 1901,
-    @var_HireDate NVARCHAR(50) = NULL,
-    @var_OfficeGuid NVARCHAR(50) = NULL,
-    @var_DepartmentGuid NVARCHAR(50) = NULL,
-    @var_CostCenterGuid NVARCHAR(50) = NULL
+    @var_EmployeeStatus SMALLINT = 1901,
+    @var_HireDate DATE = NULL,
+    @var_OfficeGuid UNIQUEIDENTIFIER = NULL,
+    @var_DepartmentGuid UNIQUEIDENTIFIER = NULL,
+    @var_CostCenterGuid UNIQUEIDENTIFIER = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @result INT;
     DECLARE @message NVARCHAR(255);
-    DECLARE @currentDateTime DATETIME = GETDATE();
+    DECLARE @currentDateTime DATETIME2(3) = SYSUTCDATETIME();
 
     IF EXISTS (SELECT 1 FROM tbl_employees WHERE msisdn = @var_MSISDN)
     BEGIN

@@ -5,7 +5,7 @@ BEGIN
     SET NOCOUNT ON;
 
     UPDATE tbl_employers
-    SET last_interaction = GETDATE()
+    SET last_interaction = SYSUTCDATETIME()
     WHERE employer_id = @var_EmployerID;
 
     SELECT

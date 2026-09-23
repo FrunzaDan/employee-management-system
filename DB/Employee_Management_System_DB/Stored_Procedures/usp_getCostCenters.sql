@@ -19,7 +19,7 @@ BEGIN
         SELECT TOP 1 brutto_salary
         FROM dbo.tbl_employee_salary_history
         WHERE FK_employee_guid = e.PK_employee_guid
-        ORDER BY effective_Date DESC
+        ORDER BY effective_Date DESC, created_Date DESC
     ) AS s
     GROUP BY cc.PK_cost_center_guid, cc.cost_center_code, cc.cost_center_name
     ORDER BY cc.cost_center_code;

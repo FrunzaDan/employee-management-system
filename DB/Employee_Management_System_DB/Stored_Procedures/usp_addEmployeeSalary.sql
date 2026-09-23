@@ -1,15 +1,15 @@
 CREATE PROCEDURE [dbo].[usp_addEmployeeSalary]
-    @var_SalaryGuid NVARCHAR(50),
-    @var_EmployeeGuid NVARCHAR(50),
+    @var_SalaryGuid UNIQUEIDENTIFIER,
+    @var_EmployeeGuid UNIQUEIDENTIFIER,
     @var_BruttoSalary DECIMAL(12, 2),
-    @var_EffectiveDate NVARCHAR(50)
+    @var_EffectiveDate DATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @result INT;
     DECLARE @message NVARCHAR(255);
-    DECLARE @currentDateTime DATETIME = GETDATE();
+    DECLARE @currentDateTime DATETIME2(3) = SYSUTCDATETIME();
 
     IF NOT EXISTS (SELECT 1 FROM tbl_employees WHERE PK_employee_guid = @var_EmployeeGuid)
     BEGIN

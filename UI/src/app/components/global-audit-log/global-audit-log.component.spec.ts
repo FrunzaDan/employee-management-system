@@ -99,9 +99,10 @@ describe('GlobalAuditLogComponent', () => {
     });
 
     it('labels a deleted employee by GUID instead of a blank name', () => {
+      // The API omits null properties, so a deleted employee's name is absent.
       const entry = buildEntry({
-        employeeFirstName: null,
-        employeeLastName: null,
+        employeeFirstName: undefined,
+        employeeLastName: undefined,
       });
 
       expect(component.employeeLabel(entry)).toBe(

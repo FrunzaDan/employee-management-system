@@ -3,6 +3,6 @@ export interface AuditLogEntry {
   employeeGuid: string;
   employerId: string;
   action: string;
-  details: string;
-  actionDate: string;
+  details?: string;
+  actionDate: string; // UTC, ISO 8601
 }

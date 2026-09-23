@@ -81,7 +81,7 @@ Domain terms and magic numbers used across this codebase — check here before a
 - **Employee** — the record being managed (name, contact info, address). Stored in `tbl_employees` + `tbl_addresses`.
 - **`employee_Status` codes** — `1901` = active, `1903` = deactivated, `1904` = test (fictitious employees created via the About page's bulk generator). See [database](database.md).
 - **`employer_role` codes** — `1801` = the only role currently in use. See [api](api.md).
-- **GUID** — employee primary key, always server-generated (`Guid.NewGuid()`), never client-supplied. See [database](database.md).
+- **GUID** — every table's primary key (`UNIQUEIDENTIFIER`), always server-generated via `SequentialGuid.NewGuid()` (SQL-Server-ordered, so inserts append to the clustered index), never client-supplied. See [database](database.md).
 - **ADO.NET** — .NET's low-level data access API (`SqlConnection`/`SqlCommand`/`SqlDataReader`); this project uses it directly against stored procedures, with no ORM (no Entity Framework) in between.
 - **Stored-proc result convention** — every mutating stored procedure returns a `(result INT, message NVARCHAR)` row: `result = 0` means success, any nonzero value is the HTTP status the API should return. See [api](api.md).
 - **`.sqlproj` / `.dacpac`** — the DB schema is an SSDT SQL Server Database Project (`.sqlproj`), which builds to a `.dacpac` (a schema snapshot) that `sqlpackage` diffs against the live database and publishes. Not migration scripts. See [build-and-run](build-and-run.md).

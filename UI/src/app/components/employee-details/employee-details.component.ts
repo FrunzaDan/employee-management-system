@@ -20,6 +20,7 @@ import { SalaryHistoryService } from '../../services/salary-history.service';
 import {
   Employee,
   EmployeeActivationStatus,
+  Gender,
 } from '../../interfaces/employee-response';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
@@ -42,13 +43,13 @@ export class EmployeeDetailsComponent {
   // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
   readonly id = input<string>();
 
-  genderMap = new Map<Employee['gender'], string>([
-    [0, 'not declared'],
-    [1, 'male'],
-    [2, 'female'],
+  genderMap = new Map<Gender, string>([
+    [Gender.NotDeclared, 'not declared'],
+    [Gender.Male, 'male'],
+    [Gender.Female, 'female'],
   ]);
 
-  statusMap = new Map<Employee['employeeStatus'], string>([
+  statusMap = new Map<EmployeeActivationStatus, string>([
     [EmployeeActivationStatus.Active, 'Active'],
     [EmployeeActivationStatus.Deactivated, 'Deactivated'],
     [EmployeeActivationStatus.Test, 'Test'],
@@ -59,6 +60,7 @@ export class EmployeeDetailsComponent {
   readonly errorMessage = this.getEmployeeService.errorSignal;
 
   readonly EmployeeStatus = EmployeeActivationStatus;
+  readonly Gender = Gender;
 
   // Deactivate/reactivate share ActivateEmployeeService's loading/error state (it's
   // providedIn: 'root', same instance the employee list uses); delete gets its own,

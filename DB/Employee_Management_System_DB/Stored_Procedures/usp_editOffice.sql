@@ -1,7 +1,7 @@
 CREATE PROCEDURE [dbo].[usp_editOffice]
-    @var_Guid NVARCHAR(50),
+    @var_Guid UNIQUEIDENTIFIER,
     @var_OfficeName NVARCHAR(100) = NULL,
-    @var_City NVARCHAR(50) = NULL,
+    @var_City NVARCHAR(100) = NULL,
     @var_Country NVARCHAR(100) = NULL
 AS
 BEGIN

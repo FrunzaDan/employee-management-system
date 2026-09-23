@@ -5,7 +5,7 @@ namespace EmployeeManagementSystem.Domain.Models;
 // EmployeeModel (no address/hire-date/salary), which those queries don't join.
 public class EmployeeSummary
 {
-    public string? Guid { get; set; }
+    public Guid Guid { get; set; }
 
     public string? FirstName { get; set; }
 
@@ -13,5 +13,5 @@ public class EmployeeSummary
 
     public string? Email { get; set; }
 
-    public int? EmployeeStatus { get; set; }
+    public EmployeeStatus EmployeeStatus { get; set; }
 }

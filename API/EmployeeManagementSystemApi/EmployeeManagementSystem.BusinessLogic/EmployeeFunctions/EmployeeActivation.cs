@@ -1,15 +1,14 @@
-﻿using EmployeeManagementSystem.BusinessLogic.Validations;
-using EmployeeManagementSystem.DataAccess.DBConnection;
+﻿using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 
 public class EmployeeActivation(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> DeactivateEmployee(string guid, string employerId,
+    public async Task<ResponseModel<object>> DeactivateEmployee(Guid guid, string employerId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || GuidValidation.ValidateGuid(guid) == false)
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "Invalid or empty Guid.");
 
         var response = await dbUtils.DeactivateEmployee(guid, cancellationToken);
@@ -23,10 +22,10 @@ public class EmployeeActivation(IDbUtils dbUtils, IEmployeeAuditLogger auditLogg
         return response;
     }
 
-    public async Task<ResponseModel<object>> ReactivateEmployee(string guid, string employerId,
+    public async Task<ResponseModel<object>> ReactivateEmployee(Guid guid, string employerId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(guid) || GuidValidation.ValidateGuid(guid) == false)
+        if (guid == Guid.Empty)
             return new ResponseModel<object>(400, "Invalid or empty Guid.");
 
         var response = await dbUtils.ReactivateEmployee(guid, cancellationToken);
