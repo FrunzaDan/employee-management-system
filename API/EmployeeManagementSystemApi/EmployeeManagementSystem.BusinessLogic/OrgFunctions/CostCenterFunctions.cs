@@ -34,7 +34,7 @@ public class CostCenterFunctions(IDbUtils dbUtils)
         CancellationToken cancellationToken = default) =>
         await dbUtils.GetCostCenters(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditCostCenterFunction(UpdateCostCenterRequest request,
+    public async Task<ResponseModel<object>> UpdateCostCenterFunction(UpdateCostCenterRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.CostCenterId == Guid.Empty)
@@ -44,7 +44,7 @@ public class CostCenterFunctions(IDbUtils dbUtils)
         if (request.Name?.Length > FieldLengthConstants.CostCenterName)
             return new ResponseModel<object>(400, "Cost center name is too long.");
 
-        return await dbUtils.EditCostCenter(request, cancellationToken);
+        return await dbUtils.UpdateCostCenter(request, cancellationToken);
     }
 
     public async Task<ResponseModel<object>> DeleteCostCenterFunction(Guid costCenterId,

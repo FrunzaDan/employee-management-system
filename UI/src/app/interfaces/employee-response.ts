@@ -48,7 +48,7 @@ export interface Employee {
   currentGrossSalary?: number;
 }
 
-// POST /api/employee/register. No employeeId: the DB generates it and the response returns it.
+// POST /api/employee/create. No employeeId: the DB generates it and the response returns it.
 export interface CreateEmployeeRequest {
   firstName: string;
   lastName: string;
@@ -65,7 +65,7 @@ export interface CreateEmployeeRequest {
   costCenterId?: string;
 }
 
-// PATCH /api/employee/edit — a partial update: an omitted field is left unchanged. There's no
+// PATCH /api/employee/update — a partial update: an omitted field is left unchanged. There's no
 // status: status only changes through deactivate/reactivate/delete.
 export interface UpdateEmployeeRequest extends Partial<Omit<CreateEmployeeRequest, 'status'>> {
   employeeId: string;

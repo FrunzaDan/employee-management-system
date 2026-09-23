@@ -36,7 +36,7 @@ public class OfficeFunctions(IDbUtils dbUtils)
         CancellationToken cancellationToken = default) =>
         await dbUtils.GetOffices(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditOfficeFunction(UpdateOfficeRequest request,
+    public async Task<ResponseModel<object>> UpdateOfficeFunction(UpdateOfficeRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.OfficeId == Guid.Empty)
@@ -48,7 +48,7 @@ public class OfficeFunctions(IDbUtils dbUtils)
         if (request.Country?.Length > FieldLengthConstants.Country)
             return new ResponseModel<object>(400, "Country is too long.");
 
-        return await dbUtils.EditOffice(request, cancellationToken);
+        return await dbUtils.UpdateOffice(request, cancellationToken);
     }
 
     public async Task<ResponseModel<object>> DeleteOfficeFunction(Guid officeId,

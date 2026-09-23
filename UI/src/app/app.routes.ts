@@ -35,20 +35,20 @@ export const routes: Routes = [
     title: 'Employees',
   },
   {
-    path: 'add-employee',
+    path: 'create-employee',
     loadComponent: () =>
-      import('./components/add-employee/add-employee.component').then(
-        (m) => m.AddEmployeeComponent,
+      import('./components/create-employee/create-employee.component').then(
+        (m) => m.CreateEmployeeComponent,
       ),
     canActivate: [authGuardFn],
     canDeactivate: [unsavedChangesGuard],
     title: 'Register employee',
   },
   {
-    path: 'edit-employee',
+    path: 'update-employee',
     loadComponent: () =>
-      import('./components/edit-employee/edit-employee.component').then(
-        (m) => m.EditEmployeeComponent,
+      import('./components/update-employee/update-employee.component').then(
+        (m) => m.UpdateEmployeeComponent,
       ),
     canActivate: [authGuardFn],
     canDeactivate: [unsavedChangesGuard],

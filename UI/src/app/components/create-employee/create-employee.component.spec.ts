@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AddEmployeeService } from '../../services/add-employee.service';
+import { CreateEmployeeService } from '../../services/create-employee.service';
 import { EmployeeFormModel } from '../employee-form-fields/employee-form';
-import { AddEmployeeComponent } from './add-employee.component';
+import { CreateEmployeeComponent } from './create-employee.component';
 
-describe('AddEmployeeComponent', () => {
-  let addEmployee: ReturnType<typeof vi.fn>;
+describe('CreateEmployeeComponent', () => {
+  let createEmployee: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let component: AddEmployeeComponent;
+  let component: CreateEmployeeComponent;
 
   const validModel: EmployeeFormModel = {
     firstName: 'Dan',
@@ -32,7 +32,7 @@ describe('AddEmployeeComponent', () => {
   };
 
   beforeEach(() => {
-    addEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    createEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
 
     // The component resolves its dependencies (and builds its signal form) in
@@ -40,17 +40,17 @@ describe('AddEmployeeComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { navigate } },
-        { provide: AddEmployeeService, useValue: { addEmployee } },
+        { provide: CreateEmployeeService, useValue: { createEmployee } },
       ],
     });
 
-    component = TestBed.runInInjectionContext(() => new AddEmployeeComponent());
+    component = TestBed.runInInjectionContext(() => new CreateEmployeeComponent());
   });
 
   it('does not call the service and reports the errors when the form is invalid', async () => {
     await submit(component.employeeForm);
 
-    expect(addEmployee).not.toHaveBeenCalled();
+    expect(createEmployee).not.toHaveBeenCalled();
     expect(component.invalidSummary()).toBe(
       'The form has 16 errors. Please correct the highlighted fields.',
     );
@@ -72,7 +72,7 @@ describe('AddEmployeeComponent', () => {
 
     await submit(component.employeeForm);
 
-    expect(addEmployee).toHaveBeenCalledWith(
+    expect(createEmployee).toHaveBeenCalledWith(
       expect.objectContaining({
         firstName: 'Dan',
         lastName: 'Frunza',
@@ -106,7 +106,7 @@ describe('AddEmployeeComponent', () => {
   });
 
   it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
-    addEmployee.mockReturnValue(
+    createEmployee.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 0 })),
     );
     component.model.set(validModel);
@@ -121,7 +121,7 @@ describe('AddEmployeeComponent', () => {
   });
 
   it('surfaces the server-provided message on a non-zero error status', async () => {
-    addEmployee.mockReturnValue(
+    createEmployee.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -156,7 +156,7 @@ describe('AddEmployeeComponent', () => {
     });
 
     it('keeps them when the save fails, so the user is still warned', async () => {
-      addEmployee.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      createEmployee.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
       component.model.set(validModel);
 
       await submit(component.employeeForm);

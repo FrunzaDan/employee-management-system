@@ -75,17 +75,17 @@ describe('EmployeeDetailsComponent', () => {
         {
           provide: GetEmployeeService,
           useValue: {
-            selectedEmployeeSignal: selectedEmployee,
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            selectedEmployee: selectedEmployee,
+            loading: signal(false),
+            error: signal<string | null>(null),
             getEmployee,
           },
         },
         {
           provide: ActivateEmployeeService,
           useValue: {
-            loadingSignal: activationLoading,
-            errorSignal: signal<string | null>(null),
+            loading: activationLoading,
+            error: signal<string | null>(null),
             deactivateEmployee,
             reactivateEmployee,
           },
@@ -95,20 +95,20 @@ describe('EmployeeDetailsComponent', () => {
         {
           provide: AuditLogService,
           useValue: {
-            entriesSignal: signal([]),
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            entries: signal([]),
+            loading: signal(false),
+            error: signal<string | null>(null),
             loadAuditLog,
           },
         },
         {
           provide: SalaryHistoryService,
           useValue: {
-            entriesSignal: signal([]),
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            entries: signal([]),
+            loading: signal(false),
+            error: signal<string | null>(null),
             loadHistory,
-            addSalary: vi.fn(),
+            createSalary: vi.fn(),
           },
         },
         provideRouter([]),

@@ -25,9 +25,9 @@ export class CostCentersComponent implements OnInit {
   private readonly costCenterService = inject(CostCenterService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
 
-  readonly costCenters = this.costCenterService.costCentersSignal;
-  readonly loading = this.costCenterService.loadingSignal;
-  readonly error = this.costCenterService.errorSignal;
+  readonly costCenters = this.costCenterService.costCenters;
+  readonly loading = this.costCenterService.loading;
+  readonly error = this.costCenterService.error;
 
   readonly draft = signal<CostCenterDraft | null>(null);
   readonly saving = signal(false);
@@ -85,7 +85,7 @@ export class CostCentersComponent implements OnInit {
       };
       await firstValueFrom(
         draft.costCenterId
-          ? this.costCenterService.editCostCenter({ costCenterId: draft.costCenterId, ...payload })
+          ? this.costCenterService.updateCostCenter({ costCenterId: draft.costCenterId, ...payload })
           : this.costCenterService.createCostCenter(payload),
       );
       this.draft.set(null);

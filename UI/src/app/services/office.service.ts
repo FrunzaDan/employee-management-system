@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { Office } from '../interfaces/office-response';
 import { EmployeeSummary } from '../interfaces/employee-summary-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 // Reference data (offices), not a growing operational table — a flat, unpaginated
@@ -27,9 +27,9 @@ export class OfficeService {
     error: null as string | null,
   });
 
-  readonly officesSignal = computed(() => this.state().offices);
-  readonly loadingSignal = computed(() => this.state().loading);
-  readonly errorSignal = computed(() => this.state().error);
+  readonly offices = computed(() => this.state().offices);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
 
   loadOffices(): void {
     this.state.update((s) => ({ ...s, loading: true, error: null }));
@@ -97,10 +97,10 @@ export class OfficeService {
       );
   }
 
-  editOffice(office: Partial<Office>): Observable<GenericResponse<object>> {
+  updateOffice(office: Partial<Office>): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/edit`, office, { headers })
+      .patch<GenericResponse<object>>(`${this.API_URL}/update`, office, { headers })
       .pipe(
         tap(() => {
           this.notificationService.show('Office updated successfully.');

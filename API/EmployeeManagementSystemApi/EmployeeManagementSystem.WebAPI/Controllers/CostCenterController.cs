@@ -25,10 +25,10 @@ public class CostCenterController(ICostCenterService costCenterService) : Contro
         CancellationToken cancellationToken) =>
         Reply(await costCenterService.CreateCostCenter(request, cancellationToken));
 
-    [HttpPatch("edit")]
-    public async Task<ActionResult<ResponseModel<object>>> EditCostCenter([FromBody] UpdateCostCenterRequest request,
+    [HttpPatch("update")]
+    public async Task<ActionResult<ResponseModel<object>>> UpdateCostCenter([FromBody] UpdateCostCenterRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await costCenterService.EditCostCenter(request, cancellationToken));
+        Reply(await costCenterService.UpdateCostCenter(request, cancellationToken));
 
     [HttpDelete("delete")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteCostCenter([FromQuery] Guid costCenterId,

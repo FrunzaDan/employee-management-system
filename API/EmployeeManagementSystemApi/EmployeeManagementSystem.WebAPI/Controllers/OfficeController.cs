@@ -25,10 +25,10 @@ public class OfficeController(IOfficeService officeService) : ControllerBase
         CancellationToken cancellationToken) =>
         Reply(await officeService.CreateOffice(request, cancellationToken));
 
-    [HttpPatch("edit")]
-    public async Task<ActionResult<ResponseModel<object>>> EditOffice([FromBody] UpdateOfficeRequest request,
+    [HttpPatch("update")]
+    public async Task<ActionResult<ResponseModel<object>>> UpdateOffice([FromBody] UpdateOfficeRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await officeService.EditOffice(request, cancellationToken));
+        Reply(await officeService.UpdateOffice(request, cancellationToken));
 
     [HttpDelete("delete")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteOffice([FromQuery] Guid officeId,

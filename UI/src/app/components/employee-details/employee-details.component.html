@@ -25,7 +25,7 @@
           >
             <a
               class="btn btn-primary shadow-none"
-              routerLink="/edit-employee"
+              routerLink="/update-employee"
               [queryParams]="{ id: employee()?.employeeId }"
               >Edit</a
             >
@@ -267,7 +267,7 @@
                 </ul>
               }
 
-              @if (addSalaryError(); as error) {
+              @if (createSalaryError(); as error) {
                 <div class="alert alert-danger mt-2" role="alert">{{ error }}</div>
               }
 
@@ -299,7 +299,7 @@
                     type="button"
                     class="btn btn-primary shadow-none w-100"
                     [disabled]="addingSalary()"
-                    (click)="addSalary()"
+                    (click)="createSalary()"
                   >
                     Add
                   </button>

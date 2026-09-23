@@ -9,16 +9,16 @@ import {
   CreateEmployeeRequest,
   Gender,
 } from '../interfaces/employee-response';
-import { AddEmployeeService } from './add-employee.service';
-import { HttpHeaderService } from './http-header-service';
+import { CreateEmployeeService } from './create-employee.service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
-describe('AddEmployeeService', () => {
-  let service: AddEmployeeService;
+describe('CreateEmployeeService', () => {
+  let service: CreateEmployeeService;
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.apiUrl}/api/employee/register`;
+  const API_URL = `${environment.apiUrl}/api/employee/create`;
 
   const buildEmployee = (): CreateEmployeeRequest => ({
     firstName: 'Dan',
@@ -51,7 +51,7 @@ describe('AddEmployeeService', () => {
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });
-    service = TestBed.inject(AddEmployeeService);
+    service = TestBed.inject(CreateEmployeeService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -59,8 +59,8 @@ describe('AddEmployeeService', () => {
     httpMock.verify();
   });
 
-  it('addEmployee POSTs the employee to the register endpoint', () => {
-    service.addEmployee(buildEmployee()).subscribe();
+  it('createEmployee POSTs the employee to the create endpoint', () => {
+    service.createEmployee(buildEmployee()).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');
@@ -69,8 +69,8 @@ describe('AddEmployeeService', () => {
     req.flush({ status: 200, responseMessage: 'Employee created successfully.' });
   });
 
-  it('addEmployee shows a success notification once the request resolves', () => {
-    service.addEmployee(buildEmployee()).subscribe();
+  it('createEmployee shows a success notification once the request resolves', () => {
+    service.createEmployee(buildEmployee()).subscribe();
 
     httpMock
       .expectOne(API_URL)
@@ -79,8 +79,8 @@ describe('AddEmployeeService', () => {
     expect(notificationShow).toHaveBeenCalledWith('Employee registered successfully.');
   });
 
-  it('addEmployeeSilently POSTs to the same endpoint without showing a notification', () => {
-    service.addEmployeeSilently(buildEmployee()).subscribe();
+  it('createEmployeeSilently POSTs to the same endpoint without showing a notification', () => {
+    service.createEmployeeSilently(buildEmployee()).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');

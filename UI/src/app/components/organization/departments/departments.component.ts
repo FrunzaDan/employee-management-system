@@ -24,9 +24,9 @@ export class DepartmentsComponent implements OnInit {
   private readonly departmentService = inject(DepartmentService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
 
-  readonly departments = this.departmentService.departmentsSignal;
-  readonly loading = this.departmentService.loadingSignal;
-  readonly error = this.departmentService.errorSignal;
+  readonly departments = this.departmentService.departments;
+  readonly loading = this.departmentService.loading;
+  readonly error = this.departmentService.error;
 
   readonly draft = signal<DepartmentDraft | null>(null);
   readonly saving = signal(false);
@@ -76,7 +76,7 @@ export class DepartmentsComponent implements OnInit {
     try {
       await firstValueFrom(
         draft.departmentId
-          ? this.departmentService.editDepartment({
+          ? this.departmentService.updateDepartment({
               departmentId: draft.departmentId,
               name: draft.name,
             })

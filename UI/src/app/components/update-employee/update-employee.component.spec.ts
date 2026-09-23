@@ -6,15 +6,15 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Employee } from '../../interfaces/employee-response';
 import { GetEmployeeService } from '../../services/get-employee.service';
-import { EditEmployeeService } from '../../services/edit-employee.service';
+import { UpdateEmployeeService } from '../../services/update-employee.service';
 import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
-import { EditEmployeeComponent } from './edit-employee.component';
+import { UpdateEmployeeComponent } from './update-employee.component';
 
-describe('EditEmployeeComponent', () => {
+describe('UpdateEmployeeComponent', () => {
   let getEmployee: ReturnType<typeof vi.fn>;
-  let editEmployee: ReturnType<typeof vi.fn>;
+  let updateEmployee: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let selectedEmployee: ReturnType<typeof signal<Employee | null>>;
 
@@ -46,7 +46,7 @@ describe('EditEmployeeComponent', () => {
 
   // `id` is what withComponentInputBinding() binds from `?id=`.
   const createComponent = (id: string | null = 'employeeId-1') => {
-    const fixture = TestBed.createComponent(EditEmployeeComponent);
+    const fixture = TestBed.createComponent(UpdateEmployeeComponent);
     if (id) fixture.componentRef.setInput('id', id);
     fixture.detectChanges();
     return fixture.componentInstance;
@@ -54,7 +54,7 @@ describe('EditEmployeeComponent', () => {
 
   beforeEach(() => {
     getEmployee = vi.fn();
-    editEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    updateEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
     selectedEmployee = signal<Employee | null>(null);
 
@@ -64,23 +64,23 @@ describe('EditEmployeeComponent', () => {
         {
           provide: GetEmployeeService,
           useValue: {
-            selectedEmployeeSignal: selectedEmployee,
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            selectedEmployee: selectedEmployee,
+            loading: signal(false),
+            error: signal<string | null>(null),
             getEmployee,
           },
         },
-        { provide: EditEmployeeService, useValue: { editEmployee } },
+        { provide: UpdateEmployeeService, useValue: { updateEmployee } },
         // EmployeeFormFieldsComponent loads these to populate the job-info selects —
         // stubbed so the fixture doesn't need a real HttpClient in this suite.
-        { provide: OfficeService, useValue: { officesSignal: signal([]), loadOffices: vi.fn() } },
+        { provide: OfficeService, useValue: { offices: signal([]), loadOffices: vi.fn() } },
         {
           provide: DepartmentService,
-          useValue: { departmentsSignal: signal([]), loadDepartments: vi.fn() },
+          useValue: { departments: signal([]), loadDepartments: vi.fn() },
         },
         {
           provide: CostCenterService,
-          useValue: { costCentersSignal: signal([]), loadCostCenters: vi.fn() },
+          useValue: { costCenters: signal([]), loadCostCenters: vi.fn() },
         },
       ],
     });
@@ -141,7 +141,7 @@ describe('EditEmployeeComponent', () => {
 
       await submit(component.employeeForm);
 
-      expect(editEmployee).not.toHaveBeenCalled();
+      expect(updateEmployee).not.toHaveBeenCalled();
       expect(component.invalidSummary()).toBe(
         'The form has 1 error. Please correct the highlighted fields.',
       );
@@ -153,7 +153,7 @@ describe('EditEmployeeComponent', () => {
 
       await submit(component.employeeForm);
 
-      expect(editEmployee).not.toHaveBeenCalled();
+      expect(updateEmployee).not.toHaveBeenCalled();
     });
 
     it('merges the form values onto the loaded employee and saves', async () => {
@@ -163,7 +163,7 @@ describe('EditEmployeeComponent', () => {
 
       await submit(component.employeeForm);
 
-      expect(editEmployee).toHaveBeenCalledWith(
+      expect(updateEmployee).toHaveBeenCalledWith(
         expect.objectContaining({
           employeeId: 'employeeId-1',
           createdAt: '2026-01-01', // preserved from the original record, not in the form
@@ -185,7 +185,7 @@ describe('EditEmployeeComponent', () => {
     it('surfaces the error and stops submitting on failure', async () => {
       const component = createComponent();
       selectedEmployee.set(buildEmployee());
-      editEmployee.mockReturnValue(
+      updateEmployee.mockReturnValue(
         throwError(
           () =>
             new HttpErrorResponse({
@@ -231,7 +231,7 @@ describe('EditEmployeeComponent', () => {
     it('keeps them when the save fails', async () => {
       const component = createComponent();
       selectedEmployee.set(buildEmployee());
-      editEmployee.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      updateEmployee.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       await submit(component.employeeForm);

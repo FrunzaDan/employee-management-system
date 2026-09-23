@@ -6,7 +6,7 @@ import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
 
 // The three form cards (personal details + address + job information) shared by
-// add-employee and edit-employee. The parent owns the form and its submission;
+// create-employee and update-employee. The parent owns the form and its submission;
 // this only renders.
 @Component({
   selector: 'app-employee-form-fields',
@@ -20,9 +20,9 @@ export class EmployeeFormFieldsComponent implements OnInit {
   private readonly departmentService = inject(DepartmentService);
   private readonly costCenterService = inject(CostCenterService);
 
-  protected readonly offices = this.officeService.officesSignal;
-  protected readonly departments = this.departmentService.departmentsSignal;
-  protected readonly costCenters = this.costCenterService.costCentersSignal;
+  protected readonly offices = this.officeService.offices;
+  protected readonly departments = this.departmentService.departments;
+  protected readonly costCenters = this.costCenterService.costCenters;
 
   ngOnInit(): void {
     // Small reference lists (see OfficeService et al.) — loaded once per form

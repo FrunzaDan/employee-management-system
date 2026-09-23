@@ -17,9 +17,9 @@ public class OfficeService(OfficeFunctions officeFunctions) : IOfficeService
         CancellationToken cancellationToken = default) =>
         await officeFunctions.GetOfficesFunction(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditOffice(UpdateOfficeRequest request,
+    public async Task<ResponseModel<object>> UpdateOffice(UpdateOfficeRequest request,
         CancellationToken cancellationToken = default) =>
-        await officeFunctions.EditOfficeFunction(request, cancellationToken);
+        await officeFunctions.UpdateOfficeFunction(request, cancellationToken);
 
     public async Task<ResponseModel<object>> DeleteOffice(Guid officeId,
         CancellationToken cancellationToken = default) =>

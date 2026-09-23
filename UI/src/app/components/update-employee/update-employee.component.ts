@@ -12,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { EditEmployeeService } from '../../services/edit-employee.service';
+import { UpdateEmployeeService } from '../../services/update-employee.service';
 import { GetEmployeeService } from '../../services/get-employee.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
@@ -26,23 +26,23 @@ import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-fo
 
 @Component({
   selector: 'app-edit-employee',
-  templateUrl: './edit-employee.component.html',
-  styleUrl: './edit-employee.component.css',
+  templateUrl: './update-employee.component.html',
+  styleUrl: './update-employee.component.css',
   imports: [EmployeeFormFieldsComponent, FormRoot, RouterLink],
   // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
-export class EditEmployeeComponent {
+export class UpdateEmployeeComponent {
   private readonly router = inject(Router);
   private readonly getEmployeeService = inject(GetEmployeeService);
-  private readonly editEmployeeService = inject(EditEmployeeService);
+  private readonly updateEmployeeService = inject(UpdateEmployeeService);
 
   // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
   readonly id = input<string>();
 
-  readonly employee = this.getEmployeeService.selectedEmployeeSignal;
-  readonly isLoading = this.getEmployeeService.loadingSignal;
-  readonly errorMessage = this.getEmployeeService.errorSignal;
+  readonly employee = this.getEmployeeService.selectedEmployee;
+  readonly isLoading = this.getEmployeeService.loading;
+  readonly errorMessage = this.getEmployeeService.error;
 
   // The form model *is* the loaded employee, mapped: it re-derives whenever
   // employee() changes and stays writable for the user's edits — no effect +
@@ -95,7 +95,7 @@ export class EditEmployeeComponent {
 
     try {
       await firstValueFrom(
-        this.editEmployeeService.editEmployee(applyFormModel(this.model(), current)),
+        this.updateEmployeeService.updateEmployee(applyFormModel(this.model(), current)),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);

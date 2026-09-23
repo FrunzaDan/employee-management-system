@@ -20,7 +20,7 @@ describe('EmployeeListComponent', () => {
   let loadEmployees: ReturnType<typeof vi.fn>;
   let exportEmployees: ReturnType<typeof vi.fn>;
   let totalItems: ReturnType<typeof signal<number>>;
-  let employeesSignal: ReturnType<typeof signal<Employee[]>>;
+  let employees: ReturnType<typeof signal<Employee[]>>;
   let deleteEmployee: ReturnType<typeof vi.fn>;
   let deleteEmployeeSilently: ReturnType<typeof vi.fn>;
   let deactivateEmployeeSilently: ReturnType<typeof vi.fn>;
@@ -53,7 +53,7 @@ describe('EmployeeListComponent', () => {
     loadEmployees = vi.fn();
     exportEmployees = vi.fn();
     totalItems = signal(0);
-    employeesSignal = signal<Employee[]>([]);
+    employees = signal<Employee[]>([]);
     deleteEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     deleteEmployeeSilently = vi
       .fn()
@@ -65,12 +65,12 @@ describe('EmployeeListComponent', () => {
     notificationShow = vi.fn();
 
     const getEmployeeServiceStub = {
-      employeesSignal,
-      loadingSignal: signal(false),
-      errorSignal: signal<string | null>(null),
-      totalItemsSignal: totalItems,
-      pageNumberSignal: signal(1),
-      pageSizeSignal: signal(10),
+      employees,
+      loading: signal(false),
+      error: signal<string | null>(null),
+      totalItems: totalItems,
+      pageNumber: signal(1),
+      pageSize: signal(10),
       loadEmployees,
     };
 
@@ -83,8 +83,8 @@ describe('EmployeeListComponent', () => {
         {
           provide: ActivateEmployeeService,
           useValue: {
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            loading: signal(false),
+            error: signal<string | null>(null),
             deactivateEmployeeSilently,
           },
         },
@@ -95,8 +95,8 @@ describe('EmployeeListComponent', () => {
         {
           provide: ExportEmployeeService,
           useValue: {
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            loading: signal(false),
+            error: signal<string | null>(null),
             exportEmployees,
           },
         },
@@ -258,12 +258,12 @@ describe('EmployeeListComponent', () => {
     });
 
     it('allOnPageSelected is false when the page is empty', () => {
-      employeesSignal.set([]);
+      employees.set([]);
       expect(component.allOnPageSelected()).toBe(false);
     });
 
     it('toggleSelectAllOnPage(true) selects every employee on the current page', () => {
-      employeesSignal.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
+      employees.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
 
       component.toggleSelectAllOnPage(true);
 
@@ -273,7 +273,7 @@ describe('EmployeeListComponent', () => {
     });
 
     it('toggleSelectAllOnPage(false) clears the selection for every employee on the current page', () => {
-      employeesSignal.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
+      employees.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
       component.toggleSelectAllOnPage(true);
 
       component.toggleSelectAllOnPage(false);
@@ -288,7 +288,7 @@ describe('EmployeeListComponent', () => {
     it('warns when the current page contains duplicate GUIDs', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      employeesSignal.set([
+      employees.set([
         buildEmployee({ employeeId: 'dup' }),
         buildEmployee({ employeeId: 'dup' }),
       ]);
@@ -301,7 +301,7 @@ describe('EmployeeListComponent', () => {
     it('does not warn when every GUID on the page is unique', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      employeesSignal.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
+      employees.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
       TestBed.flushEffects();
 
       expect(warnSpy).not.toHaveBeenCalled();
@@ -357,7 +357,7 @@ describe('EmployeeListComponent', () => {
     });
 
     it('does not call any API when the user cancels the confirmation', async () => {
-      employeesSignal.set([buildEmployee({ employeeId: 'g1' })]);
+      employees.set([buildEmployee({ employeeId: 'g1' })]);
       component.toggleSelection('g1', true);
       confirm.mockResolvedValue(false);
 
@@ -368,7 +368,7 @@ describe('EmployeeListComponent', () => {
     });
 
     it('deactivates Active employees and deletes non-Active ones, then shows a success summary and refetches', async () => {
-      employeesSignal.set([
+      employees.set([
         buildEmployee({ employeeId: 'active-1', status: EmployeeStatus.Active }),
         buildEmployee({ employeeId: 'deactivated-1', status: EmployeeStatus.Deactivated }),
         buildEmployee({ employeeId: 'test-1', status: EmployeeStatus.Test }),
@@ -394,7 +394,7 @@ describe('EmployeeListComponent', () => {
     });
 
     it('reports a failure count and does not stop the batch when one operation fails', async () => {
-      employeesSignal.set([
+      employees.set([
         buildEmployee({ employeeId: 'active-1', status: EmployeeStatus.Active }),
         buildEmployee({ employeeId: 'deactivated-1', status: EmployeeStatus.Deactivated }),
       ]);

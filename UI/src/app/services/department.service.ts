@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { Department } from '../interfaces/department-response';
 import { EmployeeSummary } from '../interfaces/employee-summary-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 @Injectable({
@@ -24,9 +24,9 @@ export class DepartmentService {
     error: null as string | null,
   });
 
-  readonly departmentsSignal = computed(() => this.state().departments);
-  readonly loadingSignal = computed(() => this.state().loading);
-  readonly errorSignal = computed(() => this.state().error);
+  readonly departments = computed(() => this.state().departments);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
 
   loadDepartments(): void {
     this.state.update((s) => ({ ...s, loading: true, error: null }));
@@ -89,10 +89,10 @@ export class DepartmentService {
       );
   }
 
-  editDepartment(department: Partial<Department>): Observable<GenericResponse<object>> {
+  updateDepartment(department: Partial<Department>): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/edit`, department, { headers })
+      .patch<GenericResponse<object>>(`${this.API_URL}/update`, department, { headers })
       .pipe(
         tap(() => {
           this.notificationService.show('Department updated successfully.');

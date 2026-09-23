@@ -4,7 +4,7 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { SalaryHistoryEntry } from '../interfaces/salary-history-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 @Injectable({
@@ -23,9 +23,9 @@ export class SalaryHistoryService {
     error: null as string | null,
   });
 
-  readonly entriesSignal = computed(() => this.state().entries);
-  readonly loadingSignal = computed(() => this.state().loading);
-  readonly errorSignal = computed(() => this.state().error);
+  readonly entries = computed(() => this.state().entries);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
 
   loadHistory(employeeId: string): void {
     this.state.update((s) => ({ ...s, loading: true, error: null }));
@@ -46,7 +46,7 @@ export class SalaryHistoryService {
       });
   }
 
-  addSalary(
+  createSalary(
     entry: Pick<SalaryHistoryEntry, 'employeeId' | 'grossSalary' | 'effectiveDate'>,
   ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
@@ -61,11 +61,11 @@ export class SalaryHistoryService {
   }
 
   /**
-   * Same endpoint as {@link addSalary}, without the per-call success toast or
+   * Same endpoint as {@link createSalary}, without the per-call success toast or
    * history reload — for bulk callers (test-data generation) adding many
    * entries for employees whose history page isn't even open.
    */
-  addSalarySilently(
+  createSalarySilently(
     entry: Pick<SalaryHistoryEntry, 'employeeId' | 'grossSalary' | 'effectiveDate'>,
   ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();

@@ -32,7 +32,7 @@ public class DepartmentFunctions(IDbUtils dbUtils)
         CancellationToken cancellationToken = default) =>
         await dbUtils.GetDepartments(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditDepartmentFunction(UpdateDepartmentRequest request,
+    public async Task<ResponseModel<object>> UpdateDepartmentFunction(UpdateDepartmentRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.DepartmentId == Guid.Empty)
@@ -40,7 +40,7 @@ public class DepartmentFunctions(IDbUtils dbUtils)
         if (request.Name?.Length > FieldLengthConstants.DepartmentName)
             return new ResponseModel<object>(400, "Department name is too long.");
 
-        return await dbUtils.EditDepartment(request, cancellationToken);
+        return await dbUtils.UpdateDepartment(request, cancellationToken);
     }
 
     public async Task<ResponseModel<object>> DeleteDepartmentFunction(Guid departmentId,

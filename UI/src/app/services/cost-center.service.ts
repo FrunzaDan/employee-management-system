@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { CostCenter } from '../interfaces/cost-center-response';
 import { EmployeeSummary } from '../interfaces/employee-summary-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 @Injectable({
@@ -24,9 +24,9 @@ export class CostCenterService {
     error: null as string | null,
   });
 
-  readonly costCentersSignal = computed(() => this.state().costCenters);
-  readonly loadingSignal = computed(() => this.state().loading);
-  readonly errorSignal = computed(() => this.state().error);
+  readonly costCenters = computed(() => this.state().costCenters);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
 
   loadCostCenters(): void {
     this.state.update((s) => ({ ...s, loading: true, error: null }));
@@ -89,10 +89,10 @@ export class CostCenterService {
       );
   }
 
-  editCostCenter(costCenter: Partial<CostCenter>): Observable<GenericResponse<object>> {
+  updateCostCenter(costCenter: Partial<CostCenter>): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/edit`, costCenter, { headers })
+      .patch<GenericResponse<object>>(`${this.API_URL}/update`, costCenter, { headers })
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center updated successfully.');

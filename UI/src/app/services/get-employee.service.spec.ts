@@ -97,7 +97,7 @@ describe('GetEmployeeService', () => {
     });
   });
 
-  it('populates employeesSignal/totalItemsSignal/pageNumberSignal/pageSizeSignal from a successful response', () => {
+  it('populates employees/totalItems/pageNumber/pageSize from a successful response', () => {
     const employee = buildEmployee();
 
     service.loadEmployees({ pageNumber: 1, pageSize: 10 });
@@ -107,18 +107,18 @@ describe('GetEmployeeService', () => {
       data: { pageNumber: 1, pageSize: 10, totalItems: 1, items: [employee] },
     });
 
-    expect(service.employeesSignal()).toEqual([employee]);
-    expect(service.totalItemsSignal()).toBe(1);
-    expect(service.pageNumberSignal()).toBe(1);
-    expect(service.pageSizeSignal()).toBe(10);
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.employees()).toEqual([employee]);
+    expect(service.totalItems()).toBe(1);
+    expect(service.pageNumber()).toBe(1);
+    expect(service.pageSize()).toBe(10);
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBeNull();
   });
 
   it('sets loading true synchronously while the request is in flight', () => {
     service.loadEmployees({ pageNumber: 1, pageSize: 10 });
 
-    expect(service.loadingSignal()).toBe(true);
+    expect(service.loading()).toBe(true);
 
     httpMock.expectOne((r) => r.url === API_URL).flush({
       status: 200,
@@ -126,7 +126,7 @@ describe('GetEmployeeService', () => {
       data: { pageNumber: 1, pageSize: 10, totalItems: 0, items: [] },
     });
 
-    expect(service.loadingSignal()).toBe(false);
+    expect(service.loading()).toBe(false);
   });
 
   it('sets a friendly message and clears loading on a network error (status 0)', () => {
@@ -136,13 +136,13 @@ describe('GetEmployeeService', () => {
       .expectOne((r) => r.url === API_URL)
       .error(new ProgressEvent('error'), { status: 0 });
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe(
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe(
       'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
     );
   });
 
-  it('updateEmployeeLocally replaces a matching employee in employeesSignal', () => {
+  it('updateEmployeeLocally replaces a matching employee in employees', () => {
     const original = buildEmployee();
 
     service.loadEmployees({ pageNumber: 1, pageSize: 10 });
@@ -155,10 +155,10 @@ describe('GetEmployeeService', () => {
     const updated = { ...original, firstName: 'Updated' };
     service.updateEmployeeLocally(updated);
 
-    expect(service.employeesSignal()).toEqual([updated]);
+    expect(service.employees()).toEqual([updated]);
   });
 
-  it('removeEmployeeLocally drops a matching employee from employeesSignal', () => {
+  it('removeEmployeeLocally drops a matching employee from employees', () => {
     const employee = buildEmployee();
 
     service.loadEmployees({ pageNumber: 1, pageSize: 10 });
@@ -170,6 +170,6 @@ describe('GetEmployeeService', () => {
 
     service.removeEmployeeLocally(employee.employeeId);
 
-    expect(service.employeesSignal()).toEqual([]);
+    expect(service.employees()).toEqual([]);
   });
 });

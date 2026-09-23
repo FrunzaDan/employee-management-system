@@ -17,9 +17,9 @@ public class DepartmentService(DepartmentFunctions departmentFunctions) : IDepar
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.GetDepartmentsFunction(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditDepartment(UpdateDepartmentRequest request,
+    public async Task<ResponseModel<object>> UpdateDepartment(UpdateDepartmentRequest request,
         CancellationToken cancellationToken = default) =>
-        await departmentFunctions.EditDepartmentFunction(request, cancellationToken);
+        await departmentFunctions.UpdateDepartmentFunction(request, cancellationToken);
 
     public async Task<ResponseModel<object>> DeleteDepartment(Guid departmentId,
         CancellationToken cancellationToken = default) =>

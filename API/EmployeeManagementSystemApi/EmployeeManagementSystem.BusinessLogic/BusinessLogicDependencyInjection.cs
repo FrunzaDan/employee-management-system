@@ -23,9 +23,9 @@ public static class BusinessLogicDependencyInjection
         services.AddSingleton<JwtCreation>();
 
         services.AddScoped<IEmployeeAuditLogger, EmployeeAuditLogger>();
-        services.AddScoped<EmployeeRegistration>();
+        services.AddScoped<EmployeeCreation>();
         services.AddScoped<EmployeeGetting>();
-        services.AddScoped<EmployeeEditing>();
+        services.AddScoped<EmployeeUpdating>();
         services.AddScoped<EmployeeActivation>();
         services.AddScoped<EmployeeDeletion>();
         services.AddScoped<EmployeeSalary>();

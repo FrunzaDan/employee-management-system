@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GetEmployeeService } from './get-employee.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { EmployeeStatus } from '../interfaces/employee-response';
 import { Observable, tap, throwError, timer } from 'rxjs';
 import { retry } from 'rxjs/internal/operators/retry';
@@ -47,8 +47,8 @@ export class ActivateEmployeeService {
     error: null,
   });
 
-  public readonly loadingSignal = computed(() => this.state().loading);
-  public readonly errorSignal = computed(() => this.state().error);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -81,7 +81,7 @@ export class ActivateEmployeeService {
           }
 
           const existingEmployee = this.getEmployeeService
-            .employeesSignal()
+            .employees()
             .find((c) => c.employeeId === employeeId);
 
           if (existingEmployee) {
@@ -129,7 +129,7 @@ export class ActivateEmployeeService {
           }
 
           const existingEmployee = this.getEmployeeService
-            .employeesSignal()
+            .employees()
             .find((c) => c.employeeId === employeeId);
 
           if (existingEmployee) {
@@ -171,7 +171,7 @@ export class ActivateEmployeeService {
       .pipe(
         tap(() => {
           const existingEmployee = this.getEmployeeService
-            .employeesSignal()
+            .employees()
             .find((c) => c.employeeId === employeeId);
 
           if (existingEmployee) {

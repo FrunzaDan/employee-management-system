@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { LoginDataResponse } from '../interfaces/user-login-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 import { SessionStorageService } from './session-storage.service';
 import { UserLoginService } from './user-login.service';

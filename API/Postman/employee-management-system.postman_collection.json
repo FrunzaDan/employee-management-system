@@ -321,14 +321,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -429,14 +429,14 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/edit",
+							"raw": "{{baseUrl}}/api/employee/update",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"edit"
+								"update"
 							]
 						},
 						"body": {
@@ -938,14 +938,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -957,7 +957,7 @@
 								}
 							}
 						},
-						"description": "`EmployeeRegistration.RegisterEmployeeFunction` requires `firstName` \u2014 `FirstName` has no SQL-side requirement, so this check exists purely to avoid silently creating a nameless employee."
+						"description": "`EmployeeCreation.CreateEmployeeFunction` requires `firstName` \u2014 `FirstName` has no SQL-side requirement, so this check exists purely to avoid silently creating a nameless employee."
 					},
 					"response": [],
 					"event": [
@@ -978,14 +978,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1017,14 +1017,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1057,14 +1057,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1097,14 +1097,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1152,14 +1152,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1306,14 +1306,14 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/edit",
+							"raw": "{{baseUrl}}/api/employee/update",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"edit"
+								"update"
 							]
 						},
 						"body": {
@@ -1382,14 +1382,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1525,14 +1525,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/employee/register",
+							"raw": "{{baseUrl}}/api/employee/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"employee",
-								"register"
+								"create"
 							]
 						},
 						"body": {

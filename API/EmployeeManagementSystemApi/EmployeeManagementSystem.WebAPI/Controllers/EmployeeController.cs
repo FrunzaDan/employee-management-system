@@ -19,10 +19,10 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     // (400, via the InvalidModelStateResponseFactory in Program.cs), and a missing one binds
     // to Guid.Empty, which the business logic rejects with its own 400.
 
-    [HttpPost("register")]
-    public async Task<ActionResult<ResponseModel<Guid?>>> RegisterEmployee(
+    [HttpPost("create")]
+    public async Task<ActionResult<ResponseModel<Guid?>>> CreateEmployee(
         [FromBody] CreateEmployeeRequest request, CancellationToken cancellationToken) =>
-        Reply(await employeeService.RegisterEmployee(request, Username, cancellationToken));
+        Reply(await employeeService.CreateEmployee(request, Username, cancellationToken));
 
     [HttpGet("get")]
     public async Task<ActionResult<ResponseModel<EmployeeModel>>> GetEmployee([FromQuery] string? searchTerm,
@@ -56,10 +56,10 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) =>
         Reply(await employeeService.GetAllEmployeeAuditLog(pageNumber, pageSize, cancellationToken));
 
-    [HttpPatch("edit")]
-    public async Task<ActionResult<ResponseModel<object>>> EditEmployee([FromBody] UpdateEmployeeRequest request,
+    [HttpPatch("update")]
+    public async Task<ActionResult<ResponseModel<object>>> UpdateEmployee([FromBody] UpdateEmployeeRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.EditEmployee(request, Username, cancellationToken));
+        Reply(await employeeService.UpdateEmployee(request, Username, cancellationToken));
 
     [HttpPatch("deactivate")]
     public async Task<ActionResult<ResponseModel<object>>> DeactivateEmployee([FromQuery] Guid employeeId,
@@ -82,9 +82,9 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
         Reply(await employeeService.GetEmployeeSalaryHistory(employeeId, cancellationToken));
 
     [HttpPost("salary-history")]
-    public async Task<ActionResult<ResponseModel<object>>> AddEmployeeSalary([FromBody] CreateSalaryRequest request,
+    public async Task<ActionResult<ResponseModel<object>>> CreateEmployeeSalary([FromBody] CreateSalaryRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.AddEmployeeSalary(request, Username, cancellationToken));
+        Reply(await employeeService.CreateEmployeeSalary(request, Username, cancellationToken));
 
     // Explicit role check (not just the class-level [Authorize]) on top of a destructive,
     // untargeted action — wipes every audit row for every employee in one call. Today this

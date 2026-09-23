@@ -17,9 +17,9 @@ public class CostCenterService(CostCenterFunctions costCenterFunctions) : ICostC
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.GetCostCentersFunction(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditCostCenter(UpdateCostCenterRequest request,
+    public async Task<ResponseModel<object>> UpdateCostCenter(UpdateCostCenterRequest request,
         CancellationToken cancellationToken = default) =>
-        await costCenterFunctions.EditCostCenterFunction(request, cancellationToken);
+        await costCenterFunctions.UpdateCostCenterFunction(request, cancellationToken);
 
     public async Task<ResponseModel<object>> DeleteCostCenter(Guid costCenterId,
         CancellationToken cancellationToken = default) =>

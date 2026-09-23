@@ -29,9 +29,9 @@ export class OfficesComponent implements OnInit {
   private readonly officeService = inject(OfficeService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
 
-  readonly offices = this.officeService.officesSignal;
-  readonly loading = this.officeService.loadingSignal;
-  readonly error = this.officeService.errorSignal;
+  readonly offices = this.officeService.offices;
+  readonly loading = this.officeService.loading;
+  readonly error = this.officeService.error;
 
   readonly draft = signal<OfficeDraft | null>(null);
   readonly saving = signal(false);
@@ -90,7 +90,7 @@ export class OfficesComponent implements OnInit {
       const payload = { name: draft.name, city: draft.city, country: draft.country };
       await firstValueFrom(
         draft.officeId
-          ? this.officeService.editOffice({ officeId: draft.officeId, ...payload })
+          ? this.officeService.updateOffice({ officeId: draft.officeId, ...payload })
           : this.officeService.createOffice(payload),
       );
       this.draft.set(null);

@@ -14,7 +14,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     private readonly SemaphoreSlim _connectionStringLock = new(1, 1);
     private string? CurrentConnectionString { get; set; }
 
-    public Task<ResponseModel<Guid?>> RegisterEmployee(CreateEmployeeRequest employee,
+    public Task<ResponseModel<Guid?>> CreateEmployee(CreateEmployeeRequest employee,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Create",
@@ -53,11 +53,11 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             reader => DbHelper.HandleResponseWithPagedEmployees(reader, request.PageNumber, request.PageSize),
             cancellationToken);
 
-    public Task<ResponseModel<object>> EditEmployee(UpdateEmployeeRequest employee,
+    public Task<ResponseModel<object>> UpdateEmployee(UpdateEmployeeRequest employee,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Update",
-            command => DbHelper.AddEmployeeParametersForEdit(command, employee),
+            command => DbHelper.AddEmployeeParametersForUpdate(command, employee),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
@@ -149,7 +149,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
-    public Task<ResponseModel<object>> AddEmployeeSalary(CreateSalaryRequest salary,
+    public Task<ResponseModel<object>> CreateEmployeeSalary(CreateSalaryRequest salary,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.EmployeeSalary_Create",
@@ -188,11 +188,11 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             DbHelper.HandleResponseWithOfficeList,
             cancellationToken);
 
-    public Task<ResponseModel<object>> EditOffice(UpdateOfficeRequest office,
+    public Task<ResponseModel<object>> UpdateOffice(UpdateOfficeRequest office,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Office_Update",
-            command => DbHelper.AddOfficeParametersForEdit(command, office),
+            command => DbHelper.AddOfficeParametersForUpdate(command, office),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
@@ -235,11 +235,11 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             DbHelper.HandleResponseWithDepartmentList,
             cancellationToken);
 
-    public Task<ResponseModel<object>> EditDepartment(UpdateDepartmentRequest department,
+    public Task<ResponseModel<object>> UpdateDepartment(UpdateDepartmentRequest department,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Department_Update",
-            command => DbHelper.AddDepartmentParametersForEdit(command, department),
+            command => DbHelper.AddDepartmentParametersForUpdate(command, department),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
@@ -282,11 +282,11 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             DbHelper.HandleResponseWithCostCenterList,
             cancellationToken);
 
-    public Task<ResponseModel<object>> EditCostCenter(UpdateCostCenterRequest costCenter,
+    public Task<ResponseModel<object>> UpdateCostCenter(UpdateCostCenterRequest costCenter,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.CostCenter_Update",
-            command => DbHelper.AddCostCenterParametersForEdit(command, costCenter),
+            command => DbHelper.AddCostCenterParametersForUpdate(command, costCenter),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 

@@ -31,11 +31,11 @@ export class EmployeeListComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
 
   // Public signals for template
-  readonly employees = this.getEmployeeService.employeesSignal;
-  readonly isLoading = this.getEmployeeService.loadingSignal;
-  readonly errorMessage = this.getEmployeeService.errorSignal;
-  readonly activationLoading = this.activateEmployeeService.loadingSignal;
-  readonly activationError = this.activateEmployeeService.errorSignal;
+  readonly employees = this.getEmployeeService.employees;
+  readonly isLoading = this.getEmployeeService.loading;
+  readonly errorMessage = this.getEmployeeService.error;
+  readonly activationLoading = this.activateEmployeeService.loading;
+  readonly activationError = this.activateEmployeeService.error;
 
   // Delete is a separate action from deactivate/reactivate, so it gets its own
   // in-flight/error state rather than being folded into activationLoading/Error.
@@ -57,8 +57,8 @@ export class EmployeeListComponent implements OnInit {
 
   // CSV export exports whatever the list is currently searching/sorted by,
   // not just the current page — see ExportEmployeeService.
-  readonly exportLoading = this.exportEmployeeService.loadingSignal;
-  readonly exportError = this.exportEmployeeService.errorSignal;
+  readonly exportLoading = this.exportEmployeeService.loading;
+  readonly exportError = this.exportEmployeeService.error;
 
   // Add EmployeeStatus enum for better type checking
   readonly EmployeeStatus = EmployeeStatus;
@@ -80,7 +80,7 @@ export class EmployeeListComponent implements OnInit {
   readonly pageSize = 50;
   readonly currentPage = signal(1);
 
-  readonly totalItems = this.getEmployeeService.totalItemsSignal;
+  readonly totalItems = this.getEmployeeService.totalItems;
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );

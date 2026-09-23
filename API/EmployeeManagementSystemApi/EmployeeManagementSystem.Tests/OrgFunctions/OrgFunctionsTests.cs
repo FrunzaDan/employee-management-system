@@ -57,7 +57,7 @@ public class OrgFunctionsTests
     }
 
     [Fact]
-    public async Task EditDepartmentFunction_RejectsAnOverLengthName_WithoutTouchingTheDb()
+    public async Task UpdateDepartmentFunction_RejectsAnOverLengthName_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var functions = new DepartmentFunctions(dbUtils.Object);
@@ -67,26 +67,26 @@ public class OrgFunctionsTests
             Name = new string('a', FieldLengthConstants.DepartmentName + 1)
         };
 
-        var result = await functions.EditDepartmentFunction(request, TestContext.Current.CancellationToken);
+        var result = await functions.UpdateDepartmentFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Equal("Department name is too long.", result.ResponseMessage);
-        dbUtils.Verify(d => d.EditDepartment(It.IsAny<UpdateDepartmentRequest>(), It.IsAny<CancellationToken>()),
+        dbUtils.Verify(d => d.UpdateDepartment(It.IsAny<UpdateDepartmentRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task EditOfficeFunction_RejectsAnEmptyOfficeId_WithoutTouchingTheDb()
+    public async Task UpdateOfficeFunction_RejectsAnEmptyOfficeId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var functions = new OfficeFunctions(dbUtils.Object);
 
-        var result = await functions.EditOfficeFunction(new UpdateOfficeRequest { Name = "HQ" },
+        var result = await functions.UpdateOfficeFunction(new UpdateOfficeRequest { Name = "HQ" },
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Equal("A valid office ID is required.", result.ResponseMessage);
-        dbUtils.Verify(d => d.EditOffice(It.IsAny<UpdateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.UpdateOffice(It.IsAny<UpdateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

@@ -19,7 +19,7 @@ public sealed class CreateDepartmentRequest
     public string? Name { get; set; }
 }
 
-// Request shape for PATCH edit: an omitted field is left unchanged.
+// Request shape for PATCH /update: an omitted field is left unchanged.
 public sealed class UpdateDepartmentRequest
 {
     public Guid DepartmentId { get; set; }

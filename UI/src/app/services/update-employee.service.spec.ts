@@ -6,18 +6,18 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { Employee } from '../interfaces/employee-response';
-import { EditEmployeeService } from './edit-employee.service';
+import { UpdateEmployeeService } from './update-employee.service';
 import { GetEmployeeService } from './get-employee.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
-describe('EditEmployeeService', () => {
-  let service: EditEmployeeService;
+describe('UpdateEmployeeService', () => {
+  let service: UpdateEmployeeService;
   let httpMock: HttpTestingController;
   let updateEmployeeLocally: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.apiUrl}/api/employee/edit`;
+  const API_URL = `${environment.apiUrl}/api/employee/update`;
 
   const buildEmployee = (): Employee => ({
     employeeId: 'employeeId-1',
@@ -56,7 +56,7 @@ describe('EditEmployeeService', () => {
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });
-    service = TestBed.inject(EditEmployeeService);
+    service = TestBed.inject(UpdateEmployeeService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -64,9 +64,9 @@ describe('EditEmployeeService', () => {
     httpMock.verify();
   });
 
-  it('PATCHes only the editable fields to the edit endpoint', () => {
+  it('PATCHes only the editable fields to the update endpoint', () => {
     const employee = buildEmployee();
-    service.editEmployee(employee).subscribe();
+    service.updateEmployee(employee).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('PATCH');
@@ -88,7 +88,7 @@ describe('EditEmployeeService', () => {
 
   it('updates the employee in the local cache and notifies on success', () => {
     const employee = buildEmployee();
-    service.editEmployee(employee).subscribe();
+    service.updateEmployee(employee).subscribe();
 
     httpMock
       .expectOne(API_URL)
@@ -99,7 +99,7 @@ describe('EditEmployeeService', () => {
   });
 
   it('does not touch the local cache or notify when the request errors', () => {
-    service.editEmployee(buildEmployee()).subscribe({ error: () => {} });
+    service.updateEmployee(buildEmployee()).subscribe({ error: () => {} });
 
     httpMock
       .expectOne(API_URL)

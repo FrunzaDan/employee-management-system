@@ -4,17 +4,17 @@ using EmployeeManagementSystem.Domain.Models;
 namespace EmployeeManagementSystem.BusinessLogic.Services.Implementation;
 
 public class EmployeeService(
-    EmployeeRegistration employeeRegistration,
+    EmployeeCreation employeeCreation,
     EmployeeGetting employeeGetting,
-    EmployeeEditing employeeEditing,
+    EmployeeUpdating employeeUpdating,
     EmployeeActivation employeeActivation,
     EmployeeDeletion employeeDeletion,
     EmployeeSalary employeeSalary)
     : IEmployeeService
 {
-    public async Task<ResponseModel<object>> AddEmployeeSalary(CreateSalaryRequest request, string performedBy,
+    public async Task<ResponseModel<object>> CreateEmployeeSalary(CreateSalaryRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeSalary.AddSalaryFunction(request, performedBy, cancellationToken);
+        await employeeSalary.CreateSalaryFunction(request, performedBy, cancellationToken);
 
     public async Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistory(Guid employeeId,
         CancellationToken cancellationToken = default) =>
@@ -32,9 +32,9 @@ public class EmployeeService(
         CancellationToken cancellationToken = default) =>
         await employeeDeletion.DeleteEmployee(employeeId, performedBy, cancellationToken);
 
-    public async Task<ResponseModel<object>> EditEmployee(UpdateEmployeeRequest request, string performedBy,
+    public async Task<ResponseModel<object>> UpdateEmployee(UpdateEmployeeRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeEditing.EditEmployeeFunction(request, performedBy, cancellationToken);
+        await employeeUpdating.UpdateEmployeeFunction(request, performedBy, cancellationToken);
 
     public async Task<ResponseModel<EmployeeModel>> GetEmployee(string? searchTerm,
         CancellationToken cancellationToken = default) =>
@@ -60,7 +60,7 @@ public class EmployeeService(
         CancellationToken cancellationToken = default) =>
         await employeeGetting.GetEmployeesForExportFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<Guid?>> RegisterEmployee(CreateEmployeeRequest request, string performedBy,
+    public async Task<ResponseModel<Guid?>> CreateEmployee(CreateEmployeeRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeRegistration.RegisterEmployeeFunction(request, performedBy, cancellationToken);
+        await employeeCreation.CreateEmployeeFunction(request, performedBy, cancellationToken);
 }

@@ -21,7 +21,7 @@ public static class DbHelper
             employee.CostCenterId);
     }
 
-    public static void AddEmployeeParametersForEdit(SqlCommand command, UpdateEmployeeRequest employee)
+    public static void AddEmployeeParametersForUpdate(SqlCommand command, UpdateEmployeeRequest employee)
     {
         command.Parameters.AddGuid("@EmployeeId", employee.EmployeeId);
         AddEmployeeCoreParameters(command, employee.FirstName, employee.LastName, employee.Email,
@@ -46,7 +46,7 @@ public static class DbHelper
         command.Parameters.AddNVarChar("@Country", FieldLengthConstants.Country, office.Country);
     }
 
-    public static void AddOfficeParametersForEdit(SqlCommand command, UpdateOfficeRequest office)
+    public static void AddOfficeParametersForUpdate(SqlCommand command, UpdateOfficeRequest office)
     {
         command.Parameters.AddGuid("@OfficeId", office.OfficeId);
         command.Parameters.AddNVarChar("@Name", FieldLengthConstants.OfficeName, office.Name);
@@ -57,7 +57,7 @@ public static class DbHelper
     public static void AddDepartmentParametersForCreate(SqlCommand command, CreateDepartmentRequest department) =>
         command.Parameters.AddNVarChar("@Name", FieldLengthConstants.DepartmentName, department.Name);
 
-    public static void AddDepartmentParametersForEdit(SqlCommand command, UpdateDepartmentRequest department)
+    public static void AddDepartmentParametersForUpdate(SqlCommand command, UpdateDepartmentRequest department)
     {
         command.Parameters.AddGuid("@DepartmentId", department.DepartmentId);
         command.Parameters.AddNVarChar("@Name", FieldLengthConstants.DepartmentName, department.Name);
@@ -69,7 +69,7 @@ public static class DbHelper
         command.Parameters.AddNVarChar("@Name", FieldLengthConstants.CostCenterName, costCenter.Name);
     }
 
-    public static void AddCostCenterParametersForEdit(SqlCommand command, UpdateCostCenterRequest costCenter)
+    public static void AddCostCenterParametersForUpdate(SqlCommand command, UpdateCostCenterRequest costCenter)
     {
         command.Parameters.AddGuid("@CostCenterId", costCenter.CostCenterId);
         command.Parameters.AddNVarChar("@Code", FieldLengthConstants.CostCenterCode, costCenter.Code);

@@ -27,7 +27,7 @@ public sealed class CreateOfficeRequest
     public string? Country { get; set; }
 }
 
-// Request shape for PATCH edit: an omitted field is left unchanged (Office_Update's
+// Request shape for PATCH /update: an omitted field is left unchanged (Office_Update's
 // ISNULL(@param, column)).
 public sealed class UpdateOfficeRequest
 {

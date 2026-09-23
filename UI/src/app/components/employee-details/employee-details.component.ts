@@ -56,9 +56,9 @@ export class EmployeeDetailsComponent {
     [EmployeeStatus.Test, 'Test'],
   ]);
 
-  readonly employee = this.getEmployeeService.selectedEmployeeSignal;
-  readonly isLoading = this.getEmployeeService.loadingSignal;
-  readonly errorMessage = this.getEmployeeService.errorSignal;
+  readonly employee = this.getEmployeeService.selectedEmployee;
+  readonly isLoading = this.getEmployeeService.loading;
+  readonly errorMessage = this.getEmployeeService.error;
 
   readonly EmployeeStatus = EmployeeStatus;
   readonly auditActionLabel = auditActionLabel;
@@ -67,19 +67,19 @@ export class EmployeeDetailsComponent {
   // Deactivate/reactivate share ActivateEmployeeService's loading/error state (it's
   // providedIn: 'root', same instance the employee list uses); delete gets its own,
   // same split as employee-list.component.ts.
-  readonly activationLoading = this.activateEmployeeService.loadingSignal;
-  readonly activationError = this.activateEmployeeService.errorSignal;
+  readonly activationLoading = this.activateEmployeeService.loading;
+  readonly activationError = this.activateEmployeeService.error;
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
-  readonly auditLog = this.auditLogService.entriesSignal;
-  readonly auditLogLoading = this.auditLogService.loadingSignal;
-  readonly auditLogError = this.auditLogService.errorSignal;
+  readonly auditLog = this.auditLogService.entries;
+  readonly auditLogLoading = this.auditLogService.loading;
+  readonly auditLogError = this.auditLogService.error;
   private wasActivationLoading = false;
 
-  readonly salaryHistory = this.salaryHistoryService.entriesSignal;
-  readonly salaryHistoryLoading = this.salaryHistoryService.loadingSignal;
-  readonly salaryHistoryError = this.salaryHistoryService.errorSignal;
+  readonly salaryHistory = this.salaryHistoryService.entries;
+  readonly salaryHistoryLoading = this.salaryHistoryService.loading;
+  readonly salaryHistoryError = this.salaryHistoryService.error;
 
   // Draft state for the inline "add salary entry" form — deliberately not a
   // signal-forms FieldTree like employee-form.ts: two plain fields, no shared
@@ -87,7 +87,7 @@ export class EmployeeDetailsComponent {
   readonly newSalaryAmount = signal('');
   readonly newSalaryEffectiveDate = signal('');
   readonly addingSalary = signal(false);
-  readonly addSalaryError = signal<string | null>(null);
+  readonly createSalaryError = signal<string | null>(null);
 
   employeeGender: Signal<string | undefined> = computed(() => {
     const c = this.employee();
@@ -160,26 +160,26 @@ export class EmployeeDetailsComponent {
     this.activateEmployeeService.reactivateEmployee(employeeId);
   }
 
-  async addSalary(): Promise<void> {
+  async createSalary(): Promise<void> {
     const employeeId = this.employee()?.employeeId;
     if (!employeeId) return;
 
     const grossSalary = Number(this.newSalaryAmount());
     if (!this.newSalaryAmount() || Number.isNaN(grossSalary) || grossSalary <= 0) {
-      this.addSalaryError.set('Enter a valid, positive gross salary.');
+      this.createSalaryError.set('Enter a valid, positive gross salary.');
       return;
     }
     if (!this.newSalaryEffectiveDate()) {
-      this.addSalaryError.set('Enter an effective date.');
+      this.createSalaryError.set('Enter an effective date.');
       return;
     }
 
     this.addingSalary.set(true);
-    this.addSalaryError.set(null);
+    this.createSalaryError.set(null);
 
     try {
       await firstValueFrom(
-        this.salaryHistoryService.addSalary({
+        this.salaryHistoryService.createSalary({
           employeeId: employeeId,
           grossSalary,
           effectiveDate: this.newSalaryEffectiveDate(),
@@ -188,7 +188,7 @@ export class EmployeeDetailsComponent {
       this.newSalaryAmount.set('');
       this.newSalaryEffectiveDate.set('');
     } catch (error) {
-      this.addSalaryError.set(
+      this.createSalaryError.set(
         extractErrorMessage(error as HttpErrorResponse, 'Failed to add salary entry'),
       );
     } finally {

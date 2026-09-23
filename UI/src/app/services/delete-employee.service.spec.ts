@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { DeleteEmployeeService } from './delete-employee.service';
 import { GetEmployeeService } from './get-employee.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 describe('DeleteEmployeeService', () => {

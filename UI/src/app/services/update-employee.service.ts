@@ -7,16 +7,16 @@ import {
   Employee,
   UpdateEmployeeRequest,
 } from '../interfaces/employee-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { GetEmployeeService } from './get-employee.service'; // Inject to update locally
 import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class EditEmployeeService {
+export class UpdateEmployeeService {
   private readonly APIURL =
-    environment.apiUrl + '/api/employee/edit';
+    environment.apiUrl + '/api/employee/update';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -25,7 +25,7 @@ export class EditEmployeeService {
 
   // Takes the whole edited employee (to update the local list with once saved) but sends
   // only the editable fields — the server-owned ones (status, dates) aren't part of an edit.
-  editEmployee(employee: Employee): Observable<GenericResponse<object>> {
+  updateEmployee(employee: Employee): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
 

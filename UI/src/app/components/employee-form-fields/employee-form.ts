@@ -6,7 +6,7 @@ import {
   Gender,
 } from '../../interfaces/employee-response';
 
-// Shared by add-employee and edit-employee: one model shape, one validation
+// Shared by create-employee and update-employee: one model shape, one validation
 // schema, and the two-way mapping between the form and the API's Employee.
 export interface EmployeeFormModel {
   firstName: string;

@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
-import { AddEmployeeService } from '../../services/add-employee.service';
+import { CreateEmployeeService } from '../../services/create-employee.service';
 import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
@@ -217,7 +217,7 @@ function pickId<T>(values: readonly T[], idOf: (value: T) => string): string | u
 export class AboutComponent {
   private readonly apiLoggerService = inject(ApiLoggerService);
   private readonly notificationService = inject(NotificationService);
-  private readonly addEmployeeService = inject(AddEmployeeService);
+  private readonly createEmployeeService = inject(CreateEmployeeService);
   private readonly officeService = inject(OfficeService);
   private readonly departmentService = inject(DepartmentService);
   private readonly costCenterService = inject(CostCenterService);
@@ -233,7 +233,7 @@ export class AboutComponent {
     );
   }
 
-  async addTestEmployees(): Promise<void> {
+  async createTestEmployees(): Promise<void> {
     if (this.addingTestEmployees()) {
       return;
     }
@@ -263,7 +263,7 @@ export class AboutComponent {
         let employeeId: string | undefined;
         try {
           const response = await firstValueFrom(
-            this.addEmployeeService.addEmployeeSilently(employee),
+            this.createEmployeeService.createEmployeeSilently(employee),
           );
           employeeId = response.data;
         } catch {
@@ -271,7 +271,7 @@ export class AboutComponent {
           continue;
         }
         added++;
-        if (employeeId) await this.addRandomInitialSalary(employeeId, employee);
+        if (employeeId) await this.createRandomInitialSalary(employeeId, employee);
       }
 
       const problems = failed > 0 ? [`${failed} failed`] : [];
@@ -289,13 +289,13 @@ export class AboutComponent {
   // registration returned), so a failure to add its salary shouldn't be reported as a failed
   // employee — same "already succeeded, don't turn a follow-up failure into an error"
   // reasoning as EmployeeAuditLogger.
-  private async addRandomInitialSalary(
+  private async createRandomInitialSalary(
     employeeId: string,
     employee: CreateEmployeeRequest,
   ): Promise<void> {
     try {
       await firstValueFrom(
-        this.salaryHistoryService.addSalarySilently({
+        this.salaryHistoryService.createSalarySilently({
           employeeId,
           grossSalary: randomGrossSalary(),
           effectiveDate: employee.hireDate!,

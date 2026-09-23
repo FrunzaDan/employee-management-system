@@ -33,7 +33,7 @@
     >
       {{ exportLoading() ? 'Exporting…' : 'Export CSV' }}
     </button>
-    <a routerLink="/add-employee" class="btn btn-primary shadow-none">
+    <a routerLink="/create-employee" class="btn btn-primary shadow-none">
       Register employee
     </a>
     <button
@@ -143,7 +143,7 @@
             <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + fullName">
               <a
                 class="btn btn-primary btn-sm shadow-none"
-                routerLink="/edit-employee"
+                routerLink="/update-employee"
                 [queryParams]="{ id: employee.employeeId }"
                 [attr.aria-label]="'Edit ' + fullName"
                 >Edit</a

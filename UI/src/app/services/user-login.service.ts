@@ -9,7 +9,7 @@ import {
 import { UserLoginRequest } from '../../../src/app/interfaces/user-login-request';
 import { environment } from '../../environments/environment';
 import { SessionStorageService } from './session-storage.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { GenericResponse } from '../interfaces/generic-response';
 import { NotificationService } from './notification.service';
 

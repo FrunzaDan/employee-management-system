@@ -25,10 +25,10 @@ public class DepartmentController(IDepartmentService departmentService) : Contro
         CancellationToken cancellationToken) =>
         Reply(await departmentService.CreateDepartment(request, cancellationToken));
 
-    [HttpPatch("edit")]
-    public async Task<ActionResult<ResponseModel<object>>> EditDepartment([FromBody] UpdateDepartmentRequest request,
+    [HttpPatch("update")]
+    public async Task<ActionResult<ResponseModel<object>>> UpdateDepartment([FromBody] UpdateDepartmentRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await departmentService.EditDepartment(request, cancellationToken));
+        Reply(await departmentService.UpdateDepartment(request, cancellationToken));
 
     [HttpDelete("delete")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteDepartment([FromQuery] Guid departmentId,

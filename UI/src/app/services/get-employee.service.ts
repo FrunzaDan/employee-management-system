@@ -11,7 +11,7 @@ import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { PagedResponse } from '../interfaces/paged-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 
 export interface LoadEmployeesParams {
   pageNumber: number;
@@ -41,15 +41,15 @@ export class GetEmployeeService {
   });
 
   // Computed signals
-  public readonly employeesSignal = computed(() => this.state().employees);
-  public readonly selectedEmployeeSignal = computed(
+  readonly employees = computed(() => this.state().employees);
+  readonly selectedEmployee = computed(
     () => this.state().selectedEmployee,
   );
-  public readonly loadingSignal = computed(() => this.state().loading);
-  public readonly errorSignal = computed(() => this.state().error);
-  public readonly pageNumberSignal = computed(() => this.state().pageNumber);
-  public readonly pageSizeSignal = computed(() => this.state().pageSize);
-  public readonly totalItemsSignal = computed(() => this.state().totalItems);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
+  readonly pageNumber = computed(() => this.state().pageNumber);
+  readonly pageSize = computed(() => this.state().pageSize);
+  readonly totalItems = computed(() => this.state().totalItems);
 
   // Routed through switchMap so a new loadEmployees() call cancels whatever request is
   // still in flight — without this, a slower earlier response (e.g. a stale page/search)
@@ -108,7 +108,7 @@ export class GetEmployeeService {
   // Pagination, search, and sorting are all server-side: each call re-fetches
   // just the requested page from the API rather than filtering/sorting an
   // already-loaded full list in memory.
-  public loadEmployees(params: LoadEmployeesParams): void {
+  loadEmployees(params: LoadEmployeesParams): void {
     this.setLoading(true);
     this.loadEmployeesParams$.next(params);
   }

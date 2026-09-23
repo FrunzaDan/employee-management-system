@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { AddEmployeeService } from '../../services/add-employee.service';
+import { CreateEmployeeService } from '../../services/create-employee.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
   EmployeeFormModel,
@@ -16,15 +16,15 @@ import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-fo
 
 @Component({
   selector: 'app-add-employee',
-  templateUrl: './add-employee.component.html',
-  styleUrl: './add-employee.component.css',
+  templateUrl: './create-employee.component.html',
+  styleUrl: './create-employee.component.css',
   imports: [EmployeeFormFieldsComponent, FormRoot, RouterLink],
   // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
-export class AddEmployeeComponent {
+export class CreateEmployeeComponent {
   private readonly router = inject(Router);
-  private readonly addEmployeeService = inject(AddEmployeeService);
+  private readonly createEmployeeService = inject(CreateEmployeeService);
 
   readonly model = signal<EmployeeFormModel>(emptyEmployeeForm());
   private readonly saved = signal(false);
@@ -58,7 +58,7 @@ export class AddEmployeeComponent {
 
     try {
       await firstValueFrom(
-        this.addEmployeeService.addEmployee(toCreateEmployeeRequest(this.model())),
+        this.createEmployeeService.createEmployee(toCreateEmployeeRequest(this.model())),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);

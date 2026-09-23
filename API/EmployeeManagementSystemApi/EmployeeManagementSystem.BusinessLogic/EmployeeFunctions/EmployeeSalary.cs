@@ -14,7 +14,7 @@ public class EmployeeSalary(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
     // overflow 500 — and so a third decimal isn't silently rounded away by SQL Server.
     private const decimal MaxGrossSalary = 9_999_999_999.99m;
 
-    public async Task<ResponseModel<object>> AddSalaryFunction(CreateSalaryRequest request, string performedBy,
+    public async Task<ResponseModel<object>> CreateSalaryFunction(CreateSalaryRequest request, string performedBy,
         CancellationToken cancellationToken = default)
     {
         if (request.EmployeeId == Guid.Empty)
@@ -32,7 +32,7 @@ public class EmployeeSalary(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
         if (request.EffectiveDate is not { } effectiveDate)
             return new ResponseModel<object>(400, "Effective date is required.");
 
-        var response = await dbUtils.AddEmployeeSalary(request, cancellationToken);
+        var response = await dbUtils.CreateEmployeeSalary(request, cancellationToken);
 
         // Not forwarding cancellationToken: the entry was already recorded, so the audit write
         // should still be attempted even if the client has since disconnected.

@@ -9,13 +9,13 @@ import { environment } from '../../environments/environment';
 import { Employee, EmployeeStatus } from '../interfaces/employee-response';
 import { ActivateEmployeeService } from './activate-employee.service';
 import { GetEmployeeService } from './get-employee.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 describe('ActivateEmployeeService', () => {
   let service: ActivateEmployeeService;
   let httpMock: HttpTestingController;
-  let employeesSignal: ReturnType<typeof signal<Employee[]>>;
+  let employees: ReturnType<typeof signal<Employee[]>>;
   let updateEmployeeLocally: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
 
@@ -49,7 +49,7 @@ describe('ActivateEmployeeService', () => {
   beforeEach(() => {
     updateEmployeeLocally = vi.fn();
     notificationShow = vi.fn();
-    employeesSignal = signal<Employee[]>([buildEmployee()]);
+    employees = signal<Employee[]>([buildEmployee()]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -61,7 +61,7 @@ describe('ActivateEmployeeService', () => {
         },
         {
           provide: GetEmployeeService,
-          useValue: { employeesSignal, updateEmployeeLocally },
+          useValue: { employees, updateEmployeeLocally },
         },
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
@@ -77,10 +77,10 @@ describe('ActivateEmployeeService', () => {
     vi.useRealTimers();
   });
 
-  it('sets loadingSignal true synchronously while deactivation is in flight', () => {
+  it('sets loading true synchronously while deactivation is in flight', () => {
     service.deactivateEmployee('employeeId-1');
 
-    expect(service.loadingSignal()).toBe(true);
+    expect(service.loading()).toBe(true);
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -104,12 +104,12 @@ describe('ActivateEmployeeService', () => {
     expect(notificationShow).toHaveBeenCalledWith(
       'Employee deactivated successfully.',
     );
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBeNull();
   });
 
   it('reactivateEmployee marks the local employee Active and hits the reactivate endpoint', () => {
-    employeesSignal.set([buildEmployee({ status: EmployeeStatus.Deactivated })]);
+    employees.set([buildEmployee({ status: EmployeeStatus.Deactivated })]);
 
     service.reactivateEmployee('employeeId-1');
 
@@ -137,12 +137,12 @@ describe('ActivateEmployeeService', () => {
 
     expect(updateEmployeeLocally).not.toHaveBeenCalled();
     expect(notificationShow).not.toHaveBeenCalled();
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('Deactivation failed');
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('Deactivation failed');
   });
 
   it('sets a not-found error and skips notification when the employee is not in the local cache', () => {
-    employeesSignal.set([]);
+    employees.set([]);
 
     service.deactivateEmployee('missing-employeeId');
 
@@ -152,7 +152,7 @@ describe('ActivateEmployeeService', () => {
 
     expect(updateEmployeeLocally).not.toHaveBeenCalled();
     expect(notificationShow).not.toHaveBeenCalled();
-    expect(service.errorSignal()).toContain('not found locally');
+    expect(service.error()).toContain('not found locally');
   });
 
   it('does not retry a definitive 4xx error and surfaces the server message', () => {
@@ -165,8 +165,8 @@ describe('ActivateEmployeeService', () => {
         { status: 409, statusText: 'Conflict' },
       );
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('Employee is already deactivated.');
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('Employee is already deactivated.');
     // httpMock.verify() in afterEach confirms no retry request was made.
   });
 
@@ -186,7 +186,7 @@ describe('ActivateEmployeeService', () => {
     expect(updateEmployeeLocally).toHaveBeenCalledWith(
       expect.objectContaining({ status: EmployeeStatus.Deactivated }),
     );
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBeNull();
   });
 });

@@ -23,11 +23,11 @@ public class EmployeeSalaryTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var expected = new ResponseModel<object>(200, "Salary entry added successfully.");
-        dbUtils.Setup(d => d.AddEmployeeSalary(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CreateEmployeeSalary(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
         var salary = new EmployeeSalary(dbUtils.Object, auditLogger.Object);
 
-        var result = await salary.AddSalaryFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
+        var result = await salary.CreateSalaryFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
         auditLogger.Verify(a => a.Log(EmployeeId, PerformedBy, AuditAction.SalaryChanged,
@@ -39,11 +39,11 @@ public class EmployeeSalaryTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
-        dbUtils.Setup(d => d.AddEmployeeSalary(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CreateEmployeeSalary(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(404, "Employee not found."));
         var salary = new EmployeeSalary(dbUtils.Object, auditLogger.Object);
 
-        var result = await salary.AddSalaryFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
+        var result = await salary.CreateSalaryFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(404, result.Status);
         auditLogger.Verify(a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(),
@@ -68,11 +68,11 @@ public class EmployeeSalaryTests
         var dbUtils = new Mock<IDbUtils>();
         var salary = new EmployeeSalary(dbUtils.Object, Mock.Of<IEmployeeAuditLogger>());
 
-        var result = await salary.AddSalaryFunction(request, PerformedBy, TestContext.Current.CancellationToken);
+        var result = await salary.CreateSalaryFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains(expectedMessagePart, result.ResponseMessage);
-        dbUtils.Verify(d => d.AddEmployeeSalary(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()),
+        dbUtils.Verify(d => d.CreateEmployeeSalary(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
