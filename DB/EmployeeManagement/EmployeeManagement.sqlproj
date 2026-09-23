@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build">
-  <Sdk Name="Microsoft.Build.Sql" Version="0.1.9-preview" />
+  <Sdk Name="Microsoft.Build.Sql" Version="2.3.0" />
   <PropertyGroup>
     <Name>EmployeeManagement</Name>
     <ProjectGuid>{C94F9DB8-ED06-4874-AB6B-F90EEE1D75CB}</ProjectGuid>

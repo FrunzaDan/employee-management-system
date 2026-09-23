@@ -1,22 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
+        <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\EmployeeManagementSystem.DataAccess\EmployeeManagementSystem.DataAccess.csproj"/>
-        <ProjectReference Include="..\EmployeeManagementSystem.Domain\EmployeeManagementSystem.Domain.csproj"/>
+        <ProjectReference Include="..\EmployeeManagementSystem.DataAccess\EmployeeManagementSystem.DataAccess.csproj" />
+        <ProjectReference Include="..\EmployeeManagementSystem.Domain\EmployeeManagementSystem.Domain.csproj" />
     </ItemGroup>
 
 </Project>
