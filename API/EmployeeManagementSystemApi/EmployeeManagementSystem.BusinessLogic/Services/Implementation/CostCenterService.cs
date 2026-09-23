@@ -5,26 +5,27 @@ namespace EmployeeManagementSystem.BusinessLogic.Services.Implementation;
 
 public class CostCenterService(CostCenterFunctions costCenterFunctions) : ICostCenterService
 {
-    public async Task<ResponseModel<object>> CreateCostCenter(CostCenterModel request,
+    public async Task<ResponseModel<Guid?>> CreateCostCenter(CreateCostCenterRequest request,
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.CreateCostCenterFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetCostCenter(Guid guid,
+    public async Task<ResponseModel<CostCenterModel>> GetCostCenter(Guid costCenterId,
         CancellationToken cancellationToken = default) =>
-        await costCenterFunctions.GetCostCenterFunction(guid, cancellationToken);
+        await costCenterFunctions.GetCostCenterFunction(costCenterId, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetCostCenters(CancellationToken cancellationToken = default) =>
+    public async Task<ResponseModel<IReadOnlyList<CostCenterModel>>> GetCostCenters(
+        CancellationToken cancellationToken = default) =>
         await costCenterFunctions.GetCostCentersFunction(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditCostCenter(CostCenterModel request,
+    public async Task<ResponseModel<object>> EditCostCenter(UpdateCostCenterRequest request,
         CancellationToken cancellationToken = default) =>
         await costCenterFunctions.EditCostCenterFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteCostCenter(Guid guid,
+    public async Task<ResponseModel<object>> DeleteCostCenter(Guid costCenterId,
         CancellationToken cancellationToken = default) =>
-        await costCenterFunctions.DeleteCostCenterFunction(guid, cancellationToken);
+        await costCenterFunctions.DeleteCostCenterFunction(costCenterId, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeesByCostCenter(Guid guid,
+    public async Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByCostCenter(Guid costCenterId,
         CancellationToken cancellationToken = default) =>
-        await costCenterFunctions.GetEmployeesByCostCenterFunction(guid, cancellationToken);
+        await costCenterFunctions.GetEmployeesByCostCenterFunction(costCenterId, cancellationToken);
 }

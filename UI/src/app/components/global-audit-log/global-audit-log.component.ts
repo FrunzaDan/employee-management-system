@@ -12,6 +12,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { GlobalAuditLogService } from '../../services/global-audit-log.service';
 import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
 import { extractErrorMessage } from '../../utils/extract-error-message';
+import { auditActionLabel } from '../../utils/audit-action-label';
 
 @Component({
   selector: 'app-global-audit-log',
@@ -20,6 +21,8 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   imports: [DatePipe, RouterLink],
 })
 export class GlobalAuditLogComponent implements OnInit {
+  readonly auditActionLabel = auditActionLabel;
+
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly globalAuditLogService = inject(GlobalAuditLogService);
 
@@ -51,7 +54,7 @@ export class GlobalAuditLogComponent implements OnInit {
 
   employeeLabel(entry: GlobalAuditLogEntry): string {
     if (!entry.employeeFirstName && !entry.employeeLastName) {
-      return `(deleted employee ${entry.employeeGuid})`;
+      return `(deleted employee ${entry.employeeId})`;
     }
     return `${entry.employeeFirstName ?? ''} ${entry.employeeLastName ?? ''}`.trim();
   }

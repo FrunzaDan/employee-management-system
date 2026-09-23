@@ -14,8 +14,8 @@ public class AuthServiceTests
         var config = new Mock<IAppSettingsConfig>();
         config.Setup(c => c.SecureJwtKey)
             .Returns("UGxlYXNlIHN0b3JlIHRoaXMgc2VjdXJpdHkga2V5IGluIGEgc2VjdXJlIGVudmlyb25tZW50IQ==");
-        config.Setup(c => c.JwtIssuer).Returns("https://localhost:7146/");
-        config.Setup(c => c.JwtAudience).Returns("https://localhost:7146/");
+        config.Setup(c => c.JwtIssuer).Returns("https://localhost:7145/");
+        config.Setup(c => c.JwtAudience).Returns("https://localhost:7145/");
         config.Setup(c => c.AccessTokenTimeout).Returns("15");
         return config;
     }
@@ -28,13 +28,13 @@ public class AuthServiceTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
+            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new EmployerCredentials
         {
-            EmployerId = "TestEmployerID",
-            EmployerPassword = "Employer123",
+            Username = "TestEmployer",
+            Password = "Employer123",
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
@@ -45,15 +45,15 @@ public class AuthServiceTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GetAccessToken_RejectsMissingEmployerId_WithoutTouchingTheDb(string? employerId)
+    public async Task GetAccessToken_RejectsMissingUsername_WithoutTouchingTheDb(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new EmployerCredentials
         {
-            EmployerId = employerId,
-            EmployerPassword = "Employer123",
+            Username = username,
+            Password = "Employer123",
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
@@ -62,21 +62,21 @@ public class AuthServiceTests
             Times.Never);
     }
 
-    // Distinct from JwtCreation's own guard, which only checks EmployerId — AuthService is
+    // Distinct from JwtCreation's own guard, which only checks Username — AuthService is
     // the one place that also rejects a missing/blank password before any DB call is made.
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GetAccessToken_RejectsMissingEmployerPassword_WithoutTouchingTheDb(string? employerPassword)
+    public async Task GetAccessToken_RejectsMissingPassword_WithoutTouchingTheDb(string? password)
     {
         var dbUtils = new Mock<IDbUtils>();
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new EmployerCredentials
         {
-            EmployerId = "TestEmployerID",
-            EmployerPassword = employerPassword,
+            Username = "TestEmployer",
+            Password = password,
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
@@ -91,16 +91,16 @@ public class AuthServiceTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(403, "Invalid Employer ID or Password."));
+            .ReturnsAsync(new ResponseModel<EmployerRole?>(403, "Invalid username or password."));
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new EmployerCredentials
         {
-            EmployerId = "TestEmployerID",
-            EmployerPassword = "WrongPassword",
+            Username = "TestEmployer",
+            Password = "WrongPassword",
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
-        Assert.Equal("Invalid Employer ID or Password.", result.ResponseMessage);
+        Assert.Equal("Invalid username or password.", result.ResponseMessage);
     }
 }

@@ -5,7 +5,10 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { Employee } from '../interfaces/employee-response';
+import {
+  CreateEmployeeRequest,
+  Gender,
+} from '../interfaces/employee-response';
 import { AddEmployeeService } from './add-employee.service';
 import { HttpHeaderService } from './http-header-service';
 import { NotificationService } from './notification.service';
@@ -15,26 +18,22 @@ describe('AddEmployeeService', () => {
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/register`;
+  const API_URL = `${environment.apiUrl}/api/employee/register`;
 
-  const buildEmployee = (): Employee => ({
-    guid: '',
+  const buildEmployee = (): CreateEmployeeRequest => ({
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
-    gender: 1,
-    employeeStatus: 1901,
-    creationDate: '',
-    interactionDate: '',
-    birthdate: '1990-01-01',
+    gender: Gender.Male,
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
   });
 

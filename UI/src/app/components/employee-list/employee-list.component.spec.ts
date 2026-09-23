@@ -11,7 +11,7 @@ import { GetEmployeeService } from '../../services/get-employee.service';
 import { NotificationService } from '../../services/notification.service';
 import {
   Employee,
-  EmployeeActivationStatus,
+  EmployeeStatus,
 } from '../../interfaces/employee-response';
 import { EmployeeListComponent } from './employee-list.component';
 
@@ -28,23 +28,23 @@ describe('EmployeeListComponent', () => {
   let notificationShow: ReturnType<typeof vi.fn>;
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
-    guid: 'guid-1',
+    employeeId: 'employeeId-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    employeeStatus: EmployeeActivationStatus.Active,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: EmployeeStatus.Active,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     ...overrides,
   });
@@ -249,12 +249,12 @@ describe('EmployeeListComponent', () => {
   });
 
   describe('toggleSelection / toggleSelectAllOnPage', () => {
-    it('adds a guid to selectedGuids when checked, and removes it when unchecked', () => {
-      component.toggleSelection('guid-1', true);
-      expect(component.isSelected('guid-1')).toBe(true);
+    it('adds a employeeId to selectedEmployeeIds when checked, and removes it when unchecked', () => {
+      component.toggleSelection('employeeId-1', true);
+      expect(component.isSelected('employeeId-1')).toBe(true);
 
-      component.toggleSelection('guid-1', false);
-      expect(component.isSelected('guid-1')).toBe(false);
+      component.toggleSelection('employeeId-1', false);
+      expect(component.isSelected('employeeId-1')).toBe(false);
     });
 
     it('allOnPageSelected is false when the page is empty', () => {
@@ -263,7 +263,7 @@ describe('EmployeeListComponent', () => {
     });
 
     it('toggleSelectAllOnPage(true) selects every employee on the current page', () => {
-      employeesSignal.set([buildEmployee({ guid: 'g1' }), buildEmployee({ guid: 'g2' })]);
+      employeesSignal.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
 
       component.toggleSelectAllOnPage(true);
 
@@ -273,7 +273,7 @@ describe('EmployeeListComponent', () => {
     });
 
     it('toggleSelectAllOnPage(false) clears the selection for every employee on the current page', () => {
-      employeesSignal.set([buildEmployee({ guid: 'g1' }), buildEmployee({ guid: 'g2' })]);
+      employeesSignal.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
       component.toggleSelectAllOnPage(true);
 
       component.toggleSelectAllOnPage(false);
@@ -289,8 +289,8 @@ describe('EmployeeListComponent', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       employeesSignal.set([
-        buildEmployee({ guid: 'dup' }),
-        buildEmployee({ guid: 'dup' }),
+        buildEmployee({ employeeId: 'dup' }),
+        buildEmployee({ employeeId: 'dup' }),
       ]);
       TestBed.flushEffects();
 
@@ -301,7 +301,7 @@ describe('EmployeeListComponent', () => {
     it('does not warn when every GUID on the page is unique', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      employeesSignal.set([buildEmployee({ guid: 'g1' }), buildEmployee({ guid: 'g2' })]);
+      employeesSignal.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
       TestBed.flushEffects();
 
       expect(warnSpy).not.toHaveBeenCalled();
@@ -313,7 +313,7 @@ describe('EmployeeListComponent', () => {
     it('does nothing when the user cancels the confirmation', async () => {
       confirm.mockResolvedValue(false);
 
-      await component.deleteEmployee('guid-1');
+      await component.deleteEmployee('employeeId-1');
 
       expect(deleteEmployee).not.toHaveBeenCalled();
     });
@@ -321,9 +321,9 @@ describe('EmployeeListComponent', () => {
     it('deletes the employee and refetches the current page on success', async () => {
       loadEmployees.mockClear();
 
-      await component.deleteEmployee('guid-1');
+      await component.deleteEmployee('employeeId-1');
 
-      expect(deleteEmployee).toHaveBeenCalledWith('guid-1');
+      expect(deleteEmployee).toHaveBeenCalledWith('employeeId-1');
       expect(component.deleting()).toBe(false);
       expect(component.deleteError()).toBeNull();
       // removeEmployeeLocally only drops the row locally; the component still
@@ -342,7 +342,7 @@ describe('EmployeeListComponent', () => {
         ),
       );
 
-      await component.deleteEmployee('guid-1');
+      await component.deleteEmployee('employeeId-1');
 
       expect(component.deleting()).toBe(false);
       expect(component.deleteError()).toBe('Employee must be deactivated first.');
@@ -357,7 +357,7 @@ describe('EmployeeListComponent', () => {
     });
 
     it('does not call any API when the user cancels the confirmation', async () => {
-      employeesSignal.set([buildEmployee({ guid: 'g1' })]);
+      employeesSignal.set([buildEmployee({ employeeId: 'g1' })]);
       component.toggleSelection('g1', true);
       confirm.mockResolvedValue(false);
 
@@ -369,9 +369,9 @@ describe('EmployeeListComponent', () => {
 
     it('deactivates Active employees and deletes non-Active ones, then shows a success summary and refetches', async () => {
       employeesSignal.set([
-        buildEmployee({ guid: 'active-1', employeeStatus: EmployeeActivationStatus.Active }),
-        buildEmployee({ guid: 'deactivated-1', employeeStatus: EmployeeActivationStatus.Deactivated }),
-        buildEmployee({ guid: 'test-1', employeeStatus: EmployeeActivationStatus.Test }),
+        buildEmployee({ employeeId: 'active-1', status: EmployeeStatus.Active }),
+        buildEmployee({ employeeId: 'deactivated-1', status: EmployeeStatus.Deactivated }),
+        buildEmployee({ employeeId: 'test-1', status: EmployeeStatus.Test }),
       ]);
       component.toggleSelectAllOnPage(true);
       loadEmployees.mockClear();
@@ -392,8 +392,8 @@ describe('EmployeeListComponent', () => {
 
     it('reports a failure count and does not stop the batch when one operation fails', async () => {
       employeesSignal.set([
-        buildEmployee({ guid: 'active-1', employeeStatus: EmployeeActivationStatus.Active }),
-        buildEmployee({ guid: 'deactivated-1', employeeStatus: EmployeeActivationStatus.Deactivated }),
+        buildEmployee({ employeeId: 'active-1', status: EmployeeStatus.Active }),
+        buildEmployee({ employeeId: 'deactivated-1', status: EmployeeStatus.Deactivated }),
       ]);
       component.toggleSelectAllOnPage(true);
       deactivateEmployeeSilently.mockReturnValue(throwError(() => new Error('boom')));

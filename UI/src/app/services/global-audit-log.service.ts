@@ -23,7 +23,7 @@ const DEFAULT_PAGE_SIZE = 10;
   providedIn: 'root',
 })
 export class GlobalAuditLogService {
-  private readonly API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/auditLog/all`;
+  private readonly API_URL = `${environment.apiUrl}/api/employee/audit-log/all`;
 
   private readonly state = signal({
     entries: [] as GlobalAuditLogEntry[],

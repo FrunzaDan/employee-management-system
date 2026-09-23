@@ -5,26 +5,27 @@ namespace EmployeeManagementSystem.BusinessLogic.Services.Implementation;
 
 public class DepartmentService(DepartmentFunctions departmentFunctions) : IDepartmentService
 {
-    public async Task<ResponseModel<object>> CreateDepartment(DepartmentModel request,
+    public async Task<ResponseModel<Guid?>> CreateDepartment(CreateDepartmentRequest request,
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.CreateDepartmentFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetDepartment(Guid guid,
+    public async Task<ResponseModel<DepartmentModel>> GetDepartment(Guid departmentId,
         CancellationToken cancellationToken = default) =>
-        await departmentFunctions.GetDepartmentFunction(guid, cancellationToken);
+        await departmentFunctions.GetDepartmentFunction(departmentId, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetDepartments(CancellationToken cancellationToken = default) =>
+    public async Task<ResponseModel<IReadOnlyList<DepartmentModel>>> GetDepartments(
+        CancellationToken cancellationToken = default) =>
         await departmentFunctions.GetDepartmentsFunction(cancellationToken);
 
-    public async Task<ResponseModel<object>> EditDepartment(DepartmentModel request,
+    public async Task<ResponseModel<object>> EditDepartment(UpdateDepartmentRequest request,
         CancellationToken cancellationToken = default) =>
         await departmentFunctions.EditDepartmentFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteDepartment(Guid guid,
+    public async Task<ResponseModel<object>> DeleteDepartment(Guid departmentId,
         CancellationToken cancellationToken = default) =>
-        await departmentFunctions.DeleteDepartmentFunction(guid, cancellationToken);
+        await departmentFunctions.DeleteDepartmentFunction(departmentId, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeesByDepartment(Guid guid,
+    public async Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByDepartment(Guid departmentId,
         CancellationToken cancellationToken = default) =>
-        await departmentFunctions.GetEmployeesByDepartmentFunction(guid, cancellationToken);
+        await departmentFunctions.GetEmployeesByDepartmentFunction(departmentId, cancellationToken);
 }

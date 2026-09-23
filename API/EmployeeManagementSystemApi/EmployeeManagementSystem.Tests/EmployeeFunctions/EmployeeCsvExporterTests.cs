@@ -5,32 +5,31 @@ namespace EmployeeManagementSystem.Tests.EmployeeFunctions;
 
 public class EmployeeCsvExporterTests
 {
-    private static EmployeeModel MakeEmployee(Action<EmployeeModel>? configure = null)
+    private static EmployeeModel MakeEmployee(Func<EmployeeModel, EmployeeModel>? configure = null)
     {
         var employee = new EmployeeModel
         {
-            Guid = System.Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+            EmployeeId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
             FirstName = "Dan",
             LastName = "Frunza",
             Email = "dan@example.com",
-            Msisdn = "123456789",
+            PhoneNumber = "123456789",
             Gender = Gender.Male,
-            Birthdate = new DateOnly(1990, 1, 1),
-            EmployeeStatus = EmployeeStatus.Active,
-            CreationDate = new DateTime(2026, 1, 1, 9, 30, 0, DateTimeKind.Utc),
-            InteractionDate = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc),
+            BirthDate = new DateOnly(1990, 1, 1),
+            Status = EmployeeStatus.Active,
+            CreatedAt = new DateTime(2026, 1, 1, 8, 30, 0, DateTimeKind.Utc),
+            LastInteractionAt = new DateTime(2026, 1, 2, 9, 45, 15, DateTimeKind.Utc),
             Address = new AddressModel
             {
                 Country = "Romania",
                 County = "Cluj",
-                Town = "Cluj-Napoca",
-                Zip = "400001",
+                City = "Cluj-Napoca",
+                PostalCode = "400001",
                 Street = "Main",
-                Number = "1"
+                StreetNumber = "1"
             }
         };
-        configure?.Invoke(employee);
-        return employee;
+        return configure is null ? employee : configure(employee);
     }
 
     [Fact]
@@ -39,17 +38,14 @@ public class EmployeeCsvExporterTests
         var csv = EmployeeCsvExporter.ToCsv([]);
 
         Assert.Equal((char)0xFEFF, csv[0]);
-        Assert.StartsWith("Guid,First Name,Last Name,Email,MSISDN,Gender,Birthdate,Status,Creation Date,Interaction Date,Country,County,Town,Zip,Street,Number\r\n", csv[1..]);
+        Assert.StartsWith("Employee ID,First Name,Last Name,Email,Phone Number,Gender,Birth Date,Status,Created At,Last Interaction At,Country,County,City,Postal Code,Street,Street Number\r\n", csv[1..]);
     }
 
     [Fact]
     public void ToCsv_MapsGenderAndStatusCodesToLabels()
     {
         var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c =>
-        {
-            c.Gender = Gender.Female;
-            c.EmployeeStatus = EmployeeStatus.Deactivated;
-        })]);
+            c with { Gender = Gender.Female, Status = EmployeeStatus.Deactivated })]);
 
         Assert.Contains(",female,", csv);
         Assert.Contains(",Deactivated,", csv);
@@ -58,37 +54,42 @@ public class EmployeeCsvExporterTests
     [Fact]
     public void ToCsv_MapsTheTestStatusCodeToItsLabel()
     {
-        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c.EmployeeStatus = EmployeeStatus.Test)]);
+        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c with { Status = EmployeeStatus.Test })]);
 
         Assert.Contains(",Test,", csv);
     }
 
-    [Theory]
-    [InlineData((byte)3)]
-    [InlineData(null)]
-    public void ToCsv_LeavesGenderBlankForAnUnrecognizedOrMissingCode(byte? gender)
+    [Fact]
+    public void ToCsv_LeavesGenderBlankForAnUnrecognizedCode()
     {
-        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c.Gender = (Gender?)gender)]);
+        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c with { Gender = (Gender)3 })]);
 
         var dataRow = csv.Split("\r\n")[1];
         Assert.Equal(string.Empty, dataRow.Split(',')[5]);
     }
 
     [Fact]
-    public void ToCsv_WritesDatesAsIsoAndTimestampsAsIsoUtc()
+    public void ToCsv_WritesDatesAsIso8601_WithTimestampsMarkedUtc()
     {
-        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee()]);
+        var dataRow = EmployeeCsvExporter.ToCsv([MakeEmployee()]).Split("\r\n")[1].Split(',');
 
-        var fields = csv.Split("\r\n")[1].Split(',');
-        Assert.Equal("1990-01-01", fields[6]);
-        Assert.Equal("2026-01-01T09:30:00Z", fields[8]);
-        Assert.Equal("2026-01-02T00:00:00Z", fields[9]);
+        Assert.Equal("1990-01-01", dataRow[6]);
+        Assert.Equal("2026-01-01 08:30:00Z", dataRow[8]);
+        Assert.Equal("2026-01-02 09:45:15Z", dataRow[9]);
+    }
+
+    [Fact]
+    public void ToCsv_LeavesBirthdateBlank_WhenItIsNotSet()
+    {
+        var dataRow = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c with { BirthDate = null })]).Split("\r\n")[1];
+
+        Assert.Equal(string.Empty, dataRow.Split(',')[6]);
     }
 
     [Fact]
     public void ToCsv_QuotesAndEscapesAFieldContainingACommaOrQuote()
     {
-        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c.LastName = "Frunza, \"Dan\"")]);
+        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c with { LastName = "Frunza, \"Dan\"" })]);
 
         Assert.Contains("\"Frunza, \"\"Dan\"\"\"", csv);
     }
@@ -96,7 +97,7 @@ public class EmployeeCsvExporterTests
     [Fact]
     public void ToCsv_PrefixesAFieldStartingWithAFormulaCharacterToPreventSpreadsheetInjection()
     {
-        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c.LastName = "=cmd|'/c calc'!A0")]);
+        var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(c => c with { LastName = "=cmd|'/c calc'!A0" })]);
 
         Assert.Contains(",'=cmd|'/c calc'!A0,", csv);
     }

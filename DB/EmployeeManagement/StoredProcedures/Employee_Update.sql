@@ -1,7 +1,7 @@
 CREATE PROCEDURE [dbo].[Employee_Update]
     @EmployeeId UNIQUEIDENTIFIER,
-    @FirstName NVARCHAR(50) = NULL,
-    @LastName NVARCHAR(50) = NULL,
+    @FirstName NVARCHAR(100) = NULL,
+    @LastName NVARCHAR(100) = NULL,
     @Email NVARCHAR(254) = NULL,
     @PhoneNumber VARCHAR(15) = NULL,
     @Gender TINYINT = NULL,
@@ -52,7 +52,7 @@ BEGIN
     )
     BEGIN
         SET @Result = 400;
-        SET @Message = 'MSISDN already exists.';
+        SET @Message = 'Phone number already exists.';
 
         SELECT @Result AS Result, @Message AS Message;
         RETURN;

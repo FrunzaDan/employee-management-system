@@ -11,47 +11,35 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 public class CostCenterController(ICostCenterService costCenterService) : ControllerBase
 {
     [HttpGet("all")]
-    public async Task<IActionResult> GetCostCenters(CancellationToken cancellationToken)
-    {
-        var response = await costCenterService.GetCostCenters(cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<IReadOnlyList<CostCenterModel>>>> GetCostCenters(
+        CancellationToken cancellationToken) =>
+        Reply(await costCenterService.GetCostCenters(cancellationToken));
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetCostCenter([FromQuery] Guid guid, CancellationToken cancellationToken)
-    {
-        var response = await costCenterService.GetCostCenter(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<CostCenterModel>>> GetCostCenter([FromQuery] Guid costCenterId,
+        CancellationToken cancellationToken) =>
+        Reply(await costCenterService.GetCostCenter(costCenterId, cancellationToken));
 
     [HttpPost("create")]
-    public async Task<IActionResult> CreateCostCenter([FromBody] CostCenterModel request,
-        CancellationToken cancellationToken)
-    {
-        var response = await costCenterService.CreateCostCenter(request, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<Guid?>>> CreateCostCenter([FromBody] CreateCostCenterRequest request,
+        CancellationToken cancellationToken) =>
+        Reply(await costCenterService.CreateCostCenter(request, cancellationToken));
 
     [HttpPatch("edit")]
-    public async Task<IActionResult> EditCostCenter([FromBody] CostCenterModel request,
-        CancellationToken cancellationToken)
-    {
-        var response = await costCenterService.EditCostCenter(request, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<object>>> EditCostCenter([FromBody] UpdateCostCenterRequest request,
+        CancellationToken cancellationToken) =>
+        Reply(await costCenterService.EditCostCenter(request, cancellationToken));
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteCostCenter([FromQuery] Guid guid, CancellationToken cancellationToken)
-    {
-        var response = await costCenterService.DeleteCostCenter(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<object>>> DeleteCostCenter([FromQuery] Guid costCenterId,
+        CancellationToken cancellationToken) =>
+        Reply(await costCenterService.DeleteCostCenter(costCenterId, cancellationToken));
 
     [HttpGet("employees")]
-    public async Task<IActionResult> GetEmployeesByCostCenter([FromQuery] Guid guid,
-        CancellationToken cancellationToken)
-    {
-        var response = await costCenterService.GetEmployeesByCostCenter(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>>> GetEmployeesByCostCenter(
+        [FromQuery] Guid costCenterId, CancellationToken cancellationToken) =>
+        Reply(await costCenterService.GetEmployeesByCostCenter(costCenterId, cancellationToken));
+
+    // The envelope's Status is the HTTP status to reply with.
+    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

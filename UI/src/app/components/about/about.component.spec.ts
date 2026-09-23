@@ -4,7 +4,6 @@ import { of, throwError } from 'rxjs';
 import { AddEmployeeService } from '../../services/add-employee.service';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
-import { GetEmployeeService } from '../../services/get-employee.service';
 import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
@@ -16,22 +15,20 @@ describe('AboutComponent', () => {
   let toggle: ReturnType<typeof vi.fn>;
   let enabled: ReturnType<typeof signal<boolean>>;
   let show: ReturnType<typeof vi.fn>;
-  let findEmployeeGuid: ReturnType<typeof vi.fn>;
   let fetchOfficesOnce: ReturnType<typeof vi.fn>;
   let fetchDepartmentsOnce: ReturnType<typeof vi.fn>;
   let fetchCostCentersOnce: ReturnType<typeof vi.fn>;
   let addSalarySilently: ReturnType<typeof vi.fn>;
 
-  const office = { guid: 'office-1', officeName: 'HQ', city: 'Cluj', country: 'Romania' };
-  const department = { guid: 'department-1', departmentName: 'Engineering' };
-  const costCenter = { guid: 'cost-center-1', costCenterCode: 'CC-1', costCenterName: 'Eng' };
+  const office = { officeId: 'office-1', name: 'HQ', city: 'Cluj', country: 'Romania' };
+  const department = { departmentId: 'department-1', name: 'Engineering' };
+  const costCenter = { costCenterId: 'cost-center-1', code: 'CC-1', name: 'Eng' };
 
   const createComponent = () => {
-    addEmployeeSilently = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    addEmployeeSilently = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok', data: 'employee-1' }));
     toggle = vi.fn();
     enabled = signal(true);
     show = vi.fn();
-    findEmployeeGuid = vi.fn().mockReturnValue(of('employee-guid'));
     fetchOfficesOnce = vi.fn().mockReturnValue(of([office]));
     fetchDepartmentsOnce = vi.fn().mockReturnValue(of([department]));
     fetchCostCentersOnce = vi.fn().mockReturnValue(of([costCenter]));
@@ -42,7 +39,6 @@ describe('AboutComponent', () => {
         { provide: AddEmployeeService, useValue: { addEmployeeSilently } },
         { provide: ApiLoggerService, useValue: { enabled, toggle } },
         { provide: NotificationService, useValue: { show } },
-        { provide: GetEmployeeService, useValue: { findEmployeeGuid } },
         { provide: OfficeService, useValue: { fetchOfficesOnce } },
         { provide: DepartmentService, useValue: { fetchDepartmentsOnce } },
         { provide: CostCenterService, useValue: { fetchCostCentersOnce } },
@@ -84,7 +80,7 @@ describe('AboutComponent', () => {
       expect(show).toHaveBeenCalledWith('Added 50 test employees.', 'success');
     });
 
-    it('gives each generated employee a unique email/msisdn suffix', async () => {
+    it('gives each generated employee a unique email/phoneNumber suffix', async () => {
       const component = createComponent();
 
       await component.addTestEmployees();
@@ -98,7 +94,7 @@ describe('AboutComponent', () => {
       let n = 0;
       addEmployeeSilently.mockImplementation(() => {
         if (n++ === 0) return throwError(() => new Error('400'));
-        return of({ status: 200, responseMessage: 'ok' });
+        return of({ status: 200, responseMessage: 'ok', data: 'employee-1' });
       });
 
       await component.addTestEmployees();
@@ -145,9 +141,9 @@ describe('AboutComponent', () => {
       await component.addTestEmployees();
 
       const employee = addEmployeeSilently.mock.calls[0][0];
-      expect(employee.officeGuid).toBe(office.guid);
-      expect(employee.departmentGuid).toBe(department.guid);
-      expect(employee.costCenterGuid).toBe(costCenter.guid);
+      expect(employee.officeId).toBe(office.officeId);
+      expect(employee.departmentId).toBe(department.departmentId);
+      expect(employee.costCenterId).toBe(costCenter.costCenterId);
     });
 
     it('adds an initial salary entry for every successfully created employee', async () => {
@@ -155,12 +151,11 @@ describe('AboutComponent', () => {
 
       await component.addTestEmployees();
 
-      expect(findEmployeeGuid).toHaveBeenCalledTimes(50);
       expect(addSalarySilently).toHaveBeenCalledTimes(50);
       const entry = addSalarySilently.mock.calls[0][0];
-      expect(entry.employeeGuid).toBe('employee-guid');
-      expect(entry.bruttoSalary).toBeGreaterThanOrEqual(3000);
-      expect(entry.bruttoSalary).toBeLessThanOrEqual(12000);
+      expect(entry.employeeId).toBe('employee-1');
+      expect(entry.grossSalary).toBeGreaterThanOrEqual(3000);
+      expect(entry.grossSalary).toBeLessThanOrEqual(12000);
       expect(entry.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
@@ -169,7 +164,7 @@ describe('AboutComponent', () => {
       let n = 0;
       addEmployeeSilently.mockImplementation(() => {
         if (n++ === 0) return throwError(() => new Error('400'));
-        return of({ status: 200, responseMessage: 'ok' });
+        return of({ status: 200, responseMessage: 'ok', data: 'employee-1' });
       });
 
       await component.addTestEmployees();

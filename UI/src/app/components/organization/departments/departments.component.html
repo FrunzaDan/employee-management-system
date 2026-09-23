@@ -16,7 +16,7 @@
   @if (draft(); as d) {
     <div class="card app-card mb-4">
       <div class="card-body">
-        <h2 class="card-title">{{ d.guid ? 'Edit department' : 'New department' }}</h2>
+        <h2 class="card-title">{{ d.departmentId ? 'Edit department' : 'New department' }}</h2>
 
         @if (saveError(); as error) {
           <div class="alert alert-danger" role="alert">{{ error }}</div>
@@ -24,12 +24,12 @@
 
         <div class="row g-3">
           <div class="col-12 col-md-6">
-            <label class="form-label" for="departmentName">Name</label>
+            <label class="form-label" for="name">Name</label>
             <input
-              id="departmentName"
+              id="name"
               type="text"
               class="form-control"
-              [value]="d.departmentName"
+              [value]="d.name"
               (input)="updateDraft($any($event.target).value)"
             />
           </div>
@@ -67,29 +67,29 @@
             <tr>
               <th scope="col" class="text-center">Name</th>
               <th scope="col" class="text-center">Employees</th>
-              <th scope="col" class="text-center">Total brutto salary</th>
+              <th scope="col" class="text-center">Total gross salary</th>
               <th scope="col" class="w-25 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (department of departments(); track department.guid) {
+            @for (department of departments(); track department.departmentId) {
               <tr>
                 <td class="align-middle text-center">
-                  <a class="plain-Links hoverItem" routerLink="/departmentDetails" [queryParams]="{ id: department.guid }">
-                    {{ department.departmentName }}
+                  <a class="plain-Links hoverItem" routerLink="/department-details" [queryParams]="{ id: department.departmentId }">
+                    {{ department.name }}
                   </a>
                 </td>
                 <td class="align-middle text-center">{{ department.employeeCount }}</td>
-                <td class="align-middle text-center">{{ department.totalBruttoSalary }}</td>
+                <td class="align-middle text-center">{{ department.totalGrossSalary }}</td>
                 <td class="align-middle text-center">
-                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + department.departmentName">
+                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + department.name">
                     <button
                       type="button"
                       class="btn btn-secondary btn-sm shadow-none"
-                      [attr.aria-expanded]="expandedDepartmentGuid() === department.guid"
+                      [attr.aria-expanded]="expandedDepartmentId() === department.departmentId"
                       (click)="toggleEmployees(department)"
                     >
-                      {{ expandedDepartmentGuid() === department.guid ? 'Hide employees' : 'Quickly view employees' }}
+                      {{ expandedDepartmentId() === department.departmentId ? 'Hide employees' : 'Quickly view employees' }}
                     </button>
                     <button
                       type="button"
@@ -108,7 +108,7 @@
                   </div>
                 </td>
               </tr>
-              @if (expandedDepartmentGuid() === department.guid) {
+              @if (expandedDepartmentId() === department.departmentId) {
                 <tr>
                   <td colspan="4" class="bg-body-tertiary">
                     @if (expandedEmployeesLoading()) {
@@ -119,12 +119,12 @@
                       <span class="text-muted">No employees assigned to this department.</span>
                     } @else {
                       <ul class="list-unstyled mb-0">
-                        @for (employee of expandedEmployees(); track employee.guid) {
+                        @for (employee of expandedEmployees(); track employee.employeeId) {
                           <li>
-                            <a class="plain-Links hoverItem" routerLink="/employeeDetails" [queryParams]="{ id: employee.guid }">
+                            <a class="plain-Links hoverItem" routerLink="/employee-details" [queryParams]="{ id: employee.employeeId }">
                               {{ employee.firstName }} {{ employee.lastName }}
                             </a>
-                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.employeeStatus) }})</span>
+                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.status) }})</span>
                           </li>
                         }
                       </ul>

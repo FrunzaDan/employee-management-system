@@ -4,6 +4,6 @@ namespace EmployeeManagementSystem.BusinessLogic.Services;
 
 public interface IAuthService
 {
-    Task<ResponseModel<object>> GetAccessToken(EmployerCredentials employerCredentials,
+    Task<ResponseModel<AccessTokenResponse>> GetAccessToken(EmployerCredentials employerCredentials,
         CancellationToken cancellationToken = default);
 }

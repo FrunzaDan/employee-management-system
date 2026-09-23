@@ -5,7 +5,7 @@ import { HttpHeaderService } from './http-header-service';
 
 export interface ExportEmployeesParams {
   searchTerm?: string;
-  sortColumn?: 'name' | 'email' | 'msisdn';
+  sortColumn?: 'name' | 'email' | 'phoneNumber';
   sortDirection?: 'asc' | 'desc';
 }
 
@@ -13,7 +13,7 @@ export interface ExportEmployeesParams {
   providedIn: 'root',
 })
 export class ExportEmployeeService {
-  private readonly API_URL_EXPORT = `${environment.EmployeeManagementSystemAPI}/api/Employee/export`;
+  private readonly API_URL_EXPORT = `${environment.apiUrl}/api/employee/export`;
 
   readonly loadingSignal = signal(false);
   readonly errorSignal = signal<string | null>(null);

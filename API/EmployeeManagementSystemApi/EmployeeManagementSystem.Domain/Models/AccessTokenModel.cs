@@ -1,8 +1,9 @@
-﻿namespace EmployeeManagementSystem.Domain.Models;
+namespace EmployeeManagementSystem.Domain.Models;
 
-public sealed class AccessTokenResponse
+public sealed record AccessTokenResponse
 {
-    public string? AccessToken { get; set; }
+    public required string AccessToken { get; init; }
 
-    public DateTime? ValidUntil { get; set; }
+    // UTC — serialized as ISO 8601 with a trailing "Z".
+    public required DateTime ExpiresAt { get; init; }
 }

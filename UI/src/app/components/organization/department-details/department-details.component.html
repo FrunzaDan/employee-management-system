@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <a routerLink="/departments" class="back-link"><span aria-hidden="true">←</span> Back to departments</a>
-      <h1 class="page-title">{{ department()?.departmentName || 'Department' }}</h1>
+      <h1 class="page-title">{{ department()?.name || 'Department' }}</h1>
       <p class="page-subtitle">Department details and assigned employees.</p>
     </div>
   </div>
@@ -20,11 +20,11 @@
         <dl class="detail-list">
           <div class="detail-row">
             <dt>Name</dt>
-            <dd>{{ d.departmentName }}</dd>
+            <dd>{{ d.name }}</dd>
           </div>
           <div class="detail-row">
-            <dt>GUID</dt>
-            <dd class="guid">{{ d.guid }}</dd>
+            <dt>Department ID</dt>
+            <dd class="entity-id">{{ d.departmentId }}</dd>
           </div>
           <div class="detail-row">
             <dt>Number of employees</dt>
@@ -59,15 +59,15 @@
               </tr>
             </thead>
             <tbody>
-              @for (employee of employees(); track employee.guid) {
+              @for (employee of employees(); track employee.employeeId) {
                 <tr>
                   <td class="align-middle text-center">
-                    <a class="plain-Links hoverItem" routerLink="/employeeDetails" [queryParams]="{ id: employee.guid }">
+                    <a class="plain-Links hoverItem" routerLink="/employee-details" [queryParams]="{ id: employee.employeeId }">
                       {{ employee.firstName }} {{ employee.lastName }}
                     </a>
                   </td>
                   <td class="align-middle text-center">{{ employee.email }}</td>
-                  <td class="align-middle text-center">{{ employeeStatusLabel(employee.employeeStatus) }}</td>
+                  <td class="align-middle text-center">{{ employeeStatusLabel(employee.status) }}</td>
                 </tr>
               }
             </tbody>

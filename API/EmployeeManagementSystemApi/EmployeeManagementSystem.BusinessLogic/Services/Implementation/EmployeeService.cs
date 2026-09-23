@@ -12,55 +12,55 @@ public class EmployeeService(
     EmployeeSalary employeeSalary)
     : IEmployeeService
 {
-    public async Task<ResponseModel<object>> AddEmployeeSalary(SalaryHistoryEntry request, string employerId,
+    public async Task<ResponseModel<object>> AddEmployeeSalary(CreateSalaryRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeSalary.AddSalaryFunction(request, employerId, cancellationToken);
+        await employeeSalary.AddSalaryFunction(request, performedBy, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeeSalaryHistory(Guid employeeGuid,
+    public async Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistory(Guid employeeId,
         CancellationToken cancellationToken = default) =>
-        await employeeSalary.GetSalaryHistoryFunction(employeeGuid, cancellationToken);
+        await employeeSalary.GetSalaryHistoryFunction(employeeId, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeactivateEmployee(Guid employeeGuid, string employerId,
+    public async Task<ResponseModel<object>> DeactivateEmployee(Guid employeeId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeActivation.DeactivateEmployee(employeeGuid, employerId, cancellationToken);
+        await employeeActivation.DeactivateEmployee(employeeId, performedBy, cancellationToken);
 
-    public async Task<ResponseModel<object>> ReactivateEmployee(Guid employeeGuid, string employerId,
+    public async Task<ResponseModel<object>> ReactivateEmployee(Guid employeeId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeActivation.ReactivateEmployee(employeeGuid, employerId, cancellationToken);
+        await employeeActivation.ReactivateEmployee(employeeId, performedBy, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteEmployee(Guid employeeGuid, string employerId,
+    public async Task<ResponseModel<object>> DeleteEmployee(Guid employeeId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeDeletion.DeleteEmployee(employeeGuid, employerId, cancellationToken);
+        await employeeDeletion.DeleteEmployee(employeeId, performedBy, cancellationToken);
 
-    public async Task<ResponseModel<object>> EditEmployee(EmployeeModel editEmployeeRequest, string employerId,
+    public async Task<ResponseModel<object>> EditEmployee(UpdateEmployeeRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeEditing.EditEmployeeFunction(editEmployeeRequest, employerId, cancellationToken);
+        await employeeEditing.EditEmployeeFunction(request, performedBy, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployee(GetEmployeeRequest getEmployeeRqst,
+    public async Task<ResponseModel<EmployeeModel>> GetEmployee(string? searchTerm,
         CancellationToken cancellationToken = default) =>
-        await employeeGetting.GetEmployeeFunction(getEmployeeRqst, cancellationToken);
+        await employeeGetting.GetEmployeeFunction(searchTerm, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeeAuditLog(Guid employeeGuid,
+    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLog(Guid employeeId,
         CancellationToken cancellationToken = default) =>
-        await employeeGetting.GetEmployeeAuditLogFunction(employeeGuid, cancellationToken);
+        await employeeGetting.GetEmployeeAuditLogFunction(employeeId, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetAllEmployeeAuditLog(int pageNumber, int pageSize,
-        CancellationToken cancellationToken = default) =>
+    public async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLog(int pageNumber,
+        int pageSize, CancellationToken cancellationToken = default) =>
         await employeeGetting.GetAllAuditLogFunction(pageNumber, pageSize, cancellationToken);
 
     public async Task<ResponseModel<object>> DeleteAllEmployeeAuditLog(
         CancellationToken cancellationToken = default) =>
         await employeeDeletion.DeleteAllAuditLogFunction(cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployees(GetEmployeesRequest request,
+    public async Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployees(GetEmployeesRequest request,
         CancellationToken cancellationToken = default) =>
         await employeeGetting.GetEmployeesFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetEmployeesForExport(ExportEmployeesRequest request,
+    public async Task<ResponseModel<string>> GetEmployeesForExport(ExportEmployeesRequest request,
         CancellationToken cancellationToken = default) =>
         await employeeGetting.GetEmployeesForExportFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> RegisterEmployee(EmployeeModel employeeRqst, string employerId,
+    public async Task<ResponseModel<Guid?>> RegisterEmployee(CreateEmployeeRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        await employeeRegistration.RegisterEmployeeFunction(employeeRqst, employerId, cancellationToken);
+        await employeeRegistration.RegisterEmployeeFunction(request, performedBy, cancellationToken);
 }

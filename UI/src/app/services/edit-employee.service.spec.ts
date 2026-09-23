@@ -17,26 +17,26 @@ describe('EditEmployeeService', () => {
   let updateEmployeeLocally: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/edit`;
+  const API_URL = `${environment.apiUrl}/api/employee/edit`;
 
   const buildEmployee = (): Employee => ({
-    guid: 'guid-1',
+    employeeId: 'employeeId-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    employeeStatus: 1901,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: 1901,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
   });
 
@@ -64,13 +64,24 @@ describe('EditEmployeeService', () => {
     httpMock.verify();
   });
 
-  it('PATCHes the employee to the edit endpoint', () => {
+  it('PATCHes only the editable fields to the edit endpoint', () => {
     const employee = buildEmployee();
     service.editEmployee(employee).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual(employee);
+    // Server-owned fields (status, dates, joined names, salary) aren't part of an edit request.
+    const {
+      status,
+      createdAt,
+      lastInteractionAt,
+      officeName,
+      departmentName,
+      costCenterName,
+      currentGrossSalary,
+      ...editable
+    } = employee;
+    expect(req.request.body).toEqual(editable);
 
     req.flush({ status: 200, responseMessage: 'Employee updated successfully.' });
   });

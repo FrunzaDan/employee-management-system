@@ -8,16 +8,16 @@ public class GetEmployeesRequest
 
     public string? SearchTerm { get; set; }
 
-    public string SortColumn { get; set; } = "name";
+    public EmployeeSortColumn SortColumn { get; set; } = EmployeeSortColumn.Name;
 
-    public string SortDirection { get; set; } = "asc";
+    public SortDirection SortDirection { get; set; } = SortDirection.Asc;
 }
 
 public class ExportEmployeesRequest
 {
     public string? SearchTerm { get; set; }
 
-    public string SortColumn { get; set; } = "name";
+    public EmployeeSortColumn SortColumn { get; set; } = EmployeeSortColumn.Name;
 
-    public string SortDirection { get; set; } = "asc";
+    public SortDirection SortDirection { get; set; } = SortDirection.Asc;
 }

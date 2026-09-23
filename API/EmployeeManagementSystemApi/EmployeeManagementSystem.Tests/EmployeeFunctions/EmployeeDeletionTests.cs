@@ -7,41 +7,41 @@ namespace EmployeeManagementSystem.Tests.EmployeeFunctions;
 
 public class EmployeeDeletionTests
 {
-    private const string EmployerId = "TestEmployerID";
+    private const string PerformedBy = "TestEmployer";
 
     [Fact]
-    public async Task DeleteEmployee_DelegatesToTheDbLayerWithTheGivenGuid_AndLogsAnAuditEntry()
+    public async Task DeleteEmployee_DelegatesToTheDbLayerWithTheGivenEmployeeId_AndLogsAnAuditEntry()
     {
-        var guid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+        var employeeId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var expected = new ResponseModel<object>(200, "Employee deleted successfully.");
-        dbUtils.Setup(d => d.DeleteEmployee(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.DeleteEmployee(employeeId, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var deletion = new EmployeeDeletion(dbUtils.Object, auditLogger.Object);
 
-        var result = await deletion.DeleteEmployee(guid, EmployerId, TestContext.Current.CancellationToken);
+        var result = await deletion.DeleteEmployee(employeeId, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.DeleteEmployee(guid, It.IsAny<CancellationToken>()), Times.Once);
-        auditLogger.Verify(a => a.Log(guid, EmployerId, "Deleted", null, It.IsAny<CancellationToken>()), Times.Once);
+        dbUtils.Verify(d => d.DeleteEmployee(employeeId, It.IsAny<CancellationToken>()), Times.Once);
+        auditLogger.Verify(a => a.Log(employeeId, PerformedBy, AuditAction.Deleted, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteEmployee_PropagatesABusinessRuleRejection_WithoutModifyingIt()
     {
         // Mirrors the real Employee_Delete rule: an active employee can't be deleted directly.
-        var guid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+        var employeeId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var expected = new ResponseModel<object>(409, "Employee must be deactivated before it can be deleted.");
-        dbUtils.Setup(d => d.DeleteEmployee(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.DeleteEmployee(employeeId, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var deletion = new EmployeeDeletion(dbUtils.Object, auditLogger.Object);
 
-        var result = await deletion.DeleteEmployee(guid, EmployerId, TestContext.Current.CancellationToken);
+        var result = await deletion.DeleteEmployee(employeeId, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(409, result.Status);
         Assert.Equal(expected.ResponseMessage, result.ResponseMessage);
-        auditLogger.Verify(a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+        auditLogger.Verify(a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

@@ -12,11 +12,11 @@ public class AuthenticationController(IAuthService authService) : ControllerBase
 {
     [HttpPost("access-token")]
     [EnableRateLimiting("login")]
-    public async Task<IActionResult> GetAccessToken([FromBody] EmployerCredentials employerCredentials,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<ResponseModel<AccessTokenResponse>>> GetAccessToken(
+        [FromBody] EmployerCredentials employerCredentials, CancellationToken cancellationToken)
     {
         var response = await authService.GetAccessToken(employerCredentials, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
+        return StatusCode(response.Status, response);
     }
 
     [Authorize]

@@ -19,11 +19,12 @@ import { DeleteEmployeeService } from '../../services/delete-employee.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
 import {
   Employee,
-  EmployeeActivationStatus,
+  EmployeeStatus,
   Gender,
 } from '../../interfaces/employee-response';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
+import { auditActionLabel } from '../../utils/audit-action-label';
 
 @Component({
   selector: 'app-employee-details',
@@ -49,17 +50,18 @@ export class EmployeeDetailsComponent {
     [Gender.Female, 'female'],
   ]);
 
-  statusMap = new Map<EmployeeActivationStatus, string>([
-    [EmployeeActivationStatus.Active, 'Active'],
-    [EmployeeActivationStatus.Deactivated, 'Deactivated'],
-    [EmployeeActivationStatus.Test, 'Test'],
+  statusMap = new Map<EmployeeStatus, string>([
+    [EmployeeStatus.Active, 'Active'],
+    [EmployeeStatus.Deactivated, 'Deactivated'],
+    [EmployeeStatus.Test, 'Test'],
   ]);
 
   readonly employee = this.getEmployeeService.selectedEmployeeSignal;
   readonly isLoading = this.getEmployeeService.loadingSignal;
   readonly errorMessage = this.getEmployeeService.errorSignal;
 
-  readonly EmployeeStatus = EmployeeActivationStatus;
+  readonly EmployeeStatus = EmployeeStatus;
+  readonly auditActionLabel = auditActionLabel;
   readonly Gender = Gender;
 
   // Deactivate/reactivate share ActivateEmployeeService's loading/error state (it's
@@ -96,8 +98,8 @@ export class EmployeeDetailsComponent {
 
   employeeStatusLabel: Signal<string | undefined> = computed(() => {
     const c = this.employee();
-    return c && c.employeeStatus !== undefined
-      ? this.statusMap.get(c.employeeStatus)
+    return c && c.status !== undefined
+      ? this.statusMap.get(c.status)
       : undefined;
   });
 
@@ -105,10 +107,10 @@ export class EmployeeDetailsComponent {
   // Test employees are fictitious data and are exempt from that guardrail
   // (see Employee_Delete), so they can be deleted straight away too.
   canDelete: Signal<boolean> = computed(() => {
-    const status = this.employee()?.employeeStatus;
+    const status = this.employee()?.status;
     return (
-      status === EmployeeActivationStatus.Deactivated ||
-      status === EmployeeActivationStatus.Test
+      status === EmployeeStatus.Deactivated ||
+      status === EmployeeStatus.Test
     );
   });
 
@@ -134,36 +136,36 @@ export class EmployeeDetailsComponent {
     effect(() => {
       const isLoading = this.activationLoading();
       if (this.wasActivationLoading && !isLoading) {
-        const guid = this.employee()?.guid;
-        if (guid) this.auditLogService.loadAuditLog(guid);
+        const employeeId = this.employee()?.employeeId;
+        if (employeeId) this.auditLogService.loadAuditLog(employeeId);
       }
       this.wasActivationLoading = isLoading;
     });
   }
 
   async deactivateEmployee(): Promise<void> {
-    const guid = this.employee()?.guid;
-    if (!guid) return;
+    const employeeId = this.employee()?.employeeId;
+    if (!employeeId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this employee?',
     );
     if (!confirmed) return;
-    this.activateEmployeeService.deactivateEmployee(guid);
+    this.activateEmployeeService.deactivateEmployee(employeeId);
   }
 
   reactivateEmployee(): void {
-    const guid = this.employee()?.guid;
-    if (!guid) return;
-    this.activateEmployeeService.reactivateEmployee(guid);
+    const employeeId = this.employee()?.employeeId;
+    if (!employeeId) return;
+    this.activateEmployeeService.reactivateEmployee(employeeId);
   }
 
   async addSalary(): Promise<void> {
-    const guid = this.employee()?.guid;
-    if (!guid) return;
+    const employeeId = this.employee()?.employeeId;
+    if (!employeeId) return;
 
-    const bruttoSalary = Number(this.newSalaryAmount());
-    if (!this.newSalaryAmount() || Number.isNaN(bruttoSalary) || bruttoSalary <= 0) {
-      this.addSalaryError.set('Enter a valid, positive brutto salary.');
+    const grossSalary = Number(this.newSalaryAmount());
+    if (!this.newSalaryAmount() || Number.isNaN(grossSalary) || grossSalary <= 0) {
+      this.addSalaryError.set('Enter a valid, positive gross salary.');
       return;
     }
     if (!this.newSalaryEffectiveDate()) {
@@ -177,8 +179,8 @@ export class EmployeeDetailsComponent {
     try {
       await firstValueFrom(
         this.salaryHistoryService.addSalary({
-          employeeGuid: guid,
-          bruttoSalary,
+          employeeId: employeeId,
+          grossSalary,
           effectiveDate: this.newSalaryEffectiveDate(),
         }),
       );
@@ -194,8 +196,8 @@ export class EmployeeDetailsComponent {
   }
 
   async deleteEmployee(): Promise<void> {
-    const guid = this.employee()?.guid;
-    if (!guid) return;
+    const employeeId = this.employee()?.employeeId;
+    if (!employeeId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete this employee? This cannot be undone.',
     );
@@ -204,7 +206,7 @@ export class EmployeeDetailsComponent {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.deleteEmployeeService.deleteEmployee(guid).subscribe({
+    this.deleteEmployeeService.deleteEmployee(employeeId).subscribe({
       next: () => this.router.navigate(['/employees']),
       error: (error: HttpErrorResponse) => {
         this.deleting.set(false);

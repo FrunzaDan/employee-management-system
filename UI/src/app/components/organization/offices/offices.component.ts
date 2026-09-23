@@ -10,8 +10,8 @@ import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
 interface OfficeDraft {
-  guid: string | null; // null = creating a new office, not editing an existing one
-  officeName: string;
+  officeId: string | null; // null = creating a new office, not editing an existing one
+  name: string;
   city: string;
   country: string;
 }
@@ -41,7 +41,7 @@ export class OfficesComponent implements OnInit {
   // Which office's employee list is currently expanded (at most one at a
   // time) — fetched on demand rather than eagerly per office, since most
   // rows are never expanded in a given visit.
-  readonly expandedOfficeGuid = signal<string | null>(null);
+  readonly expandedOfficeId = signal<string | null>(null);
   readonly expandedEmployees = signal<EmployeeSummary[]>([]);
   readonly expandedEmployeesLoading = signal(false);
   readonly expandedEmployeesError = signal<string | null>(null);
@@ -54,14 +54,14 @@ export class OfficesComponent implements OnInit {
 
   startAdd(): void {
     this.saveError.set(null);
-    this.draft.set({ guid: null, officeName: '', city: '', country: '' });
+    this.draft.set({ officeId: null, name: '', city: '', country: '' });
   }
 
   startEdit(office: Office): void {
     this.saveError.set(null);
     this.draft.set({
-      guid: office.guid,
-      officeName: office.officeName,
+      officeId: office.officeId,
+      name: office.name,
       city: office.city ?? '',
       country: office.country ?? '',
     });
@@ -72,13 +72,13 @@ export class OfficesComponent implements OnInit {
     this.saveError.set(null);
   }
 
-  updateDraft(field: keyof Omit<OfficeDraft, 'guid'>, value: string): void {
+  updateDraft(field: keyof Omit<OfficeDraft, 'officeId'>, value: string): void {
     this.draft.update((d) => (d ? { ...d, [field]: value } : d));
   }
 
   async save(): Promise<void> {
     const draft = this.draft();
-    if (!draft || !draft.officeName.trim()) {
+    if (!draft || !draft.name.trim()) {
       this.saveError.set('Office name is required.');
       return;
     }
@@ -87,10 +87,10 @@ export class OfficesComponent implements OnInit {
     this.saveError.set(null);
 
     try {
-      const payload = { officeName: draft.officeName, city: draft.city, country: draft.country };
+      const payload = { name: draft.name, city: draft.city, country: draft.country };
       await firstValueFrom(
-        draft.guid
-          ? this.officeService.editOffice({ guid: draft.guid, ...payload })
+        draft.officeId
+          ? this.officeService.editOffice({ officeId: draft.officeId, ...payload })
           : this.officeService.createOffice(payload),
       );
       this.draft.set(null);
@@ -103,13 +103,13 @@ export class OfficesComponent implements OnInit {
 
   async deleteOffice(office: Office): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
-      `Delete office "${office.officeName}"? This cannot be undone.`,
+      `Delete office "${office.name}"? This cannot be undone.`,
     );
     if (!confirmed) return;
 
     this.deleteError.set(null);
     try {
-      await firstValueFrom(this.officeService.deleteOffice(office.guid));
+      await firstValueFrom(this.officeService.deleteOffice(office.officeId));
     } catch (error) {
       // e.g. 409 when the office is still assigned to an employee.
       this.deleteError.set(extractErrorMessage(error as HttpErrorResponse, 'Failed to delete office'));
@@ -117,17 +117,17 @@ export class OfficesComponent implements OnInit {
   }
 
   toggleEmployees(office: Office): void {
-    if (this.expandedOfficeGuid() === office.guid) {
-      this.expandedOfficeGuid.set(null);
+    if (this.expandedOfficeId() === office.officeId) {
+      this.expandedOfficeId.set(null);
       return;
     }
 
-    this.expandedOfficeGuid.set(office.guid);
+    this.expandedOfficeId.set(office.officeId);
     this.expandedEmployees.set([]);
     this.expandedEmployeesError.set(null);
     this.expandedEmployeesLoading.set(true);
 
-    this.officeService.getEmployees(office.guid).subscribe({
+    this.officeService.getEmployees(office.officeId).subscribe({
       next: (employees) => {
         this.expandedEmployees.set(employees);
         this.expandedEmployeesLoading.set(false);

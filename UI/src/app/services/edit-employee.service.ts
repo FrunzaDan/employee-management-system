@@ -3,7 +3,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../../../src/app/interfaces/generic-response';
-import { Employee } from '../interfaces/employee-response';
+import {
+  Employee,
+  UpdateEmployeeRequest,
+} from '../interfaces/employee-response';
 import { HttpHeaderService } from './http-header-service';
 import { GetEmployeeService } from './get-employee.service'; // Inject to update locally
 import { NotificationService } from './notification.service';
@@ -13,19 +16,25 @@ import { NotificationService } from './notification.service';
 })
 export class EditEmployeeService {
   private readonly APIURL =
-    environment.EmployeeManagementSystemAPI + '/api/Employee/edit';
+    environment.apiUrl + '/api/employee/edit';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly getEmployeeService = inject(GetEmployeeService);
   private readonly notificationService = inject(NotificationService);
 
+  // Takes the whole edited employee (to update the local list with once saved) but sends
+  // only the editable fields — the server-owned ones (status, dates) aren't part of an edit.
   editEmployee(employee: Employee): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
 
     return this.http
-      .patch<GenericResponse<object>>(this.APIURL, employee, { headers })
+      .patch<GenericResponse<object>>(
+        this.APIURL,
+        toUpdateEmployeeRequest(employee),
+        { headers },
+      )
       .pipe(
         tap(() => {
           this.getEmployeeService.updateEmployeeLocally(employee);
@@ -33,4 +42,21 @@ export class EditEmployeeService {
         }),
       );
   }
+}
+
+function toUpdateEmployeeRequest(employee: Employee): UpdateEmployeeRequest {
+  return {
+    employeeId: employee.employeeId,
+    firstName: employee.firstName,
+    lastName: employee.lastName,
+    email: employee.email,
+    phoneNumber: employee.phoneNumber,
+    gender: employee.gender,
+    birthDate: employee.birthDate,
+    address: employee.address,
+    hireDate: employee.hireDate,
+    officeId: employee.officeId,
+    departmentId: employee.departmentId,
+    costCenterId: employee.costCenterId,
+  };
 }

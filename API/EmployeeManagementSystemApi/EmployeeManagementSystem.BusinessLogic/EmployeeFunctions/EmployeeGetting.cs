@@ -1,11 +1,11 @@
-﻿using EmployeeManagementSystem.BusinessLogic.Validations;
+using EmployeeManagementSystem.BusinessLogic.Validations;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 
-public class EmployeeGetting
+public class EmployeeGetting(IDbUtils dbUtils)
 {
     private const int MaxPageSize = 100;
 
@@ -14,52 +14,42 @@ public class EmployeeGetting
     // response — generous enough that no real local/demo dataset will ever hit it.
     private const int MaxExportRows = 5000;
 
-    private static readonly string[] ValidSortColumns = ["name", "email", "msisdn"];
-    private static readonly string[] ValidSortDirections = ["asc", "desc"];
-
-    private readonly IDbUtils _dbUtils;
-
-    public EmployeeGetting(IDbUtils dbUtils)
-    {
-        _dbUtils = dbUtils;
-    }
-
-    public async Task<ResponseModel<object>> GetEmployeeFunction(GetEmployeeRequest request,
+    public async Task<ResponseModel<EmployeeModel>> GetEmployeeFunction(string? searchTerm,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.SearchVariable))
-            return new ResponseModel<object>(404, "Search variable is required.");
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            return new ResponseModel<EmployeeModel>(400, "Search variable cannot be null or empty.");
 
-        request.SearchOption = DetermineSearchOption(request.SearchVariable);
+        var lookup = DetermineLookup(searchTerm.Trim());
+        if (lookup is null)
+            return new ResponseModel<EmployeeModel>(404,
+                "No valid search variable was provided! It must be a employee ID, phone number, or email.");
 
-        if (request.SearchOption == EmployeeSearchOption.None)
-            return new ResponseModel<object>(404,
-                "No valid search variable was provided! It must be a GUID, MSISDN, or Email.");
-
-        return await _dbUtils.GetEmployee(request, cancellationToken);
+        return await dbUtils.GetEmployee(lookup, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetEmployeesFunction(GetEmployeesRequest request,
+    public async Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployeesFunction(GetEmployeesRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.PageNumber < 1)
-            return new ResponseModel<object>(400, "Page number must be 1 or greater.");
+            return new ResponseModel<PagedResponse<EmployeeModel>>(400, "Page number must be 1 or greater.");
 
         if (request.PageSize < 1 || request.PageSize > MaxPageSize)
-            return new ResponseModel<object>(400, $"Page size must be between 1 and {MaxPageSize}.");
+            return new ResponseModel<PagedResponse<EmployeeModel>>(400,
+                $"Page size must be between 1 and {MaxPageSize}.");
 
         var validationError = ValidateAndNormalizeSortAndSearch(request);
         if (validationError != null)
-            return validationError;
+            return new ResponseModel<PagedResponse<EmployeeModel>>(400, validationError);
 
-        return await _dbUtils.GetEmployees(request, cancellationToken);
+        return await dbUtils.GetEmployees(request, cancellationToken);
     }
 
     // Exports the full search/sort result (capped at MaxExportRows), not just one
-    // page — it reuses Employee_List via the same _dbUtils.GetEmployees call the
+    // page — it reuses Employee_List via the same dbUtils.GetEmployees call the
     // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
     // filtering/sorting SQL stays in exactly one place.
-    public async Task<ResponseModel<object>> GetEmployeesForExportFunction(ExportEmployeesRequest request,
+    public async Task<ResponseModel<string>> GetEmployeesForExportFunction(ExportEmployeesRequest request,
         CancellationToken cancellationToken = default)
     {
         var pagedRequest = new GetEmployeesRequest
@@ -73,62 +63,70 @@ public class EmployeeGetting
 
         var validationError = ValidateAndNormalizeSortAndSearch(pagedRequest);
         if (validationError != null)
-            return validationError;
+            return new ResponseModel<string>(400, validationError);
 
-        var response = await _dbUtils.GetEmployees(pagedRequest, cancellationToken);
-        if (response.Status != 200 || response.Data is not PagedResponse<EmployeeModel> paged)
-            return response;
+        var response = await dbUtils.GetEmployees(pagedRequest, cancellationToken);
+        if (response is not { Status: 200, Data: { } paged })
+            return new ResponseModel<string>(response.Status, response.ResponseMessage);
 
         var csv = EmployeeCsvExporter.ToCsv(paged.Items);
-        return new ResponseModel<object>(200, $"{paged.Items.Count()} employees exported.", csv);
+        return new ResponseModel<string>(200, $"{paged.Items.Count} employees exported.", csv);
     }
 
-    private static ResponseModel<object>? ValidateAndNormalizeSortAndSearch(GetEmployeesRequest request)
+    // The enums can only hold an undefined value if one was forced in (e.g. "?sortColumn=7"
+    // binds to (EmployeeSortColumn)7), so this is a backstop, not the primary check.
+    private static string? ValidateAndNormalizeSortAndSearch(GetEmployeesRequest request)
     {
-        var sortColumn = request.SortColumn.Trim().ToLowerInvariant();
-        if (!ValidSortColumns.Contains(sortColumn))
-            return new ResponseModel<object>(400,
-                $"Sort column must be one of: {string.Join(", ", ValidSortColumns)}.");
+        if (!Enum.IsDefined(request.SortColumn))
+            return $"Sort column must be one of: {string.Join(", ", Enum.GetNames<EmployeeSortColumn>())}.";
 
-        var sortDirection = request.SortDirection.Trim().ToLowerInvariant();
-        if (!ValidSortDirections.Contains(sortDirection))
-            return new ResponseModel<object>(400,
-                $"Sort direction must be one of: {string.Join(", ", ValidSortDirections)}.");
+        if (!Enum.IsDefined(request.SortDirection))
+            return $"Sort direction must be one of: {string.Join(", ", Enum.GetNames<SortDirection>())}.";
 
-        request.SortColumn = sortColumn;
-        request.SortDirection = sortDirection;
         request.SearchTerm = string.IsNullOrWhiteSpace(request.SearchTerm) ? null : request.SearchTerm.Trim();
+
+        if (request.SearchTerm?.Length > FieldLengthConstants.SearchTerm)
+            return "Search term is too long.";
 
         return null;
     }
 
-    public async Task<ResponseModel<object>> GetEmployeeAuditLogFunction(Guid employeeGuid,
+    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLogFunction(Guid employeeId,
         CancellationToken cancellationToken = default)
     {
-        if (employeeGuid == Guid.Empty)
-            return new ResponseModel<object>(400, "A valid employee GUID is required.");
+        if (employeeId == Guid.Empty)
+            return new ResponseModel<IReadOnlyList<AuditLogEntry>>(400, "A valid employee ID is required.");
 
-        return await _dbUtils.GetEmployeeAuditLog(employeeGuid, cancellationToken);
+        return await dbUtils.GetEmployeeAuditLog(employeeId, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetAllAuditLogFunction(int pageNumber, int pageSize,
-        CancellationToken cancellationToken = default)
+    public async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllAuditLogFunction(int pageNumber,
+        int pageSize, CancellationToken cancellationToken = default)
     {
         if (pageNumber < 1)
-            return new ResponseModel<object>(400, "Page number must be 1 or greater.");
+            return new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(400, "Page number must be 1 or greater.");
 
         if (pageSize < 1 || pageSize > MaxPageSize)
-            return new ResponseModel<object>(400, $"Page size must be between 1 and {MaxPageSize}.");
+            return new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(400,
+                $"Page size must be between 1 and {MaxPageSize}.");
 
-        return await _dbUtils.GetAllEmployeeAuditLog(pageNumber, pageSize, cancellationToken);
+        return await dbUtils.GetAllEmployeeAuditLog(pageNumber, pageSize, cancellationToken);
     }
 
-    private static EmployeeSearchOption DetermineSearchOption(string searchVariable)
+    // Picks the one key Employee_Get should seek on, from the search term's shape: GUID
+    // (any format Guid.TryParse accepts — braces, upper case, no hyphens), then phone number, then
+    // email. Null when it's none of the three.
+    private static EmployeeLookup? DetermineLookup(string searchTerm)
     {
-        return GuidValidation.ValidateGuid(searchVariable) ? EmployeeSearchOption.Guid :
-            MsisdnValidation.ValidateMsisdn(searchVariable) ? EmployeeSearchOption.Msisdn :
-            EmailValidation.ValidateEmail(searchVariable) && searchVariable.Length <= FieldLengthConstants.Email
-                ? EmployeeSearchOption.Email :
-            EmployeeSearchOption.None;
+        if (Guid.TryParse(searchTerm, out var employeeId))
+            return new EmployeeLookup(EmployeeId: employeeId);
+
+        if (PhoneNumberValidation.ValidatePhoneNumber(searchTerm))
+            return new EmployeeLookup(PhoneNumber: searchTerm);
+
+        if (EmailValidation.ValidateEmail(searchTerm) && searchTerm.Length <= FieldLengthConstants.Email)
+            return new EmployeeLookup(Email: searchTerm);
+
+        return null;
     }
 }

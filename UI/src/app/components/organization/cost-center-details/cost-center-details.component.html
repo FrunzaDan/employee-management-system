@@ -1,8 +1,8 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <a routerLink="/costCenters" class="back-link"><span aria-hidden="true">←</span> Back to cost centers</a>
-      <h1 class="page-title">{{ costCenter()?.costCenterCode || 'Cost center' }}</h1>
+      <a routerLink="/cost-centers" class="back-link"><span aria-hidden="true">←</span> Back to cost centers</a>
+      <h1 class="page-title">{{ costCenter()?.code || 'Cost center' }}</h1>
       <p class="page-subtitle">Cost center details and assigned employees.</p>
     </div>
   </div>
@@ -20,15 +20,15 @@
         <dl class="detail-list">
           <div class="detail-row">
             <dt>Code</dt>
-            <dd>{{ cc.costCenterCode }}</dd>
+            <dd>{{ cc.code }}</dd>
           </div>
           <div class="detail-row">
             <dt>Name</dt>
-            <dd>{{ cc.costCenterName || '—' }}</dd>
+            <dd>{{ cc.name || '—' }}</dd>
           </div>
           <div class="detail-row">
-            <dt>GUID</dt>
-            <dd class="guid">{{ cc.guid }}</dd>
+            <dt>Cost center ID</dt>
+            <dd class="entity-id">{{ cc.costCenterId }}</dd>
           </div>
           <div class="detail-row">
             <dt>Number of employees</dt>
@@ -63,15 +63,15 @@
               </tr>
             </thead>
             <tbody>
-              @for (employee of employees(); track employee.guid) {
+              @for (employee of employees(); track employee.employeeId) {
                 <tr>
                   <td class="align-middle text-center">
-                    <a class="plain-Links hoverItem" routerLink="/employeeDetails" [queryParams]="{ id: employee.guid }">
+                    <a class="plain-Links hoverItem" routerLink="/employee-details" [queryParams]="{ id: employee.employeeId }">
                       {{ employee.firstName }} {{ employee.lastName }}
                     </a>
                   </td>
                   <td class="align-middle text-center">{{ employee.email }}</td>
-                  <td class="align-middle text-center">{{ employeeStatusLabel(employee.employeeStatus) }}</td>
+                  <td class="align-middle text-center">{{ employeeStatusLabel(employee.status) }}</td>
                 </tr>
               }
             </tbody>

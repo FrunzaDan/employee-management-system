@@ -19,14 +19,14 @@ describe('UserLoginService', () => {
   let setSessionAccessToken: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.EmployeeManagementSystemAPI}/api/Authentication/access-token`;
+  const API_URL = `${environment.apiUrl}/api/authentication/access-token`;
 
   const buildResponse = (
     overrides: Partial<LoginDataResponse> = {},
   ): LoginDataResponse => ({
     status: 200,
     responseMessage: 'Success!',
-    data: { accessToken: 'jwt-123', validUntil: '2026-01-01T00:15:00' },
+    data: { accessToken: 'jwt-123', expiresAt: '2026-01-01T00:15:00' },
     ...overrides,
   });
 
@@ -57,14 +57,14 @@ describe('UserLoginService', () => {
 
   it('posts the credentials to the access-token endpoint', () => {
     service
-      .login({ employerId: 'TestEmployerID', employerPassword: 'Employer123' })
+      .login({ username: 'TestEmployerID', password: 'Employer123' })
       .subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
-      employerId: 'TestEmployerID',
-      employerPassword: 'Employer123',
+      username: 'TestEmployerID',
+      password: 'Employer123',
     });
 
     req.flush(buildResponse());
@@ -82,14 +82,14 @@ describe('UserLoginService', () => {
   it('checkCredentials reports failure and does nothing else when status is not 200', () => {
     const response = buildResponse({
       status: 401,
-      responseMessage: 'Invalid Employer ID or Password.',
+      responseMessage: 'Invalid username or password.',
     });
 
     const result = service.checkCredentials(response);
 
     expect(result).toEqual({
       success: false,
-      message: 'Invalid Employer ID or Password.',
+      message: 'Invalid username or password.',
     });
     expect(setSessionAccessToken).not.toHaveBeenCalled();
     expect(notificationShow).not.toHaveBeenCalled();

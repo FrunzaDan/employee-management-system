@@ -2,27 +2,38 @@ CREATE TABLE [dbo].[Employee]
 (
     -- UNIQUEIDENTIFIER (16 bytes), not NVARCHAR(50) (72 bytes for a 36-char GUID): this key is
     -- the clustered index, so every nonclustered index below — and every FK pointing here —
-    -- carries a copy of it. Values come from SequentialGuid (DataAccess), which orders the way
-    -- SQL Server sorts GUIDs, so inserts append instead of splitting pages at random.
-    [EmployeeId] UNIQUEIDENTIFIER NOT NULL,
-    [FirstName] NVARCHAR (50) NOT NULL,
-    [LastName] NVARCHAR (50) NOT NULL,
+    -- carries a copy of it. Generated here, by NEWSEQUENTIALID(), rather than by the API: each
+    -- new key sorts after the previous one, so inserts append to the end of the clustered index
+    -- instead of splitting random pages. Employee_Create hands the new value back.
+    [EmployeeId] UNIQUEIDENTIFIER NOT NULL
+        CONSTRAINT [DF_Employee_EmployeeId] DEFAULT NEWSEQUENTIALID(),
+    [FirstName] NVARCHAR (100) NOT NULL,
+    [LastName] NVARCHAR (100) NOT NULL,
     -- NOT NULL (not just the UQ_ constraints below): SQL Server treats every NULL as
     -- distinct under UNIQUE, so a NULL Email/PhoneNumber would silently bypass both the unique
     -- constraint and Employee_Create's own duplicate pre-check (`= NULL` never matches).
     -- 254 = the longest address RFC 5321 allows through SMTP.
     [Email] NVARCHAR (254) NOT NULL,
-    -- The MSISDN: E.164 caps a phone number at 15 digits, and digits never need Unicode.
+    -- Digits only (the API's PhoneNumber regex): E.164 caps a phone number at 15 digits, and
+    -- digits never need Unicode. Anything compared against it must be VARCHAR too — an NVARCHAR
+    -- parameter would force a conversion of the column and turn UQ_Employee_PhoneNumber seeks
+    -- into scans.
     [PhoneNumber] VARCHAR (15) NOT NULL,
-    -- 0 = not declared, 1 = male, 2 = female (see EmployeeModel's Gender enum).
-    [Gender] TINYINT NULL,
+    -- 0 = not declared, 1 = male, 2 = female (ISO/IEC 5218; see the API's Gender enum).
+    -- NOT NULL: "not declared" already has its own code, so NULL would be a second way to say it.
+    [Gender] TINYINT NOT NULL
+        CONSTRAINT [DF_Employee_Gender] DEFAULT 0,
     [BirthDate] DATE NULL,
-    [StatusCode] SMALLINT NOT NULL CONSTRAINT [DF_Employee_StatusCode] DEFAULT (1901),
+    -- 1901 = active, 1903 = deactivated, 1904 = test (see ai_docs/database.md).
+    [StatusCode] SMALLINT NOT NULL
+        CONSTRAINT [DF_Employee_StatusCode] DEFAULT 1901,
     -- UTC. DATETIME2(3) (millisecond precision, 7 bytes) instead of DATETIME (8 bytes, 1/300s
     -- rounding) — and never a string: the old NVARCHAR columns silently stored GETDATE()'s
     -- default 'Sep 22 2026 12:53PM' text, which loses seconds and doesn't sort chronologically.
-    [CreatedAt] DATETIME2 (3) NOT NULL CONSTRAINT [DF_Employee_CreatedAt] DEFAULT (SYSUTCDATETIME()),
-    [LastInteractionAt] DATETIME2 (3) NOT NULL CONSTRAINT [DF_Employee_LastInteractionAt] DEFAULT (SYSUTCDATETIME()),
+    [CreatedAt] DATETIME2 (3) NOT NULL
+        CONSTRAINT [DF_Employee_CreatedAt] DEFAULT SYSUTCDATETIME(),
+    [LastInteractionAt] DATETIME2 (3) NOT NULL
+        CONSTRAINT [DF_Employee_LastInteractionAt] DEFAULT SYSUTCDATETIME(),
     -- Job info: independent of the address/status fields above and always optional at
     -- the schema level — Employee_Create/Employee_Update pre-check these keys exist
     -- (friendly 400) before they'd ever hit these FKs.

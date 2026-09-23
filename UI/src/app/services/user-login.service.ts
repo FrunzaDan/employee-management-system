@@ -23,8 +23,8 @@ export interface CredentialsCheckResult {
 })
 export class UserLoginService {
   readonly APIURL =
-    environment.EmployeeManagementSystemAPI +
-    '/api/Authentication/access-token';
+    environment.apiUrl +
+    '/api/authentication/access-token';
 
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);

@@ -1,12 +1,15 @@
+import { AuditAction } from './audit-log-entry';
+import { IsoDateTime } from './iso-date';
+
 export interface GlobalAuditLogEntry {
-  auditId: number;
-  employeeGuid: string;
-  // Absent when the employee no longer exists (the API LEFT JOINs Employee,
-  // since audit history outlives a deleted employee, and omits null properties).
+  employeeAuditLogId: number;
+  employeeId: string;
+  // Absent when the employee no longer exists (the API LEFT JOINs Employee, since audit
+  // history outlives a deleted employee, and omits null properties).
   employeeFirstName?: string;
   employeeLastName?: string;
-  employerId: string;
-  action: string;
+  performedBy: string;
+  actionType: AuditAction;
   details?: string;
-  actionDate: string; // UTC, ISO 8601
+  occurredAt: IsoDateTime;
 }

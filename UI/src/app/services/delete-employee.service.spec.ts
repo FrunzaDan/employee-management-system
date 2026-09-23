@@ -16,7 +16,7 @@ describe('DeleteEmployeeService', () => {
   let removeEmployeeLocally: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/delete`;
+  const API_URL = `${environment.apiUrl}/api/employee/delete`;
 
   beforeEach(() => {
     removeEmployeeLocally = vi.fn();
@@ -43,29 +43,29 @@ describe('DeleteEmployeeService', () => {
   });
 
   describe('deleteEmployee', () => {
-    it('DELETEs with the employeeGUID as a query param', () => {
-      service.deleteEmployee('guid-1').subscribe();
+    it('DELETEs with the employeeId as a query param', () => {
+      service.deleteEmployee('employeeId-1').subscribe();
 
       const req = httpMock.expectOne((r) => r.url === API_URL);
       expect(req.request.method).toBe('DELETE');
-      expect(req.request.params.get('employeeGUID')).toBe('guid-1');
+      expect(req.request.params.get('employeeId')).toBe('employeeId-1');
 
       req.flush({ status: 200, responseMessage: 'Employee deleted successfully.' });
     });
 
     it('removes the employee from the local cache and notifies on success', () => {
-      service.deleteEmployee('guid-1').subscribe();
+      service.deleteEmployee('employeeId-1').subscribe();
 
       httpMock
         .expectOne((r) => r.url === API_URL)
         .flush({ status: 200, responseMessage: 'Employee deleted successfully.' });
 
-      expect(removeEmployeeLocally).toHaveBeenCalledWith('guid-1');
+      expect(removeEmployeeLocally).toHaveBeenCalledWith('employeeId-1');
       expect(notificationShow).toHaveBeenCalledWith('Employee deleted successfully.');
     });
 
     it('does not touch the local cache or notify when the request errors', () => {
-      service.deleteEmployee('guid-1').subscribe({ error: () => {} });
+      service.deleteEmployee('employeeId-1').subscribe({ error: () => {} });
 
       httpMock
         .expectOne((r) => r.url === API_URL)
@@ -81,14 +81,14 @@ describe('DeleteEmployeeService', () => {
 
   describe('deleteEmployeeSilently', () => {
     it('DELETEs the same endpoint and updates the local cache, but never notifies', () => {
-      service.deleteEmployeeSilently('guid-1').subscribe();
+      service.deleteEmployeeSilently('employeeId-1').subscribe();
 
       const req = httpMock.expectOne((r) => r.url === API_URL);
       expect(req.request.method).toBe('DELETE');
-      expect(req.request.params.get('employeeGUID')).toBe('guid-1');
+      expect(req.request.params.get('employeeId')).toBe('employeeId-1');
       req.flush({ status: 200, responseMessage: 'Employee deleted successfully.' });
 
-      expect(removeEmployeeLocally).toHaveBeenCalledWith('guid-1');
+      expect(removeEmployeeLocally).toHaveBeenCalledWith('employeeId-1');
       expect(notificationShow).not.toHaveBeenCalled();
     });
   });

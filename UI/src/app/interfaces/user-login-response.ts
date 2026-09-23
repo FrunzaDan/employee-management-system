@@ -1,8 +1,9 @@
 import { GenericResponse } from './generic-response';
+import { IsoDateTime } from './iso-date';
 
 export interface LoginData {
   accessToken: string;
-  validUntil: string; // UTC, ISO 8601
+  expiresAt: IsoDateTime;
 }
 
 export interface LoginDataResponse extends GenericResponse<LoginData> {}

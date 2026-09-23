@@ -10,8 +10,8 @@ import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
 interface DepartmentDraft {
-  guid: string | null;
-  departmentName: string;
+  departmentId: string | null;
+  name: string;
 }
 
 @Component({
@@ -33,7 +33,7 @@ export class DepartmentsComponent implements OnInit {
   readonly saveError = signal<string | null>(null);
   readonly deleteError = signal<string | null>(null);
 
-  readonly expandedDepartmentGuid = signal<string | null>(null);
+  readonly expandedDepartmentId = signal<string | null>(null);
   readonly expandedEmployees = signal<EmployeeSummary[]>([]);
   readonly expandedEmployeesLoading = signal(false);
   readonly expandedEmployeesError = signal<string | null>(null);
@@ -46,12 +46,12 @@ export class DepartmentsComponent implements OnInit {
 
   startAdd(): void {
     this.saveError.set(null);
-    this.draft.set({ guid: null, departmentName: '' });
+    this.draft.set({ departmentId: null, name: '' });
   }
 
   startEdit(department: Department): void {
     this.saveError.set(null);
-    this.draft.set({ guid: department.guid, departmentName: department.departmentName });
+    this.draft.set({ departmentId: department.departmentId, name: department.name });
   }
 
   cancel(): void {
@@ -60,12 +60,12 @@ export class DepartmentsComponent implements OnInit {
   }
 
   updateDraft(value: string): void {
-    this.draft.update((d) => (d ? { ...d, departmentName: value } : d));
+    this.draft.update((d) => (d ? { ...d, name: value } : d));
   }
 
   async save(): Promise<void> {
     const draft = this.draft();
-    if (!draft || !draft.departmentName.trim()) {
+    if (!draft || !draft.name.trim()) {
       this.saveError.set('Department name is required.');
       return;
     }
@@ -75,12 +75,12 @@ export class DepartmentsComponent implements OnInit {
 
     try {
       await firstValueFrom(
-        draft.guid
+        draft.departmentId
           ? this.departmentService.editDepartment({
-              guid: draft.guid,
-              departmentName: draft.departmentName,
+              departmentId: draft.departmentId,
+              name: draft.name,
             })
-          : this.departmentService.createDepartment({ departmentName: draft.departmentName }),
+          : this.departmentService.createDepartment({ name: draft.name }),
       );
       this.draft.set(null);
     } catch (error) {
@@ -94,13 +94,13 @@ export class DepartmentsComponent implements OnInit {
 
   async deleteDepartment(department: Department): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
-      `Delete department "${department.departmentName}"? This cannot be undone.`,
+      `Delete department "${department.name}"? This cannot be undone.`,
     );
     if (!confirmed) return;
 
     this.deleteError.set(null);
     try {
-      await firstValueFrom(this.departmentService.deleteDepartment(department.guid));
+      await firstValueFrom(this.departmentService.deleteDepartment(department.departmentId));
     } catch (error) {
       this.deleteError.set(
         extractErrorMessage(error as HttpErrorResponse, 'Failed to delete department'),
@@ -109,17 +109,17 @@ export class DepartmentsComponent implements OnInit {
   }
 
   toggleEmployees(department: Department): void {
-    if (this.expandedDepartmentGuid() === department.guid) {
-      this.expandedDepartmentGuid.set(null);
+    if (this.expandedDepartmentId() === department.departmentId) {
+      this.expandedDepartmentId.set(null);
       return;
     }
 
-    this.expandedDepartmentGuid.set(department.guid);
+    this.expandedDepartmentId.set(department.departmentId);
     this.expandedEmployees.set([]);
     this.expandedEmployeesError.set(null);
     this.expandedEmployeesLoading.set(true);
 
-    this.departmentService.getEmployees(department.guid).subscribe({
+    this.departmentService.getEmployees(department.departmentId).subscribe({
       next: (employees) => {
         this.expandedEmployees.set(employees);
         this.expandedEmployeesLoading.set(false);

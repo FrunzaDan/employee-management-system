@@ -12,26 +12,26 @@ describe('GetEmployeeService', () => {
   let service: GetEmployeeService;
   let httpMock: HttpTestingController;
 
-  const API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/all`;
+  const API_URL = `${environment.apiUrl}/api/employee/all`;
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
-    guid: 'guid-1',
+    employeeId: 'employeeId-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    employeeStatus: 1901,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: 1901,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     ...overrides,
   });
@@ -142,53 +142,6 @@ describe('GetEmployeeService', () => {
     );
   });
 
-  describe('findEmployeeGuid', () => {
-    const GET_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/get`;
-
-    it('looks the employee up by email and returns its guid', () => {
-      let guid: string | undefined;
-
-      service.findEmployeeGuid('dan@example.com').subscribe((g) => (guid = g));
-      const req = httpMock.expectOne((r) => r.url === GET_URL);
-      expect(req.request.params.get('searchVariable')).toBe('dan@example.com');
-      req.flush({ status: 200, responseMessage: 'ok', data: buildEmployee({ guid: 'guid-42' }) });
-
-      expect(guid).toBe('guid-42');
-    });
-
-    it('does not touch the signals the details page relies on', () => {
-      service.findEmployeeGuid('dan@example.com').subscribe();
-      httpMock
-        .expectOne((r) => r.url === GET_URL)
-        .flush({ status: 200, responseMessage: 'ok', data: buildEmployee() });
-
-      expect(service.selectedEmployeeSignal()).toBeNull();
-      expect(service.loadingSignal()).toBe(false);
-    });
-
-    it('errors when the response carries no employee', () => {
-      const onError = vi.fn();
-
-      service.findEmployeeGuid('nobody@example.com').subscribe({ error: onError });
-      httpMock
-        .expectOne((r) => r.url === GET_URL)
-        .flush({ status: 200, responseMessage: 'ok' });
-
-      expect(onError).toHaveBeenCalledTimes(1);
-    });
-
-    it('propagates an HTTP failure', () => {
-      const onError = vi.fn();
-
-      service.findEmployeeGuid('dan@example.com').subscribe({ error: onError });
-      httpMock
-        .expectOne((r) => r.url === GET_URL)
-        .flush(null, { status: 404, statusText: 'Not Found' });
-
-      expect(onError).toHaveBeenCalledTimes(1);
-    });
-  });
-
   it('updateEmployeeLocally replaces a matching employee in employeesSignal', () => {
     const original = buildEmployee();
 
@@ -215,7 +168,7 @@ describe('GetEmployeeService', () => {
       data: { pageNumber: 1, pageSize: 10, totalItems: 1, items: [employee] },
     });
 
-    service.removeEmployeeLocally(employee.guid);
+    service.removeEmployeeLocally(employee.employeeId);
 
     expect(service.employeesSignal()).toEqual([]);
   });

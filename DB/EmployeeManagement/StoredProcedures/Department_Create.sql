@@ -1,5 +1,4 @@
 CREATE PROCEDURE [dbo].[Department_Create]
-    @DepartmentId UNIQUEIDENTIFIER,
     @Name NVARCHAR(100)
 AS
 BEGIN
@@ -7,18 +6,25 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
+    DECLARE @DepartmentId UNIQUEIDENTIFIER = NULL;
+    DECLARE @Inserted TABLE (DepartmentId UNIQUEIDENTIFIER);
 
     BEGIN TRY
-        INSERT INTO dbo.Department (DepartmentId, Name)
-        VALUES (@DepartmentId, @Name);
+        -- DepartmentId comes from the table's NEWSEQUENTIALID() default.
+        INSERT INTO dbo.Department (Name)
+        OUTPUT inserted.DepartmentId INTO @Inserted
+        VALUES (@Name);
+
+        SELECT @DepartmentId = DepartmentId FROM @Inserted;
 
         SET @Result = 0;
-        SET @Message = CONCAT('Department created successfully. GUID: ', @DepartmentId);
+        SET @Message = 'Department created successfully.';
     END TRY
     BEGIN CATCH
         SET @Result = 500;
         SET @Message = CONCAT('Failed to create department: ', ERROR_MESSAGE());
     END CATCH
 
-    SELECT @Result AS Result, @Message AS Message;
+    -- DepartmentId: the new department's server-generated key; only meaningful when Result = 0.
+    SELECT @Result AS Result, @Message AS Message, @DepartmentId AS DepartmentId;
 END

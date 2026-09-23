@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GetEmployeeService } from './get-employee.service';
 import { HttpHeaderService } from './http-header-service';
-import { EmployeeActivationStatus } from '../interfaces/employee-response';
+import { EmployeeStatus } from '../interfaces/employee-response';
 import { Observable, tap, throwError, timer } from 'rxjs';
 import { retry } from 'rxjs/internal/operators/retry';
 import { catchError } from 'rxjs/internal/operators/catchError';
@@ -37,9 +37,9 @@ const TRANSIENT_ERROR_RETRY_CONFIG = {
 })
 export class ActivateEmployeeService {
   readonly APIURL_DEACTIVATE =
-    environment.EmployeeManagementSystemAPI + '/api/Employee/deactivate';
+    environment.apiUrl + '/api/employee/deactivate';
   readonly APIURL_REACTIVATE =
-    environment.EmployeeManagementSystemAPI + '/api/Employee/reactivate';
+    environment.apiUrl + '/api/employee/reactivate';
 
   private readonly state = signal<ActivationState>({
     loading: false,
@@ -54,11 +54,11 @@ export class ActivateEmployeeService {
   private readonly getEmployeeService = inject(GetEmployeeService);
   private readonly notificationService = inject(NotificationService);
 
-  deactivateEmployee(employeeGUID: string): void {
+  deactivateEmployee(employeeId: string): void {
     this.setLoading(true);
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeGUID', employeeGUID);
+    const params = new HttpParams().set('employeeId', employeeId);
 
     this.http
       .patch<GenericResponse<object>>(this.APIURL_DEACTIVATE, null, {
@@ -81,19 +81,19 @@ export class ActivateEmployeeService {
 
           const existingEmployee = this.getEmployeeService
             .employeesSignal()
-            .find((c) => c.guid === employeeGUID);
+            .find((c) => c.employeeId === employeeId);
 
           if (existingEmployee) {
             this.getEmployeeService.updateEmployeeLocally({
               ...existingEmployee,
-              employeeStatus: EmployeeActivationStatus.Deactivated,
+              status: EmployeeStatus.Deactivated,
             });
             this.clearError();
             this.notificationService.show('Employee deactivated successfully.');
           } else {
             this.handleError(
               new Error(
-                `Employee with GUID ${employeeGUID} not found locally.`,
+                `Employee with GUID ${employeeId} not found locally.`,
               ),
             );
           }
@@ -102,11 +102,11 @@ export class ActivateEmployeeService {
       });
   }
 
-  reactivateEmployee(employeeGUID: string): void {
+  reactivateEmployee(employeeId: string): void {
     this.setLoading(true);
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeGUID', employeeGUID);
+    const params = new HttpParams().set('employeeId', employeeId);
 
     this.http
       .patch<GenericResponse<object>>(this.APIURL_REACTIVATE, null, {
@@ -129,19 +129,19 @@ export class ActivateEmployeeService {
 
           const existingEmployee = this.getEmployeeService
             .employeesSignal()
-            .find((c) => c.guid === employeeGUID);
+            .find((c) => c.employeeId === employeeId);
 
           if (existingEmployee) {
             this.getEmployeeService.updateEmployeeLocally({
               ...existingEmployee,
-              employeeStatus: EmployeeActivationStatus.Active,
+              status: EmployeeStatus.Active,
             });
             this.clearError();
             this.notificationService.show('Employee reactivated successfully.');
           } else {
             this.handleError(
               new Error(
-                `Employee with GUID ${employeeGUID} not found locally.`,
+                `Employee with GUID ${employeeId} not found locally.`,
               ),
             );
           }
@@ -156,11 +156,11 @@ export class ActivateEmployeeService {
    * summary notification and track their own in-flight state instead.
    */
   deactivateEmployeeSilently(
-    employeeGUID: string,
+    employeeId: string,
   ): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeGUID', employeeGUID);
+    const params = new HttpParams().set('employeeId', employeeId);
 
     return this.http
       .patch<GenericResponse<object>>(this.APIURL_DEACTIVATE, null, {
@@ -171,12 +171,12 @@ export class ActivateEmployeeService {
         tap(() => {
           const existingEmployee = this.getEmployeeService
             .employeesSignal()
-            .find((c) => c.guid === employeeGUID);
+            .find((c) => c.employeeId === employeeId);
 
           if (existingEmployee) {
             this.getEmployeeService.updateEmployeeLocally({
               ...existingEmployee,
-              employeeStatus: EmployeeActivationStatus.Deactivated,
+              status: EmployeeStatus.Deactivated,
             });
           }
         }),

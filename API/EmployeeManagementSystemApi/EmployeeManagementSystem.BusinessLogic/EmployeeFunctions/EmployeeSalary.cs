@@ -12,45 +12,44 @@ public class EmployeeSalary(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
     // EmployeeSalary.GrossSalary is DECIMAL(12, 2): at most 10 integer digits
     // and 2 decimals. Checked here so an out-of-range amount is a clean 400, not an arithmetic
     // overflow 500 — and so a third decimal isn't silently rounded away by SQL Server.
-    private const decimal MaxBruttoSalary = 9_999_999_999.99m;
+    private const decimal MaxGrossSalary = 9_999_999_999.99m;
 
-    public async Task<ResponseModel<object>> AddSalaryFunction(SalaryHistoryEntry request, string employerId,
+    public async Task<ResponseModel<object>> AddSalaryFunction(CreateSalaryRequest request, string performedBy,
         CancellationToken cancellationToken = default)
     {
-        if (request.EmployeeGuid is not { } employeeGuid || employeeGuid == Guid.Empty)
-            return new ResponseModel<object>(400, "A valid employee GUID is required.");
+        if (request.EmployeeId == Guid.Empty)
+            return new ResponseModel<object>(400, "A valid employee ID is required.");
 
-        if (request.BruttoSalary is not { } bruttoSalary || bruttoSalary <= 0)
-            return new ResponseModel<object>(400, "Brutto salary must be a positive amount.");
+        if (request.GrossSalary is not { } grossSalary || grossSalary <= 0)
+            return new ResponseModel<object>(400, "Gross salary must be a positive amount.");
 
-        if (bruttoSalary > MaxBruttoSalary)
-            return new ResponseModel<object>(400, $"Brutto salary can't exceed {MaxBruttoSalary:N2}.");
+        if (grossSalary > MaxGrossSalary)
+            return new ResponseModel<object>(400, $"Gross salary can't exceed {MaxGrossSalary:N2}.");
 
-        if (decimal.Round(bruttoSalary, 2) != bruttoSalary)
-            return new ResponseModel<object>(400, "Brutto salary can have at most 2 decimal places.");
+        if (decimal.Round(grossSalary, 2) != grossSalary)
+            return new ResponseModel<object>(400, "Gross salary can have at most 2 decimal places.");
 
         if (request.EffectiveDate is not { } effectiveDate)
             return new ResponseModel<object>(400, "Effective date is required.");
 
-        // Same reasoning as every other GUID in this app: always server-generated.
-        request.SalaryGuid = SequentialGuid.NewGuid();
-
         var response = await dbUtils.AddEmployeeSalary(request, cancellationToken);
 
+        // Not forwarding cancellationToken: the entry was already recorded, so the audit write
+        // should still be attempted even if the client has since disconnected.
         if (response.Status == 200)
-            await auditLogger.Log(employeeGuid, employerId, "Salary changed",
+            await auditLogger.Log(request.EmployeeId, performedBy, AuditAction.SalaryChanged,
                 string.Create(CultureInfo.InvariantCulture,
-                    $"Brutto salary set to {bruttoSalary} effective {effectiveDate:yyyy-MM-dd}"));
+                    $"Gross salary set to {grossSalary} effective {effectiveDate:yyyy-MM-dd}"));
 
         return response;
     }
 
-    public async Task<ResponseModel<object>> GetSalaryHistoryFunction(Guid employeeGuid,
+    public async Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetSalaryHistoryFunction(Guid employeeId,
         CancellationToken cancellationToken = default)
     {
-        if (employeeGuid == Guid.Empty)
-            return new ResponseModel<object>(400, "A valid employee GUID is required.");
+        if (employeeId == Guid.Empty)
+            return new ResponseModel<IReadOnlyList<SalaryModel>>(400, "A valid employee ID is required.");
 
-        return await dbUtils.GetEmployeeSalaryHistory(employeeGuid, cancellationToken);
+        return await dbUtils.GetEmployeeSalaryHistory(employeeId, cancellationToken);
     }
 }

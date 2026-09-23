@@ -7,7 +7,7 @@
 // these fields, so every empty-credentials case gets the same 403 ResponseModel response.
 public sealed class EmployerCredentials
 {
-    public string? EmployerId { get; set; }
+    public string? Username { get; set; }
 
-    public string? EmployerPassword { get; set; }
+    public string? Password { get; set; }
 }

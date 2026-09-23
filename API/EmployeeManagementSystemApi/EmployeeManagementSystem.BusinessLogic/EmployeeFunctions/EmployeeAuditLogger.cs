@@ -1,4 +1,5 @@
 using EmployeeManagementSystem.DataAccess.DBConnection;
+using EmployeeManagementSystem.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
@@ -9,18 +10,18 @@ namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 // swallowed and logged instead.
 public class EmployeeAuditLogger(IDbUtils dbUtils, ILogger<EmployeeAuditLogger> logger) : IEmployeeAuditLogger
 {
-    public async Task Log(Guid employeeGuid, string employerId, string action, string? details = null,
+    public async Task Log(Guid employeeId, string performedBy, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            await dbUtils.LogEmployeeAudit(employeeGuid, employerId, action, details, cancellationToken);
+            await dbUtils.LogEmployeeAudit(employeeId, performedBy, action, details, cancellationToken);
         }
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Failed to write audit log entry for employee {EmployeeGuid}, action {Action}",
-                employeeGuid, action);
+                "Failed to write audit log entry for employee {EmployeeId}, action {Action}",
+                employeeId, action);
         }
     }
 }

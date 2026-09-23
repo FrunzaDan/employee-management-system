@@ -11,44 +11,35 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 public class OfficeController(IOfficeService officeService) : ControllerBase
 {
     [HttpGet("all")]
-    public async Task<IActionResult> GetOffices(CancellationToken cancellationToken)
-    {
-        var response = await officeService.GetOffices(cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<IReadOnlyList<OfficeModel>>>> GetOffices(
+        CancellationToken cancellationToken) =>
+        Reply(await officeService.GetOffices(cancellationToken));
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetOffice([FromQuery] Guid guid, CancellationToken cancellationToken)
-    {
-        var response = await officeService.GetOffice(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<OfficeModel>>> GetOffice([FromQuery] Guid officeId,
+        CancellationToken cancellationToken) =>
+        Reply(await officeService.GetOffice(officeId, cancellationToken));
 
     [HttpPost("create")]
-    public async Task<IActionResult> CreateOffice([FromBody] OfficeModel request, CancellationToken cancellationToken)
-    {
-        var response = await officeService.CreateOffice(request, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<Guid?>>> CreateOffice([FromBody] CreateOfficeRequest request,
+        CancellationToken cancellationToken) =>
+        Reply(await officeService.CreateOffice(request, cancellationToken));
 
     [HttpPatch("edit")]
-    public async Task<IActionResult> EditOffice([FromBody] OfficeModel request, CancellationToken cancellationToken)
-    {
-        var response = await officeService.EditOffice(request, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<object>>> EditOffice([FromBody] UpdateOfficeRequest request,
+        CancellationToken cancellationToken) =>
+        Reply(await officeService.EditOffice(request, cancellationToken));
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteOffice([FromQuery] Guid guid, CancellationToken cancellationToken)
-    {
-        var response = await officeService.DeleteOffice(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<object>>> DeleteOffice([FromQuery] Guid officeId,
+        CancellationToken cancellationToken) =>
+        Reply(await officeService.DeleteOffice(officeId, cancellationToken));
 
     [HttpGet("employees")]
-    public async Task<IActionResult> GetEmployeesByOffice([FromQuery] Guid guid, CancellationToken cancellationToken)
-    {
-        var response = await officeService.GetEmployeesByOffice(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>>> GetEmployeesByOffice(
+        [FromQuery] Guid officeId, CancellationToken cancellationToken) =>
+        Reply(await officeService.GetEmployeesByOffice(officeId, cancellationToken));
+
+    // The envelope's Status is the HTTP status to reply with.
+    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

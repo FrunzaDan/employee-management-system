@@ -1,57 +1,72 @@
-import { GenericResponse } from './generic-response';
+import { IsoDate, IsoDateTime } from './iso-date';
 
-// Property optionality mirrors the DB's nullability: the API serializes with
-// NullValueHandling.Ignore, so a NULL column arrives as an *absent* property
-// (undefined), never as `null`.
-//
-// Dates: `birthdate`/`hireDate` are calendar dates ("YYYY-MM-DD", no time zone);
-// `creationDate`/`interactionDate` are UTC instants in ISO 8601 with a trailing
-// "Z" — render them with the `date` pipe to show local time. JSON has no date
-// type, so both stay strings here.
-export interface Employee {
-  guid: string;
-  firstName: string;
-  lastName: string;
-  msisdn: string;
-  email: string;
-  gender?: Gender;
-  employeeStatus: EmployeeActivationStatus;
-  creationDate: string;
-  interactionDate: string;
-  birthdate?: string;
-  address: Address;
-  hireDate?: string;
-  officeGuid?: string;
-  officeName?: string;
-  departmentGuid?: string;
-  departmentName?: string;
-  costCenterGuid?: string;
-  costCenterName?: string;
-  currentBruttoSalary?: number;
+// Employee.Gender — serialized by the API as its number.
+export enum Gender {
+  NotDeclared = 0,
+  Male = 1,
+  Female = 2,
 }
 
-export interface Address {
-  country?: string;
-  county?: string;
-  town?: string;
-  zip?: string;
-  street?: string;
-  number?: string;
-}
-
-export interface EmployeeResponse extends GenericResponse<EmployeeResponse> {}
-
-// Employee.StatusCode values (CHECK-constrained in the DB; the API's
-// EmployeeStatus enum).
-export enum EmployeeActivationStatus {
+// Employee.StatusCode values — see ai_docs/database.md.
+export enum EmployeeStatus {
   Active = 1901,
   Deactivated = 1903,
   Test = 1904,
 }
 
-// Employee.Gender codes (CHECK-constrained in the DB; the API's Gender enum).
-export enum Gender {
-  NotDeclared = 0,
-  Male = 1,
-  Female = 2,
+export interface Address {
+  country: string;
+  county: string;
+  city: string;
+  postalCode: string;
+  street: string;
+  streetNumber: string;
+}
+
+// An employee as the API returns it. Optionality mirrors the DB's nullability: birth date and
+// the job-info fields are the only NULLable columns, and the API omits null properties
+// entirely, so an unset one arrives as a missing key.
+export interface Employee {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  gender: Gender;
+  status: EmployeeStatus;
+  createdAt: IsoDateTime;
+  lastInteractionAt: IsoDateTime;
+  birthDate?: IsoDate;
+  address: Address;
+  hireDate?: IsoDate;
+  officeId?: string;
+  officeName?: string;
+  departmentId?: string;
+  departmentName?: string;
+  costCenterId?: string;
+  costCenterName?: string;
+  currentGrossSalary?: number;
+}
+
+// POST /api/employee/register. No employeeId: the DB generates it and the response returns it.
+export interface CreateEmployeeRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  gender: Gender;
+  birthDate?: IsoDate;
+  // Omitted = Active. The only other value the API accepts is Test.
+  status?: EmployeeStatus.Active | EmployeeStatus.Test;
+  address: Address;
+  hireDate?: IsoDate;
+  officeId?: string;
+  departmentId?: string;
+  costCenterId?: string;
+}
+
+// PATCH /api/employee/edit — a partial update: an omitted field is left unchanged. There's no
+// status: status only changes through deactivate/reactivate/delete.
+export interface UpdateEmployeeRequest extends Partial<Omit<CreateEmployeeRequest, 'status'>> {
+  employeeId: string;
 }

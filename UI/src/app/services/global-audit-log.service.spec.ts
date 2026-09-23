@@ -12,19 +12,19 @@ describe('GlobalAuditLogService', () => {
   let service: GlobalAuditLogService;
   let httpMock: HttpTestingController;
 
-  const API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/auditLog/all`;
+  const API_URL = `${environment.apiUrl}/api/employee/audit-log/all`;
 
   const buildEntry = (
     overrides: Partial<GlobalAuditLogEntry> = {},
   ): GlobalAuditLogEntry => ({
-    auditId: 1,
-    employeeGuid: 'guid-1',
+    employeeAuditLogId: 1,
+    employeeId: 'employeeId-1',
     employeeFirstName: 'Dan',
     employeeLastName: 'Frunza',
-    employerId: 'TestEmployerID',
-    action: 'Created',
+    performedBy: 'TestEmployerID',
+    actionType: 'Created',
     details: '',
-    actionDate: '2026-01-01T00:00:00Z',
+    occurredAt: '2026-01-01T00:00:00Z',
     ...overrides,
   });
 

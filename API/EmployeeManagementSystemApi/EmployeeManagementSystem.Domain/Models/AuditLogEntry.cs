@@ -1,39 +1,39 @@
 namespace EmployeeManagementSystem.Domain.Models;
 
-public class AuditLogEntry
+public sealed record AuditLogEntry
 {
-    public int AuditId { get; set; }
+    public required int EmployeeAuditLogId { get; init; }
 
-    public Guid EmployeeGuid { get; set; }
+    public required Guid EmployeeId { get; init; }
 
-    public string? EmployerId { get; set; }
+    public required string PerformedBy { get; init; }
 
-    public string? Action { get; set; }
+    public required AuditAction ActionType { get; init; }
 
-    public string? Details { get; set; }
+    public string? Details { get; init; }
 
     // UTC.
-    public DateTime ActionDate { get; set; }
+    public required DateTime OccurredAt { get; init; }
 }
 
-public class GlobalAuditLogEntry
+public sealed record GlobalAuditLogEntry
 {
-    public int AuditId { get; set; }
+    public required int EmployeeAuditLogId { get; init; }
 
-    public Guid EmployeeGuid { get; set; }
+    public required Guid EmployeeId { get; init; }
 
     // Null when the employee no longer exists (EmployeeAuditLog_List LEFT
     // JOINs Employee, since audit history outlives a deleted employee).
-    public string? EmployeeFirstName { get; set; }
+    public string? EmployeeFirstName { get; init; }
 
-    public string? EmployeeLastName { get; set; }
+    public string? EmployeeLastName { get; init; }
 
-    public string? EmployerId { get; set; }
+    public required string PerformedBy { get; init; }
 
-    public string? Action { get; set; }
+    public required AuditAction ActionType { get; init; }
 
-    public string? Details { get; set; }
+    public string? Details { get; init; }
 
     // UTC.
-    public DateTime ActionDate { get; set; }
+    public required DateTime OccurredAt { get; init; }
 }

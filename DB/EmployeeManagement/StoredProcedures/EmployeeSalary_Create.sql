@@ -1,5 +1,4 @@
 CREATE PROCEDURE [dbo].[EmployeeSalary_Create]
-    @EmployeeSalaryId UNIQUEIDENTIFIER,
     @EmployeeId UNIQUEIDENTIFIER,
     @GrossSalary DECIMAL(12, 2),
     @EffectiveDate DATE
@@ -9,7 +8,6 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
-    DECLARE @Now DATETIME2(3) = SYSUTCDATETIME();
 
     IF NOT EXISTS (SELECT 1 FROM dbo.Employee WHERE EmployeeId = @EmployeeId)
     BEGIN
@@ -21,10 +19,9 @@ BEGIN
     END
 
     BEGIN TRY
-        INSERT INTO dbo.EmployeeSalary
-        (EmployeeSalaryId, EmployeeId, GrossSalary, EffectiveDate, CreatedAt)
-        VALUES
-        (@EmployeeSalaryId, @EmployeeId, @GrossSalary, @EffectiveDate, @Now);
+        -- EmployeeSalaryId (IDENTITY) and CreatedAt (SYSUTCDATETIME()) come from the table.
+        INSERT INTO dbo.EmployeeSalary (EmployeeId, GrossSalary, EffectiveDate)
+        VALUES (@EmployeeId, @GrossSalary, @EffectiveDate);
 
         SET @Result = 0;
         SET @Message = 'Salary entry added successfully.';

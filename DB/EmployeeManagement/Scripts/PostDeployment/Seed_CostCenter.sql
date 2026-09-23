@@ -2,9 +2,9 @@
 -- guard makes this safe to re-run.
 IF NOT EXISTS (SELECT 1 FROM dbo.CostCenter WHERE Code = 'CC-100')
 BEGIN
-    INSERT INTO dbo.CostCenter (CostCenterId, Code, Name)
+    INSERT INTO dbo.CostCenter (Code, Name)
     VALUES
-        (NEWID(), 'CC-100', 'Product & Engineering'),
-        (NEWID(), 'CC-200', 'General & Administrative'),
-        (NEWID(), 'CC-300', 'Sales & Marketing');
+        ('CC-100', 'Product & Engineering'),
+        ('CC-200', 'General & Administrative'),
+        ('CC-300', 'Sales & Marketing');
 END

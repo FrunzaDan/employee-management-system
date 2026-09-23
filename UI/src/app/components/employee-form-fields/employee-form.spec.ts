@@ -6,7 +6,7 @@ describe('isEmployeeFormDirty', () => {
   });
 
   it('is true when any single field differs', () => {
-    const changed = { ...emptyEmployeeForm(), zip: '400000' };
+    const changed = { ...emptyEmployeeForm(), postalCode: '400000' };
 
     expect(isEmployeeFormDirty(changed, emptyEmployeeForm())).toBe(true);
   });

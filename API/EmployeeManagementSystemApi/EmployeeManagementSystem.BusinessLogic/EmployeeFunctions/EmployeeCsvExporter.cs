@@ -12,8 +12,8 @@ public static class EmployeeCsvExporter
 
     private static readonly string[] Header =
     [
-        "Guid", "First Name", "Last Name", "Email", "MSISDN", "Gender", "Birthdate", "Status",
-        "Creation Date", "Interaction Date", "Country", "County", "Town", "Zip", "Street", "Number"
+        "Employee ID", "First Name", "Last Name", "Email", "Phone Number", "Gender", "Birth Date", "Status",
+        "Created At", "Last Interaction At", "Country", "County", "City", "Postal Code", "Street", "Street Number"
     ];
 
     public static string ToCsv(IEnumerable<EmployeeModel> employees)
@@ -28,22 +28,23 @@ public static class EmployeeCsvExporter
         {
             var fields = new[]
             {
-                employee.Guid?.ToString(),
+                employee.EmployeeId.ToString(),
                 employee.FirstName,
                 employee.LastName,
                 employee.Email,
-                employee.Msisdn,
+                employee.PhoneNumber,
                 GenderLabel(employee.Gender),
-                employee.Birthdate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                StatusLabel(employee.EmployeeStatus),
-                FormatTimestamp(employee.CreationDate),
-                FormatTimestamp(employee.InteractionDate),
-                employee.Address?.Country,
-                employee.Address?.County,
-                employee.Address?.Town,
-                employee.Address?.Zip,
-                employee.Address?.Street,
-                employee.Address?.Number
+                employee.BirthDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                StatusLabel(employee.Status),
+                // "u" = "yyyy-MM-dd HH:mm:ssZ": sortable, unambiguous, and explicitly UTC.
+                employee.CreatedAt.ToString("u", CultureInfo.InvariantCulture),
+                employee.LastInteractionAt.ToString("u", CultureInfo.InvariantCulture),
+                employee.Address.Country,
+                employee.Address.County,
+                employee.Address.City,
+                employee.Address.PostalCode,
+                employee.Address.Street,
+                employee.Address.StreetNumber
             };
 
             builder.AppendJoin(',', fields.Select(EscapeField)).Append("\r\n");
@@ -52,7 +53,7 @@ public static class EmployeeCsvExporter
         return builder.ToString();
     }
 
-    private static string GenderLabel(Gender? gender) => gender switch
+    private static string GenderLabel(Gender gender) => gender switch
     {
         Gender.NotDeclared => "not declared",
         Gender.Male => "male",
@@ -60,18 +61,13 @@ public static class EmployeeCsvExporter
         _ => string.Empty
     };
 
-    private static string StatusLabel(EmployeeStatus? status) => status switch
+    private static string StatusLabel(EmployeeStatus status) => status switch
     {
         EmployeeStatus.Active => "Active",
         EmployeeStatus.Deactivated => "Deactivated",
         EmployeeStatus.Test => "Test",
         _ => string.Empty
     };
-
-    // ISO 8601 UTC ("2026-09-23T10:15:00Z"): unambiguous in any locale, and sorts correctly
-    // as text if the sheet treats it as a string.
-    private static string? FormatTimestamp(DateTime? value) =>
-        value?.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 
     // RFC 4180 quoting, plus a leading apostrophe on any field that starts with a
     // formula-trigger character (=, +, -, @) so a spreadsheet app never executes

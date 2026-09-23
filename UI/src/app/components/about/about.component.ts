@@ -3,7 +3,6 @@ import { firstValueFrom } from 'rxjs';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
 import { AddEmployeeService } from '../../services/add-employee.service';
-import { GetEmployeeService } from '../../services/get-employee.service';
 import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
@@ -12,8 +11,9 @@ import { Office } from '../../interfaces/office-response';
 import { Department } from '../../interfaces/department-response';
 import { CostCenter } from '../../interfaces/cost-center-response';
 import {
-  Employee,
-  EmployeeActivationStatus,
+  CreateEmployeeRequest,
+  EmployeeStatus,
+  Gender,
 } from '../../interfaces/employee-response';
 
 const TEST_EMPLOYEE_COUNT = 50;
@@ -23,8 +23,8 @@ const TEST_EMPLOYEE_COUNT = 50;
 const HIRE_DATE_RANGE_START_YEAR = 2018;
 const HIRE_DATE_RANGE_END_YEAR = 2025;
 
-const MIN_BRUTTO_SALARY = 3000;
-const MAX_BRUTTO_SALARY = 12000;
+const MIN_GROSS_SALARY = 3000;
+const MAX_GROSS_SALARY = 12000;
 
 const FIRST_NAMES = [
   'Andrei',
@@ -112,37 +112,37 @@ const LAST_NAMES = [
   'Ungureanu',
 ];
 
-const COUNTIES_TOWNS: ReadonlyArray<{ county: string; town: string }> = [
-  { county: 'Cluj', town: 'Cluj-Napoca' },
-  { county: 'Iasi', town: 'Iasi' },
-  { county: 'Timis', town: 'Timisoara' },
-  { county: 'Brasov', town: 'Brasov' },
-  { county: 'Constanta', town: 'Constanta' },
-  { county: 'Bihor', town: 'Oradea' },
-  { county: 'Sibiu', town: 'Sibiu' },
-  { county: 'Dolj', town: 'Craiova' },
-  { county: 'Ilfov', town: 'Otopeni' },
-  { county: 'Bucuresti', town: 'Bucuresti' },
-  { county: 'Arad', town: 'Arad' },
-  { county: 'Arges', town: 'Pitesti' },
-  { county: 'Bacău', town: 'Bacău' },
-  { county: 'Bistrița-Năsăud', town: 'Bistrița' },
-  { county: 'Botoșani', town: 'Botoșani' },
-  { county: 'Brăila', town: 'Brăila' },
-  { county: 'Buzău', town: 'Buzău' },
-  { county: 'Caraș-Severin', town: 'Reșița' },
-  { county: 'Călărași', town: 'Călărași' },
-  { county: 'Covasna', town: 'Sfântu Gheorghe' },
-  { county: 'Dâmbovița', town: 'Târgoviște' },
-  { county: 'Galați', town: 'Galați' },
-  { county: 'Gorj', town: 'Târgu Jiu' },
-  { county: 'Hunedoara', town: 'Deva' },
-  { county: 'Maramureș', town: 'Baia Mare' },
-  { county: 'Mureș', town: 'Târgu Mureș' },
-  { county: 'Neamț', town: 'Piatra Neamț' },
-  { county: 'Prahova', town: 'Ploiești' },
-  { county: 'Suceava', town: 'Suceava' },
-  { county: 'Vâlcea', town: 'Râmnicu Vâlcea' },
+const COUNTIES_CITIES: ReadonlyArray<{ county: string; city: string }> = [
+  { county: 'Cluj', city: 'Cluj-Napoca' },
+  { county: 'Iasi', city: 'Iasi' },
+  { county: 'Timis', city: 'Timisoara' },
+  { county: 'Brasov', city: 'Brasov' },
+  { county: 'Constanta', city: 'Constanta' },
+  { county: 'Bihor', city: 'Oradea' },
+  { county: 'Sibiu', city: 'Sibiu' },
+  { county: 'Dolj', city: 'Craiova' },
+  { county: 'Ilfov', city: 'Otopeni' },
+  { county: 'Bucuresti', city: 'Bucuresti' },
+  { county: 'Arad', city: 'Arad' },
+  { county: 'Arges', city: 'Pitesti' },
+  { county: 'Bacău', city: 'Bacău' },
+  { county: 'Bistrița-Năsăud', city: 'Bistrița' },
+  { county: 'Botoșani', city: 'Botoșani' },
+  { county: 'Brăila', city: 'Brăila' },
+  { county: 'Buzău', city: 'Buzău' },
+  { county: 'Caraș-Severin', city: 'Reșița' },
+  { county: 'Călărași', city: 'Călărași' },
+  { county: 'Covasna', city: 'Sfântu Gheorghe' },
+  { county: 'Dâmbovița', city: 'Târgoviște' },
+  { county: 'Galați', city: 'Galați' },
+  { county: 'Gorj', city: 'Târgu Jiu' },
+  { county: 'Hunedoara', city: 'Deva' },
+  { county: 'Maramureș', city: 'Baia Mare' },
+  { county: 'Mureș', city: 'Târgu Mureș' },
+  { county: 'Neamț', city: 'Piatra Neamț' },
+  { county: 'Prahova', city: 'Ploiești' },
+  { county: 'Suceava', city: 'Suceava' },
+  { county: 'Vâlcea', city: 'Râmnicu Vâlcea' },
 ];
 
 const STREETS = [
@@ -180,7 +180,7 @@ function randomDigits(length: number): string {
   return digits;
 }
 
-function randomBirthdate(): string {
+function randomBirthDate(): string {
   const start = new Date(1950, 0, 1).getTime();
   const end = new Date(2005, 11, 31).getTime();
   const date = new Date(start + Math.random() * (end - start));
@@ -198,14 +198,14 @@ function randomHireDate(): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-function randomBruttoSalary(): number {
-  return Math.floor(Math.random() * (MAX_BRUTTO_SALARY - MIN_BRUTTO_SALARY + 1)) + MIN_BRUTTO_SALARY;
+function randomGrossSalary(): number {
+  return Math.floor(Math.random() * (MAX_GROSS_SALARY - MIN_GROSS_SALARY + 1)) + MIN_GROSS_SALARY;
 }
 
 // undefined (not '') when the list hasn't loaded/is empty, so the field is
-// simply omitted from the create request rather than sent as a bad guid.
-function pickGuid(values: ReadonlyArray<{ guid: string }>): string | undefined {
-  return values.length > 0 ? pick(values).guid : undefined;
+// simply omitted from the create request rather than sent as a bad ID.
+function pickId<T>(values: readonly T[], idOf: (value: T) => string): string | undefined {
+  return values.length > 0 ? idOf(pick(values)) : undefined;
 }
 
 @Component({
@@ -218,7 +218,6 @@ export class AboutComponent {
   private readonly apiLoggerService = inject(ApiLoggerService);
   private readonly notificationService = inject(NotificationService);
   private readonly addEmployeeService = inject(AddEmployeeService);
-  private readonly getEmployeeService = inject(GetEmployeeService);
   private readonly officeService = inject(OfficeService);
   private readonly departmentService = inject(DepartmentService);
   private readonly costCenterService = inject(CostCenterService);
@@ -243,7 +242,7 @@ export class AboutComponent {
     try {
       // Fetched once up front (not via the services' loadX()/signal state,
       // which is for the admin CRUD pages) so every generated employee can
-      // pick a random, real office/department/cost-center guid — see
+      // pick a random, real office/department/cost-center employeeId — see
       // OfficeService.fetchOfficesOnce.
       const [offices, departments, costCenters] = await Promise.all([
         firstValueFrom(this.officeService.fetchOfficesOnce()),
@@ -252,7 +251,7 @@ export class AboutComponent {
       ]);
 
       // An index-based suffix (rather than pure randomness) guarantees no
-      // email/msisdn collisions within the batch itself, since both columns
+      // email/phoneNumber collisions within the batch itself, since both columns
       // carry a unique constraint at the database level.
       const employees = Array.from({ length: TEST_EMPLOYEE_COUNT }, (_, index) =>
         this.buildRandomEmployee(index, offices, departments, costCenters),
@@ -261,16 +260,18 @@ export class AboutComponent {
       let added = 0;
       let failed = 0;
       for (const employee of employees) {
+        let employeeId: string | undefined;
         try {
-          await firstValueFrom(
+          const response = await firstValueFrom(
             this.addEmployeeService.addEmployeeSilently(employee),
           );
+          employeeId = response.data;
         } catch {
           failed++;
           continue;
         }
         added++;
-        await this.addRandomInitialSalary(employee);
+        if (employeeId) await this.addRandomInitialSalary(employeeId, employee);
       }
 
       const problems = failed > 0 ? [`${failed} failed`] : [];
@@ -284,19 +285,19 @@ export class AboutComponent {
     }
   }
 
-  // Best-effort: the employee was already created successfully, so a failure
-  // to look up its guid or add its salary shouldn't be reported as a failed
-  // employee — same "already succeeded, don't turn a follow-up failure into
-  // an error" reasoning as EmployeeAuditLogger.
-  private async addRandomInitialSalary(employee: Employee): Promise<void> {
+  // Best-effort: the employee was already created successfully (employeeId is the ID its
+  // registration returned), so a failure to add its salary shouldn't be reported as a failed
+  // employee — same "already succeeded, don't turn a follow-up failure into an error"
+  // reasoning as EmployeeAuditLogger.
+  private async addRandomInitialSalary(
+    employeeId: string,
+    employee: CreateEmployeeRequest,
+  ): Promise<void> {
     try {
-      const employeeGuid = await firstValueFrom(
-        this.getEmployeeService.findEmployeeGuid(employee.email),
-      );
       await firstValueFrom(
         this.salaryHistoryService.addSalarySilently({
-          employeeGuid,
-          bruttoSalary: randomBruttoSalary(),
+          employeeId,
+          grossSalary: randomGrossSalary(),
           effectiveDate: employee.hireDate!,
         }),
       );
@@ -310,32 +311,32 @@ export class AboutComponent {
     offices: Office[],
     departments: Department[],
     costCenters: CostCenter[],
-  ): Employee {
+  ): CreateEmployeeRequest {
     const firstName = pick(FIRST_NAMES);
     const lastName = pick(LAST_NAMES);
-    const { county, town } = pick(COUNTIES_TOWNS);
+    const { county, city } = pick(COUNTIES_CITIES);
     const suffix = index.toString().padStart(2, '0');
 
     return {
       firstName,
       lastName,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${suffix}@example.com`,
-      msisdn: `07${randomDigits(6)}${suffix}`,
-      gender: Math.floor(Math.random() * 3),
-      birthdate: randomBirthdate(),
-      employeeStatus: EmployeeActivationStatus.Test,
+      phoneNumber: `07${randomDigits(6)}${suffix}`,
+      gender: pick([Gender.NotDeclared, Gender.Male, Gender.Female]),
+      birthDate: randomBirthDate(),
+      status: EmployeeStatus.Test,
       address: {
         country: 'Romania',
         county,
-        town,
+        city,
         street: pick(STREETS),
-        number: (Math.floor(Math.random() * 150) + 1).toString(),
-        zip: randomDigits(6),
+        streetNumber: (Math.floor(Math.random() * 150) + 1).toString(),
+        postalCode: randomDigits(6),
       },
       hireDate: randomHireDate(),
-      officeGuid: pickGuid(offices),
-      departmentGuid: pickGuid(departments),
-      costCenterGuid: pickGuid(costCenters),
-    } as Employee;
+      officeId: pickId(offices, (office) => office.officeId),
+      departmentId: pickId(departments, (department) => department.departmentId),
+      costCenterId: pickId(costCenters, (costCenter) => costCenter.costCenterId),
+    };
   }
 }

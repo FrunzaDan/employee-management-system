@@ -1,4 +1,4 @@
 export interface UserLoginRequest {
-  employerId: string;
-  employerPassword: string;
+  username: string;
+  password: string;
 }

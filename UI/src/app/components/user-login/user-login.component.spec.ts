@@ -50,8 +50,8 @@ describe('UserLoginComponent', () => {
     await submit(component.loginForm);
 
     expect(login).toHaveBeenCalledWith({
-      employerId: 'TestEmployerID',
-      employerPassword: 'Employer123',
+      username: 'TestEmployerID',
+      password: 'Employer123',
     });
     expect(component.errorMessage()).toBeNull();
   });

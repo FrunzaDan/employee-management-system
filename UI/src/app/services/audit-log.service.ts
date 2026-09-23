@@ -10,21 +10,21 @@ import { HttpHeaderService } from './http-header-service';
   providedIn: 'root',
 })
 export class AuditLogService {
-  private readonly API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/auditLog`;
+  private readonly API_URL = `${environment.apiUrl}/api/employee/audit-log`;
   private readonly httpHeaderService = inject(HttpHeaderService);
 
-  private readonly employeeGuid = signal<string | undefined>(undefined);
+  private readonly employeeId = signal<string | undefined>(undefined);
 
-  // Declarative fetch: the request is a function of `employeeGuid`, so a new
-  // guid cancels the in-flight request and starts another, and no request is
-  // made at all until a guid has been set (returning undefined idles it).
+  // Declarative fetch: the request is a function of `employeeId`, so a new
+  // employeeId cancels the in-flight request and starts another, and no request is
+  // made at all until a employeeId has been set (returning undefined idles it).
   private readonly auditLog = httpResource<GenericResponse<AuditLogEntry[]>>(
     () => {
-      const guid = this.employeeGuid();
-      if (!guid) return undefined;
+      const employeeId = this.employeeId();
+      if (!employeeId) return undefined;
       return {
         url: this.API_URL,
-        params: { employeeGuid: guid },
+        params: { employeeId: employeeId },
         headers: this.httpHeaderService.getHeadersWithTokenSet(),
       };
     },
@@ -40,13 +40,13 @@ export class AuditLogService {
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 
-  loadAuditLog(employeeGuid: string): void {
-    if (this.employeeGuid() === employeeGuid) {
+  loadAuditLog(employeeId: string): void {
+    if (this.employeeId() === employeeId) {
       // Same employee (e.g. after a deactivate/reactivate) — the request itself
       // hasn't changed, so ask for a fresh copy.
       this.auditLog.reload();
     } else {
-      this.employeeGuid.set(employeeGuid);
+      this.employeeId.set(employeeId);
     }
   }
 }

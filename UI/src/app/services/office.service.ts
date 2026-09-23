@@ -15,7 +15,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class OfficeService {
-  private readonly API_URL = `${environment.EmployeeManagementSystemAPI}/api/Office`;
+  private readonly API_URL = `${environment.apiUrl}/api/office`;
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -53,7 +53,7 @@ export class OfficeService {
    * Same list as {@link loadOffices}, but as a one-off Observable rather than
    * updating this service's signal state — for callers (e.g. bulk test-data
    * generation) that need the list once, up front, without touching the page
-   * that's actually browsing/managing offices. Mirrors GetEmployeeService.findEmployeeGuid.
+   * that's actually browsing/managing offices.
    */
   fetchOfficesOnce(): Observable<Office[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
@@ -62,10 +62,10 @@ export class OfficeService {
       .pipe(map((response) => response.data ?? []));
   }
 
-  /** A single office by guid — for the office details page, reached directly by URL. */
-  getOffice(guid: string): Observable<Office> {
+  /** A single office by officeId — for the office details page, reached directly by URL. */
+  getOffice(officeId: string): Observable<Office> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', guid);
+    const params = new HttpParams().set('officeId', officeId);
     return this.http
       .get<GenericResponse<Office>>(`${this.API_URL}/get`, { headers, params })
       .pipe(
@@ -77,9 +77,9 @@ export class OfficeService {
   }
 
   /** The employees currently assigned to this office (see Employee_ListByOffice). */
-  getEmployees(officeGuid: string): Observable<EmployeeSummary[]> {
+  getEmployees(officeId: string): Observable<EmployeeSummary[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', officeGuid);
+    const params = new HttpParams().set('officeId', officeId);
     return this.http
       .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, { headers, params })
       .pipe(map((response) => response.data ?? []));
@@ -109,9 +109,9 @@ export class OfficeService {
       );
   }
 
-  deleteOffice(guid: string): Observable<GenericResponse<object>> {
+  deleteOffice(officeId: string): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', guid);
+    const params = new HttpParams().set('officeId', officeId);
     return this.http
       .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { headers, params })
       .pipe(

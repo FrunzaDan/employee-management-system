@@ -19,33 +19,33 @@ describe('EditEmployeeComponent', () => {
   let selectedEmployee: ReturnType<typeof signal<Employee | null>>;
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
-    guid: 'guid-1',
+    employeeId: 'employeeId-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    employeeStatus: 1901,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: 1901,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     hireDate: '2020-01-01',
-    officeGuid: '11111111-1111-1111-1111-111111111111',
-    departmentGuid: '22222222-2222-2222-2222-222222222222',
-    costCenterGuid: '33333333-3333-3333-3333-333333333333',
+    officeId: '11111111-1111-1111-1111-111111111111',
+    departmentId: '22222222-2222-2222-2222-222222222222',
+    costCenterId: '33333333-3333-3333-3333-333333333333',
     ...overrides,
   });
 
   // `id` is what withComponentInputBinding() binds from `?id=`.
-  const createComponent = (id: string | null = 'guid-1') => {
+  const createComponent = (id: string | null = 'employeeId-1') => {
     const fixture = TestBed.createComponent(EditEmployeeComponent);
     if (id) fixture.componentRef.setInput('id', id);
     fixture.detectChanges();
@@ -90,9 +90,9 @@ describe('EditEmployeeComponent', () => {
 
   describe('loading by id', () => {
     it('fetches the employee named by the id input', () => {
-      createComponent('guid-1');
+      createComponent('employeeId-1');
 
-      expect(getEmployee).toHaveBeenCalledWith('guid-1');
+      expect(getEmployee).toHaveBeenCalledWith('employeeId-1');
     });
 
     it('does not fetch when there is no id', () => {
@@ -118,18 +118,18 @@ describe('EditEmployeeComponent', () => {
       expect(component.model().country).toBe('Romania');
     });
 
-    it('zero-pads an unpadded stored birthdate for the date input', () => {
+    it('zero-pads an unpadded stored birthDate for the date input', () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ birthdate: '2020-1-5' }));
+      selectedEmployee.set(buildEmployee({ birthDate: '2020-1-5' }));
 
-      expect(component.model().birthdate).toBe('2020-01-05');
+      expect(component.model().birthDate).toBe('2020-01-05');
     });
 
-    it('leaves the birthdate blank when the stored value is not a full date', () => {
+    it('leaves the birthDate blank when the stored value is not a full date', () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ birthdate: '2020' }));
+      selectedEmployee.set(buildEmployee({ birthDate: '2020' }));
 
-      expect(component.model().birthdate).toBe('');
+      expect(component.model().birthDate).toBe('');
     });
   });
 
@@ -158,15 +158,15 @@ describe('EditEmployeeComponent', () => {
 
     it('merges the form values onto the loaded employee and saves', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1', creationDate: '2026-01-01' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1', createdAt: '2026-01-01' }));
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       await submit(component.employeeForm);
 
       expect(editEmployee).toHaveBeenCalledWith(
         expect.objectContaining({
-          guid: 'guid-1',
-          creationDate: '2026-01-01', // preserved from the original record, not in the form
+          employeeId: 'employeeId-1',
+          createdAt: '2026-01-01', // preserved from the original record, not in the form
           firstName: 'Updated',
           gender: 1,
         }),
@@ -276,19 +276,19 @@ describe('EditEmployeeComponent', () => {
       firstName: employee.firstName,
       lastName: employee.lastName,
       email: employee.email,
-      msisdn: employee.msisdn,
+      phoneNumber: employee.phoneNumber,
       gender: String(employee.gender),
-      birthdate: employee.birthdate ?? '',
+      birthDate: employee.birthDate ?? '',
       country: employee.address.country ?? '',
       county: employee.address.county ?? '',
-      town: employee.address.town ?? '',
+      city: employee.address.city ?? '',
       street: employee.address.street ?? '',
-      number: employee.address.number ?? '',
-      zip: employee.address.zip ?? '',
+      streetNumber: employee.address.streetNumber ?? '',
+      postalCode: employee.address.postalCode ?? '',
       hireDate: employee.hireDate ?? '',
-      officeGuid: employee.officeGuid ?? '',
-      departmentGuid: employee.departmentGuid ?? '',
-      costCenterGuid: employee.costCenterGuid ?? '',
+      officeId: employee.officeId ?? '',
+      departmentId: employee.departmentId ?? '',
+      costCenterId: employee.costCenterId ?? '',
     };
   }
 });

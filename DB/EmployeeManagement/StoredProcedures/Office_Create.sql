@@ -1,5 +1,4 @@
 CREATE PROCEDURE [dbo].[Office_Create]
-    @OfficeId UNIQUEIDENTIFIER,
     @Name NVARCHAR(100),
     @City NVARCHAR(100) = NULL,
     @Country NVARCHAR(100) = NULL
@@ -9,18 +8,25 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
+    DECLARE @OfficeId UNIQUEIDENTIFIER = NULL;
+    DECLARE @Inserted TABLE (OfficeId UNIQUEIDENTIFIER);
 
     BEGIN TRY
-        INSERT INTO dbo.Office (OfficeId, Name, City, Country)
-        VALUES (@OfficeId, @Name, @City, @Country);
+        -- OfficeId comes from the table's NEWSEQUENTIALID() default.
+        INSERT INTO dbo.Office (Name, City, Country)
+        OUTPUT inserted.OfficeId INTO @Inserted
+        VALUES (@Name, @City, @Country);
+
+        SELECT @OfficeId = OfficeId FROM @Inserted;
 
         SET @Result = 0;
-        SET @Message = CONCAT('Office created successfully. GUID: ', @OfficeId);
+        SET @Message = 'Office created successfully.';
     END TRY
     BEGIN CATCH
         SET @Result = 500;
         SET @Message = CONCAT('Failed to create office: ', ERROR_MESSAGE());
     END CATCH
 
-    SELECT @Result AS Result, @Message AS Message;
+    -- OfficeId: the new office's server-generated key; only meaningful when Result = 0.
+    SELECT @Result AS Result, @Message AS Message, @OfficeId AS OfficeId;
 END

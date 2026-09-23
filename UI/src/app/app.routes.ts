@@ -35,7 +35,7 @@ export const routes: Routes = [
     title: 'Employees',
   },
   {
-    path: 'addEmployee',
+    path: 'add-employee',
     loadComponent: () =>
       import('./components/add-employee/add-employee.component').then(
         (m) => m.AddEmployeeComponent,
@@ -45,7 +45,7 @@ export const routes: Routes = [
     title: 'Register employee',
   },
   {
-    path: 'editEmployee',
+    path: 'edit-employee',
     loadComponent: () =>
       import('./components/edit-employee/edit-employee.component').then(
         (m) => m.EditEmployeeComponent,
@@ -64,7 +64,7 @@ export const routes: Routes = [
     title: 'About',
   },
   {
-    path: 'employeeDetails',
+    path: 'employee-details',
     loadComponent: () =>
       import('./components/employee-details/employee-details.component').then(
         (m) => m.EmployeeDetailsComponent,
@@ -73,7 +73,7 @@ export const routes: Routes = [
     title: 'Employee details',
   },
   {
-    path: 'auditLog',
+    path: 'audit-log',
     loadComponent: () =>
       import('./components/global-audit-log/global-audit-log.component').then(
         (m) => m.GlobalAuditLogComponent,
@@ -91,7 +91,7 @@ export const routes: Routes = [
     title: 'Offices',
   },
   {
-    path: 'officeDetails',
+    path: 'office-details',
     loadComponent: () =>
       import('./components/organization/office-details/office-details.component').then(
         (m) => m.OfficeDetailsComponent,
@@ -109,7 +109,7 @@ export const routes: Routes = [
     title: 'Departments',
   },
   {
-    path: 'departmentDetails',
+    path: 'department-details',
     loadComponent: () =>
       import('./components/organization/department-details/department-details.component').then(
         (m) => m.DepartmentDetailsComponent,
@@ -118,7 +118,7 @@ export const routes: Routes = [
     title: 'Department details',
   },
   {
-    path: 'costCenters',
+    path: 'cost-centers',
     loadComponent: () =>
       import('./components/organization/cost-centers/cost-centers.component').then(
         (m) => m.CostCentersComponent,
@@ -127,7 +127,7 @@ export const routes: Routes = [
     title: 'Cost centers',
   },
   {
-    path: 'costCenterDetails',
+    path: 'cost-center-details',
     loadComponent: () =>
       import('./components/organization/cost-center-details/cost-center-details.component').then(
         (m) => m.CostCenterDetailsComponent,

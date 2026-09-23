@@ -1,7 +1,7 @@
 CREATE PROCEDURE [dbo].[EmployeeAuditLog_Create]
     @EmployeeId UNIQUEIDENTIFIER,
     @PerformedBy NVARCHAR(50),
-    @ActionType VARCHAR(50),
+    @ActionType VARCHAR(20),
     @Details NVARCHAR(500) = NULL
 AS
 BEGIN
@@ -12,11 +12,11 @@ BEGIN
 
     INSERT INTO dbo.EmployeeAuditLog
     (
-        EmployeeId, PerformedBy, ActionType, Details, OccurredAt
+        EmployeeId, PerformedBy, ActionType, Details
     )
     VALUES
     (
-        @EmployeeId, @PerformedBy, @ActionType, @Details, SYSUTCDATETIME()
+        @EmployeeId, @PerformedBy, @ActionType, @Details
     );
 
     SET @Result = 0;

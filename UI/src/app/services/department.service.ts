@@ -12,7 +12,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class DepartmentService {
-  private readonly API_URL = `${environment.EmployeeManagementSystemAPI}/api/Department`;
+  private readonly API_URL = `${environment.apiUrl}/api/department`;
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -54,10 +54,10 @@ export class DepartmentService {
       .pipe(map((response) => response.data ?? []));
   }
 
-  /** A single department by guid — for the department details page, reached directly by URL. */
-  getDepartment(guid: string): Observable<Department> {
+  /** A single department by departmentId — for the department details page, reached directly by URL. */
+  getDepartment(departmentId: string): Observable<Department> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', guid);
+    const params = new HttpParams().set('departmentId', departmentId);
     return this.http
       .get<GenericResponse<Department>>(`${this.API_URL}/get`, { headers, params })
       .pipe(
@@ -69,9 +69,9 @@ export class DepartmentService {
   }
 
   /** The employees currently assigned to this department (see Employee_ListByDepartment). */
-  getEmployees(departmentGuid: string): Observable<EmployeeSummary[]> {
+  getEmployees(departmentId: string): Observable<EmployeeSummary[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', departmentGuid);
+    const params = new HttpParams().set('departmentId', departmentId);
     return this.http
       .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, { headers, params })
       .pipe(map((response) => response.data ?? []));
@@ -101,9 +101,9 @@ export class DepartmentService {
       );
   }
 
-  deleteDepartment(guid: string): Observable<GenericResponse<object>> {
+  deleteDepartment(departmentId: string): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', guid);
+    const params = new HttpParams().set('departmentId', departmentId);
     return this.http
       .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { headers, params })
       .pipe(

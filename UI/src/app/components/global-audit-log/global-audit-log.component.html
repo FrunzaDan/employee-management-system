@@ -41,17 +41,17 @@
       </tr>
     </thead>
     <tbody>
-      @for (entry of entries(); track entry.auditId) {
+      @for (entry of entries(); track entry.employeeAuditLogId) {
       <tr>
         <td class="align-middle text-center">
-          {{ entry.actionDate | date: 'medium' }}
+          {{ entry.occurredAt | date: 'medium' }}
         </td>
         <td class="align-middle text-center">
           @if (entry.employeeFirstName || entry.employeeLastName) {
           <a
             class="plain-Links hoverItem"
-            routerLink="/employeeDetails"
-            [queryParams]="{ id: entry.employeeGuid }"
+            routerLink="/employee-details"
+            [queryParams]="{ id: entry.employeeId }"
           >
             {{ employeeLabel(entry) }}
           </a>
@@ -59,8 +59,8 @@
           <span class="text-muted">{{ employeeLabel(entry) }}</span>
           }
         </td>
-        <td class="align-middle text-center">{{ entry.employerId }}</td>
-        <td class="align-middle text-center">{{ entry.action }}</td>
+        <td class="align-middle text-center">{{ entry.performedBy }}</td>
+        <td class="align-middle text-center">{{ auditActionLabel(entry.actionType) }}</td>
         <td class="align-middle text-center">{{ entry.details }}</td>
       </tr>
       }

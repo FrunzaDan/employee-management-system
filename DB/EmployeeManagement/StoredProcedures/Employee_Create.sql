@@ -1,11 +1,10 @@
 CREATE PROCEDURE [dbo].[Employee_Create]
-    @EmployeeId UNIQUEIDENTIFIER,
-    @FirstName NVARCHAR(50),
-    @LastName NVARCHAR(50),
+    @FirstName NVARCHAR(100),
+    @LastName NVARCHAR(100),
     @Email NVARCHAR(254),
     @PhoneNumber VARCHAR(15),
-    @Gender TINYINT,
-    @BirthDate DATE,
+    @Gender TINYINT = 0,
+    @BirthDate DATE = NULL,
     @Country NVARCHAR(100),
     @County NVARCHAR(100),
     @City NVARCHAR(100),
@@ -23,12 +22,13 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
-    DECLARE @Now DATETIME2(3) = SYSUTCDATETIME();
+    DECLARE @EmployeeId UNIQUEIDENTIFIER = NULL;
+    DECLARE @Inserted TABLE (EmployeeId UNIQUEIDENTIFIER);
 
     IF EXISTS (SELECT 1 FROM dbo.Employee WHERE PhoneNumber = @PhoneNumber)
     BEGIN
-        SET @Result = 400;  -- MSISDN already exists
-        SET @Message = 'MSISDN already exists.';
+        SET @Result = 400;  -- Phone number already exists
+        SET @Message = 'Phone number already exists.';
     END
     ELSE IF EXISTS (SELECT 1 FROM dbo.Employee WHERE Email = @Email)
     BEGIN
@@ -60,18 +60,21 @@ BEGIN
             -- Both inserts must succeed together: Employee_Get/Employee_List INNER JOIN
             -- to EmployeeAddress, so a employee row left without a matching address row would
             -- silently disappear from every read despite existing in Employee.
+            -- EmployeeId, CreatedAt and LastInteractionAt come from the table's
+            -- defaults (NEWSEQUENTIALID() / SYSUTCDATETIME()); OUTPUT captures the new key.
             INSERT INTO dbo.Employee
             (
-                EmployeeId, FirstName, LastName, Email, PhoneNumber,
-                Gender, BirthDate, StatusCode, CreatedAt, LastInteractionAt,
+                FirstName, LastName, Email, PhoneNumber, Gender, BirthDate, StatusCode,
                 HireDate, OfficeId, DepartmentId, CostCenterId
             )
+            OUTPUT inserted.EmployeeId INTO @Inserted
             VALUES
             (
-                @EmployeeId, @FirstName, @LastName, @Email, @PhoneNumber,
-                @Gender, @BirthDate, @StatusCode, @Now, @Now,
+                @FirstName, @LastName, @Email, @PhoneNumber, @Gender, @BirthDate, @StatusCode,
                 @HireDate, @OfficeId, @DepartmentId, @CostCenterId
             );
+
+            SELECT @EmployeeId = EmployeeId FROM @Inserted;
 
             INSERT INTO dbo.EmployeeAddress
             (
@@ -85,16 +88,19 @@ BEGIN
             COMMIT TRANSACTION;
 
             SET @Result = 0;
-            SET @Message = CONCAT('Employee created successfully. GUID: ', @EmployeeId);
+            SET @Message = 'Employee created successfully.';
         END TRY
         BEGIN CATCH
             IF @@TRANCOUNT > 0
                 ROLLBACK TRANSACTION;
 
+            SET @EmployeeId = NULL;
             SET @Result = 500;
             SET @Message = CONCAT('Failed to create employee: ', ERROR_MESSAGE());
         END CATCH
     END
 
-    SELECT @Result AS Result, @Message AS Message;
+    -- EmployeeId rides along on the usual (Result, Message) row so the API can return the
+    -- new employee's server-generated key; only meaningful when Result = 0.
+    SELECT @Result AS Result, @Message AS Message, @EmployeeId AS EmployeeId;
 END

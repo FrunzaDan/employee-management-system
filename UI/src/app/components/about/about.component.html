@@ -113,20 +113,20 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <ul>
             <li>
               <code>Employee</code> — one row per employee: name, email,
-              MSISDN, gender, birthdate, a numeric
+              phone number, gender, birth date, a numeric
               <code>StatusCode</code> (active / deactivated), and
-              creation/last-interaction timestamps, keyed by a GUID primary key.
-              Email and MSISDN each carry a unique constraint, so duplicates are
+              creation/last-interaction timestamps, keyed by an <code>EmployeeId</code> (GUID) primary key.
+              Email and phone number each carry a unique constraint, so duplicates are
               rejected by the database itself, not just application logic.
             </li>
             <li>
               <code>EmployeeAddress</code> — one row per employee's address,
               linked back to <code>Employee</code> by a foreign key on that
-              same GUID.
+              same <code>EmployeeId</code>.
             </li>
             <li>
               <code>Employer</code> — login accounts for the API, keyed by
-              employer ID (primary key): a PBKDF2 password hash and its salt
+              <code>Username</code> (primary key): a PBKDF2 password hash and its salt
               (never the plaintext password), a role, and a last-interaction
               timestamp.
             </li>
@@ -138,16 +138,16 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <ul>
             <li>
               <code>Employee_Create</code> — inserts the employee and address
-              rows in one transaction, rejecting duplicate email/MSISDN first.
+              rows in one transaction, rejecting duplicate email/phone number first.
             </li>
             <li>
-              <code>Employee_Get</code> — looks up a single employee by GUID,
-              MSISDN, or email.
+              <code>Employee_Get</code> — looks up a single employee by ID,
+              phone number, or email.
             </li>
             <li>
               <code>Employee_List</code> — returns one page of employees
               joined with their addresses, filtered by an optional search term
-              and sorted by name/email/MSISDN, plus a total count for
+              and sorted by name/email/phone number, plus a total count for
               pagination.
             </li>
             <li>
@@ -174,7 +174,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             A post-deployment script seeds one demo login the first time the
             schema is deployed (it's skipped if that employer already exists),
             so there's something to sign in with immediately after
-            initialization: employer ID <code>TestEmployerID</code>, password
+            initialization: username <code>TestEmployerID</code>, password
             <code>Employer123</code>.
           </p>
         </div>
@@ -189,8 +189,8 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           </p>
           <ol>
             <li>
-              The login form submits a employer ID and password to
-              <code>POST /api/Authentication/access-token</code> over HTTPS.
+              The login form submits a username and password to
+              <code>POST /api/authentication/access-token</code> over HTTPS.
               That endpoint is rate-limited (5 attempts per minute per caller
               IP) — beyond that it responds with <code>429</code>
               immediately, without touching the database, to blunt scripted
@@ -200,7 +200,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               The API fetches only that employer's stored password hash and salt
               via a stored procedure (<code>dbo.Employer_GetAuthData</code>),
               executed through a parameterized ADO.NET
-              <code>SqlCommand</code> — the employer ID is always bound as a
+              <code>SqlCommand</code> — the username is always bound as a
               command parameter, never concatenated into SQL, so this path is
               not vulnerable to SQL injection.
             </li>
@@ -213,7 +213,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <li>
               On success, the API mints a JWT signed with HMAC-SHA256 (the same
               signing-key logic is shared by issuing and validating, so they can
-              never quietly drift apart). It carries the employer ID (as several
+              never quietly drift apart). It carries the username (as several
               standard claim types), the employer's role, a marker for how they
               authenticated, a unique token ID, and issued time, with a
               configured expiry.
@@ -319,7 +319,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <p class="card-text">
             <strong>This is test data.</strong> The button below registers 50
             fictitious employees through the same
-            <code>POST /api/Employee/register</code> endpoint the
+            <code>POST /api/employee/register</code> endpoint the
             <em>Add Employee</em> form uses — each with a randomly generated
             name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), and
             a home address. Every one of them is created with the
@@ -361,7 +361,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               Register a new employee through a validated form (name, contact
-              details, address, birthdate via a native date picker, etc.).
+              details, address, birth date via a native date picker, etc.).
             </li>
             <li>
               Open a employee's details page for a full read-only view, with a

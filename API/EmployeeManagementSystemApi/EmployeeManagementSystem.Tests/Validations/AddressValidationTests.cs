@@ -1,19 +1,19 @@
-using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.BusinessLogic.Validations;
+using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.Tests.Validations;
 
 public class AddressValidationTests
 {
-    private static AddressModel ValidAddress() => new()
+    private static AddressRequest ValidAddress() => new()
     {
         Country = new string('a', FieldLengthConstants.Country),
         County = new string('a', FieldLengthConstants.County),
-        Town = new string('a', FieldLengthConstants.Town),
-        Zip = new string('a', FieldLengthConstants.Zip),
+        City = new string('a', FieldLengthConstants.City),
+        PostalCode = new string('a', FieldLengthConstants.PostalCode),
         Street = new string('a', FieldLengthConstants.Street),
-        Number = new string('a', FieldLengthConstants.Number)
+        StreetNumber = new string('a', FieldLengthConstants.StreetNumber)
     };
 
     [Fact]
@@ -25,7 +25,7 @@ public class AddressValidationTests
     [Fact]
     public void ValidateLengths_ReturnsNull_WhenAllFieldsAreNull()
     {
-        Assert.Null(AddressValidation.ValidateLengths(new AddressModel()));
+        Assert.Null(AddressValidation.ValidateLengths(new AddressRequest()));
     }
 
     [Fact]
@@ -50,18 +50,18 @@ public class AddressValidationTests
     public void ValidateLengths_RejectsOverLengthTown()
     {
         var address = ValidAddress();
-        address.Town = new string('a', FieldLengthConstants.Town + 1);
+        address.City = new string('a', FieldLengthConstants.City + 1);
 
-        Assert.Equal("Town is too long.", AddressValidation.ValidateLengths(address));
+        Assert.Equal("City is too long.", AddressValidation.ValidateLengths(address));
     }
 
     [Fact]
     public void ValidateLengths_RejectsOverLengthZip()
     {
         var address = ValidAddress();
-        address.Zip = new string('a', FieldLengthConstants.Zip + 1);
+        address.PostalCode = new string('a', FieldLengthConstants.PostalCode + 1);
 
-        Assert.Equal("Zip is too long.", AddressValidation.ValidateLengths(address));
+        Assert.Equal("Postal code is too long.", AddressValidation.ValidateLengths(address));
     }
 
     [Fact]
@@ -77,19 +77,37 @@ public class AddressValidationTests
     public void ValidateLengths_RejectsOverLengthNumber()
     {
         var address = ValidAddress();
-        address.Number = new string('a', FieldLengthConstants.Number + 1);
+        address.StreetNumber = new string('a', FieldLengthConstants.StreetNumber + 1);
 
-        Assert.Equal("Number is too long.", AddressValidation.ValidateLengths(address));
+        Assert.Equal("Street number is too long.", AddressValidation.ValidateLengths(address));
+    }
+
+    [Fact]
+    public void ValidateRequired_ReturnsNull_WhenEveryFieldIsPresent()
+    {
+        Assert.Null(AddressValidation.ValidateRequired(ValidAddress()));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void ValidateRequired_RejectsAMissingPostalCode(string? postalCode)
+    {
+        var address = ValidAddress();
+        address.PostalCode = postalCode;
+
+        Assert.Equal("Postal code is required.", AddressValidation.ValidateRequired(address));
     }
 
     [Theory]
     [InlineData("400001")]
     [InlineData("SW1A 1AA")]
     [InlineData("12345-6789")]
-    public void ValidateLengths_AcceptsRealWorldPostalCodes(string zip)
+    public void ValidateLengths_AcceptsRealWorldPostalCodes(string postalCode)
     {
         var address = ValidAddress();
-        address.Zip = zip;
+        address.PostalCode = postalCode;
 
         Assert.Null(AddressValidation.ValidateLengths(address));
     }
@@ -97,12 +115,12 @@ public class AddressValidationTests
     [Theory]
     [InlineData("4000é1")]
     [InlineData("400_001")]
-    public void ValidateLengths_RejectsAZipThatWouldBeMangledByTheVarcharColumn(string zip)
+    public void ValidateLengths_RejectsAPostalCodeThatWouldBeMangledByTheVarcharColumn(string postalCode)
     {
         var address = ValidAddress();
-        address.Zip = zip;
+        address.PostalCode = postalCode;
 
-        Assert.Equal("Zip may only contain letters, digits, spaces and hyphens.",
+        Assert.Equal("Postal code may only contain letters, digits, spaces and hyphens.",
             AddressValidation.ValidateLengths(address));
     }
 }

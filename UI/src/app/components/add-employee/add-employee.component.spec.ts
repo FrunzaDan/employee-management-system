@@ -16,19 +16,19 @@ describe('AddEmployeeComponent', () => {
     firstName: 'Dan',
     lastName: 'Frunza',
     email: 'dan@example.com',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     gender: '1',
-    birthdate: '1990-01-01',
+    birthDate: '1990-01-01',
     country: 'Romania',
     county: 'Cluj',
-    town: 'Cluj-Napoca',
+    city: 'Cluj-Napoca',
     street: 'Main',
-    number: '1',
-    zip: '400000',
+    streetNumber: '1',
+    postalCode: '400000',
     hireDate: '2020-01-01',
-    officeGuid: '11111111-1111-1111-1111-111111111111',
-    departmentGuid: '22222222-2222-2222-2222-222222222222',
-    costCenterGuid: '33333333-3333-3333-3333-333333333333',
+    officeId: '11111111-1111-1111-1111-111111111111',
+    departmentId: '22222222-2222-2222-2222-222222222222',
+    costCenterId: '33333333-3333-3333-3333-333333333333',
   };
 
   beforeEach(() => {
@@ -57,12 +57,12 @@ describe('AddEmployeeComponent', () => {
   });
 
   it('validates the email and phone formats', () => {
-    component.model.set({ ...validModel, email: 'not-an-email', msisdn: '12' });
+    component.model.set({ ...validModel, email: 'not-an-email', phoneNumber: '12' });
 
     expect(component.employeeForm.email().errors()[0].message).toBe(
       'The Email should be a valid one',
     );
-    expect(component.employeeForm.msisdn().errors()[0].message).toBe(
+    expect(component.employeeForm.phoneNumber().errors()[0].message).toBe(
       'The phone number should be a valid one',
     );
   });
@@ -77,21 +77,21 @@ describe('AddEmployeeComponent', () => {
         firstName: 'Dan',
         lastName: 'Frunza',
         email: 'dan@example.com',
-        msisdn: '123456789',
+        phoneNumber: '123456789',
         gender: 1,
-        birthdate: '1990-01-01',
+        birthDate: '1990-01-01',
         address: {
           country: 'Romania',
           county: 'Cluj',
-          town: 'Cluj-Napoca',
+          city: 'Cluj-Napoca',
           street: 'Main',
-          number: '1',
-          zip: '400000',
+          streetNumber: '1',
+          postalCode: '400000',
         },
         hireDate: '2020-01-01',
-        officeGuid: '11111111-1111-1111-1111-111111111111',
-        departmentGuid: '22222222-2222-2222-2222-222222222222',
-        costCenterGuid: '33333333-3333-3333-3333-333333333333',
+        officeId: '11111111-1111-1111-1111-111111111111',
+        departmentId: '22222222-2222-2222-2222-222222222222',
+        costCenterId: '33333333-3333-3333-3333-333333333333',
       }),
     );
   });

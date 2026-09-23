@@ -2,10 +2,10 @@
 -- guard makes this safe to re-run.
 IF NOT EXISTS (SELECT 1 FROM dbo.Department WHERE Name = 'Engineering')
 BEGIN
-    INSERT INTO dbo.Department (DepartmentId, Name)
+    INSERT INTO dbo.Department (Name)
     VALUES
-        (NEWID(), 'Engineering'),
-        (NEWID(), 'Human Resources'),
-        (NEWID(), 'Sales'),
-        (NEWID(), 'Finance');
+        ('Engineering'),
+        ('Human Resources'),
+        ('Sales'),
+        ('Finance');
 END

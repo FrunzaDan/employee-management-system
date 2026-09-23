@@ -5,7 +5,7 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import {
   Employee,
-  EmployeeActivationStatus,
+  EmployeeStatus,
 } from '../../interfaces/employee-response';
 import { ActivateEmployeeService } from '../../services/activate-employee.service';
 import { AuditLogService } from '../../services/audit-log.service';
@@ -28,23 +28,23 @@ describe('EmployeeDetailsComponent', () => {
   let loadHistory: ReturnType<typeof vi.fn>;
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
-    guid: 'guid-1',
+    employeeId: 'employeeId-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    employeeStatus: EmployeeActivationStatus.Active,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: EmployeeStatus.Active,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     hireDate: '2020-01-01',
     ...overrides,
@@ -52,7 +52,7 @@ describe('EmployeeDetailsComponent', () => {
 
   // routeParamId is what withComponentInputBinding() would bind to the `id`
   // input from `?id=`; set it to null before createComponent() for the "no id" case.
-  let routeParamId: string | null = 'guid-1';
+  let routeParamId: string | null = 'employeeId-1';
 
   const createComponent = (): EmployeeDetailsComponent => {
     getEmployee = vi.fn();
@@ -125,7 +125,7 @@ describe('EmployeeDetailsComponent', () => {
   };
 
   beforeEach(() => {
-    routeParamId = 'guid-1';
+    routeParamId = 'employeeId-1';
   });
 
   afterEach(() => {
@@ -136,8 +136,8 @@ describe('EmployeeDetailsComponent', () => {
     it('fetches the employee and its audit log using the id input', () => {
       createComponent();
 
-      expect(getEmployee).toHaveBeenCalledWith('guid-1');
-      expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
+      expect(getEmployee).toHaveBeenCalledWith('employeeId-1');
+      expect(loadAuditLog).toHaveBeenCalledWith('employeeId-1');
     });
 
     it('navigates home instead of fetching when there is no id', () => {
@@ -161,7 +161,7 @@ describe('EmployeeDetailsComponent', () => {
     it('employeeStatusLabel maps the status code to a label', () => {
       const component = createComponent();
       selectedEmployee.set(
-        buildEmployee({ employeeStatus: EmployeeActivationStatus.Deactivated }),
+        buildEmployee({ status: EmployeeStatus.Deactivated }),
       );
 
       expect(component.employeeStatusLabel()).toBe('Deactivated');
@@ -179,7 +179,7 @@ describe('EmployeeDetailsComponent', () => {
     it('is false for an Active employee', () => {
       const component = createComponent();
       selectedEmployee.set(
-        buildEmployee({ employeeStatus: EmployeeActivationStatus.Active }),
+        buildEmployee({ status: EmployeeStatus.Active }),
       );
 
       expect(component.canDelete()).toBe(false);
@@ -188,7 +188,7 @@ describe('EmployeeDetailsComponent', () => {
     it('is true for a Deactivated employee', () => {
       const component = createComponent();
       selectedEmployee.set(
-        buildEmployee({ employeeStatus: EmployeeActivationStatus.Deactivated }),
+        buildEmployee({ status: EmployeeStatus.Deactivated }),
       );
 
       expect(component.canDelete()).toBe(true);
@@ -197,7 +197,7 @@ describe('EmployeeDetailsComponent', () => {
     it('is true for a Test employee (exempt from the deactivate-first rule)', () => {
       const component = createComponent();
       selectedEmployee.set(
-        buildEmployee({ employeeStatus: EmployeeActivationStatus.Test }),
+        buildEmployee({ status: EmployeeStatus.Test }),
       );
 
       expect(component.canDelete()).toBe(true);
@@ -207,17 +207,17 @@ describe('EmployeeDetailsComponent', () => {
   describe('deactivateEmployee / reactivateEmployee', () => {
     it('deactivateEmployee asks for confirmation before delegating to the service', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
 
       await component.deactivateEmployee();
 
       expect(confirm).toHaveBeenCalled();
-      expect(deactivateEmployee).toHaveBeenCalledWith('guid-1');
+      expect(deactivateEmployee).toHaveBeenCalledWith('employeeId-1');
     });
 
     it('deactivateEmployee does nothing when the user cancels', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deactivateEmployee();
@@ -227,19 +227,19 @@ describe('EmployeeDetailsComponent', () => {
 
     it('reactivateEmployee delegates directly, without a confirmation prompt', () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
 
       component.reactivateEmployee();
 
       expect(confirm).not.toHaveBeenCalled();
-      expect(reactivateEmployee).toHaveBeenCalledWith('guid-1');
+      expect(reactivateEmployee).toHaveBeenCalledWith('employeeId-1');
     });
   });
 
   describe('deleteEmployee', () => {
     it('does nothing when the user cancels the confirmation', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deleteEmployee();
@@ -249,17 +249,17 @@ describe('EmployeeDetailsComponent', () => {
 
     it('deletes the employee and navigates back to the list on success', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
 
       await component.deleteEmployee();
 
-      expect(deleteEmployee).toHaveBeenCalledWith('guid-1');
+      expect(deleteEmployee).toHaveBeenCalledWith('employeeId-1');
       expect(navigate).toHaveBeenCalledWith(['/employees']);
     });
 
     it('surfaces the error and stops loading when the delete request fails', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
       deleteEmployee.mockReturnValue(
         throwError(
           () =>
@@ -280,7 +280,7 @@ describe('EmployeeDetailsComponent', () => {
   describe('audit log reload on activation-loading transition', () => {
     it('reloads the audit log once a deactivate/reactivate call resolves (true -> false)', () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
       loadAuditLog.mockClear();
 
       activationLoading.set(true);
@@ -290,12 +290,12 @@ describe('EmployeeDetailsComponent', () => {
       activationLoading.set(false);
       TestBed.flushEffects();
 
-      expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
+      expect(loadAuditLog).toHaveBeenCalledWith('employeeId-1');
     });
 
     it('does not reload on the initial false state (no prior true)', () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ guid: 'guid-1' }));
+      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
       loadAuditLog.mockClear();
 
       TestBed.flushEffects();

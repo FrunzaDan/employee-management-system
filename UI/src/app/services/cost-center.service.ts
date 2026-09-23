@@ -12,7 +12,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class CostCenterService {
-  private readonly API_URL = `${environment.EmployeeManagementSystemAPI}/api/CostCenter`;
+  private readonly API_URL = `${environment.apiUrl}/api/cost-center`;
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -54,10 +54,10 @@ export class CostCenterService {
       .pipe(map((response) => response.data ?? []));
   }
 
-  /** A single cost center by guid — for the cost center details page, reached directly by URL. */
-  getCostCenter(guid: string): Observable<CostCenter> {
+  /** A single cost center by costCenterId — for the cost center details page, reached directly by URL. */
+  getCostCenter(costCenterId: string): Observable<CostCenter> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', guid);
+    const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
       .get<GenericResponse<CostCenter>>(`${this.API_URL}/get`, { headers, params })
       .pipe(
@@ -69,9 +69,9 @@ export class CostCenterService {
   }
 
   /** The employees currently assigned to this cost center (see Employee_ListByCostCenter). */
-  getEmployees(costCenterGuid: string): Observable<EmployeeSummary[]> {
+  getEmployees(costCenterId: string): Observable<EmployeeSummary[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', costCenterGuid);
+    const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
       .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, { headers, params })
       .pipe(map((response) => response.data ?? []));
@@ -101,9 +101,9 @@ export class CostCenterService {
       );
   }
 
-  deleteCostCenter(guid: string): Observable<GenericResponse<object>> {
+  deleteCostCenter(costCenterId: string): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('guid', guid);
+    const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
       .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { headers, params })
       .pipe(

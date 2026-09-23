@@ -16,7 +16,7 @@
   @if (draft(); as d) {
     <div class="card app-card mb-4">
       <div class="card-body">
-        <h2 class="card-title">{{ d.guid ? 'Edit office' : 'New office' }}</h2>
+        <h2 class="card-title">{{ d.officeId ? 'Edit office' : 'New office' }}</h2>
 
         @if (saveError(); as error) {
           <div class="alert alert-danger" role="alert">{{ error }}</div>
@@ -24,13 +24,13 @@
 
         <div class="row g-3">
           <div class="col-12 col-md-4">
-            <label class="form-label" for="officeName">Name</label>
+            <label class="form-label" for="name">Name</label>
             <input
-              id="officeName"
+              id="name"
               type="text"
               class="form-control"
-              [value]="d.officeName"
-              (input)="updateDraft('officeName', $any($event.target).value)"
+              [value]="d.name"
+              (input)="updateDraft('name', $any($event.target).value)"
             />
           </div>
           <div class="col-12 col-md-4">
@@ -89,31 +89,31 @@
               <th scope="col" class="text-center">City</th>
               <th scope="col" class="text-center">Country</th>
               <th scope="col" class="text-center">Employees</th>
-              <th scope="col" class="text-center">Total brutto salary</th>
+              <th scope="col" class="text-center">Total gross salary</th>
               <th scope="col" class="w-25 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (office of offices(); track office.guid) {
+            @for (office of offices(); track office.officeId) {
               <tr>
                 <td class="align-middle text-center">
-                  <a class="plain-Links hoverItem" routerLink="/officeDetails" [queryParams]="{ id: office.guid }">
-                    {{ office.officeName }}
+                  <a class="plain-Links hoverItem" routerLink="/office-details" [queryParams]="{ id: office.officeId }">
+                    {{ office.name }}
                   </a>
                 </td>
                 <td class="align-middle text-center">{{ office.city || '—' }}</td>
                 <td class="align-middle text-center">{{ office.country || '—' }}</td>
                 <td class="align-middle text-center">{{ office.employeeCount }}</td>
-                <td class="align-middle text-center">{{ office.totalBruttoSalary }}</td>
+                <td class="align-middle text-center">{{ office.totalGrossSalary }}</td>
                 <td class="align-middle text-center">
-                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + office.officeName">
+                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + office.name">
                     <button
                       type="button"
                       class="btn btn-secondary btn-sm shadow-none"
-                      [attr.aria-expanded]="expandedOfficeGuid() === office.guid"
+                      [attr.aria-expanded]="expandedOfficeId() === office.officeId"
                       (click)="toggleEmployees(office)"
                     >
-                      {{ expandedOfficeGuid() === office.guid ? 'Hide employees' : 'Quickly view employees' }}
+                      {{ expandedOfficeId() === office.officeId ? 'Hide employees' : 'Quickly view employees' }}
                     </button>
                     <button
                       type="button"
@@ -132,7 +132,7 @@
                   </div>
                 </td>
               </tr>
-              @if (expandedOfficeGuid() === office.guid) {
+              @if (expandedOfficeId() === office.officeId) {
                 <tr>
                   <td colspan="6" class="bg-body-tertiary">
                     @if (expandedEmployeesLoading()) {
@@ -143,12 +143,12 @@
                       <span class="text-muted">No employees assigned to this office.</span>
                     } @else {
                       <ul class="list-unstyled mb-0">
-                        @for (employee of expandedEmployees(); track employee.guid) {
+                        @for (employee of expandedEmployees(); track employee.employeeId) {
                           <li>
-                            <a class="plain-Links hoverItem" routerLink="/employeeDetails" [queryParams]="{ id: employee.guid }">
+                            <a class="plain-Links hoverItem" routerLink="/employee-details" [queryParams]="{ id: employee.employeeId }">
                               {{ employee.firstName }} {{ employee.lastName }}
                             </a>
-                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.employeeStatus) }})</span>
+                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.status) }})</span>
                           </li>
                         }
                       </ul>

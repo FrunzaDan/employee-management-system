@@ -12,7 +12,7 @@ describe('ExportEmployeeService', () => {
   let httpMock: HttpTestingController;
   let triggerDownloadSpy: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/export`;
+  const API_URL = `${environment.apiUrl}/api/employee/export`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({

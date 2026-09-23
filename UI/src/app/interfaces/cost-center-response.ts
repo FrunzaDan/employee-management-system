@@ -1,7 +1,9 @@
+// employeeCount/totalGrossSalary are aggregates only the list endpoint computes; the
+// single-cost-center endpoint omits them.
 export interface CostCenter {
-  guid: string;
-  costCenterCode: string;
-  costCenterName?: string;
-  employeeCount: number;
-  totalBruttoSalary: number;
+  costCenterId: string;
+  code: string;
+  name?: string;
+  employeeCount?: number;
+  totalGrossSalary?: number;
 }

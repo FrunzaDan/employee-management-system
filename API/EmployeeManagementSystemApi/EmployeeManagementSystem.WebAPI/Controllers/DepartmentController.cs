@@ -11,47 +11,35 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 public class DepartmentController(IDepartmentService departmentService) : ControllerBase
 {
     [HttpGet("all")]
-    public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken)
-    {
-        var response = await departmentService.GetDepartments(cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<IReadOnlyList<DepartmentModel>>>> GetDepartments(
+        CancellationToken cancellationToken) =>
+        Reply(await departmentService.GetDepartments(cancellationToken));
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetDepartment([FromQuery] Guid guid, CancellationToken cancellationToken)
-    {
-        var response = await departmentService.GetDepartment(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<DepartmentModel>>> GetDepartment([FromQuery] Guid departmentId,
+        CancellationToken cancellationToken) =>
+        Reply(await departmentService.GetDepartment(departmentId, cancellationToken));
 
     [HttpPost("create")]
-    public async Task<IActionResult> CreateDepartment([FromBody] DepartmentModel request,
-        CancellationToken cancellationToken)
-    {
-        var response = await departmentService.CreateDepartment(request, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<Guid?>>> CreateDepartment([FromBody] CreateDepartmentRequest request,
+        CancellationToken cancellationToken) =>
+        Reply(await departmentService.CreateDepartment(request, cancellationToken));
 
     [HttpPatch("edit")]
-    public async Task<IActionResult> EditDepartment([FromBody] DepartmentModel request,
-        CancellationToken cancellationToken)
-    {
-        var response = await departmentService.EditDepartment(request, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<object>>> EditDepartment([FromBody] UpdateDepartmentRequest request,
+        CancellationToken cancellationToken) =>
+        Reply(await departmentService.EditDepartment(request, cancellationToken));
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteDepartment([FromQuery] Guid guid, CancellationToken cancellationToken)
-    {
-        var response = await departmentService.DeleteDepartment(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<object>>> DeleteDepartment([FromQuery] Guid departmentId,
+        CancellationToken cancellationToken) =>
+        Reply(await departmentService.DeleteDepartment(departmentId, cancellationToken));
 
     [HttpGet("employees")]
-    public async Task<IActionResult> GetEmployeesByDepartment([FromQuery] Guid guid,
-        CancellationToken cancellationToken)
-    {
-        var response = await departmentService.GetEmployeesByDepartment(guid, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
-    }
+    public async Task<ActionResult<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>>> GetEmployeesByDepartment(
+        [FromQuery] Guid departmentId, CancellationToken cancellationToken) =>
+        Reply(await departmentService.GetEmployeesByDepartment(departmentId, cancellationToken));
+
+    // The envelope's Status is the HTTP status to reply with.
+    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

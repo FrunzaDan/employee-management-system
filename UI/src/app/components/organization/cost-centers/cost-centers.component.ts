@@ -10,9 +10,9 @@ import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
 interface CostCenterDraft {
-  guid: string | null;
-  costCenterCode: string;
-  costCenterName: string;
+  costCenterId: string | null;
+  code: string;
+  name: string;
 }
 
 @Component({
@@ -34,7 +34,7 @@ export class CostCentersComponent implements OnInit {
   readonly saveError = signal<string | null>(null);
   readonly deleteError = signal<string | null>(null);
 
-  readonly expandedCostCenterGuid = signal<string | null>(null);
+  readonly expandedCostCenterId = signal<string | null>(null);
   readonly expandedEmployees = signal<EmployeeSummary[]>([]);
   readonly expandedEmployeesLoading = signal(false);
   readonly expandedEmployeesError = signal<string | null>(null);
@@ -47,15 +47,15 @@ export class CostCentersComponent implements OnInit {
 
   startAdd(): void {
     this.saveError.set(null);
-    this.draft.set({ guid: null, costCenterCode: '', costCenterName: '' });
+    this.draft.set({ costCenterId: null, code: '', name: '' });
   }
 
   startEdit(costCenter: CostCenter): void {
     this.saveError.set(null);
     this.draft.set({
-      guid: costCenter.guid,
-      costCenterCode: costCenter.costCenterCode,
-      costCenterName: costCenter.costCenterName ?? '',
+      costCenterId: costCenter.costCenterId,
+      code: costCenter.code,
+      name: costCenter.name ?? '',
     });
   }
 
@@ -64,13 +64,13 @@ export class CostCentersComponent implements OnInit {
     this.saveError.set(null);
   }
 
-  updateDraft(field: keyof Omit<CostCenterDraft, 'guid'>, value: string): void {
+  updateDraft(field: keyof Omit<CostCenterDraft, 'costCenterId'>, value: string): void {
     this.draft.update((d) => (d ? { ...d, [field]: value } : d));
   }
 
   async save(): Promise<void> {
     const draft = this.draft();
-    if (!draft || !draft.costCenterCode.trim()) {
+    if (!draft || !draft.code.trim()) {
       this.saveError.set('Cost center code is required.');
       return;
     }
@@ -80,12 +80,12 @@ export class CostCentersComponent implements OnInit {
 
     try {
       const payload = {
-        costCenterCode: draft.costCenterCode,
-        costCenterName: draft.costCenterName,
+        code: draft.code,
+        name: draft.name,
       };
       await firstValueFrom(
-        draft.guid
-          ? this.costCenterService.editCostCenter({ guid: draft.guid, ...payload })
+        draft.costCenterId
+          ? this.costCenterService.editCostCenter({ costCenterId: draft.costCenterId, ...payload })
           : this.costCenterService.createCostCenter(payload),
       );
       this.draft.set(null);
@@ -100,13 +100,13 @@ export class CostCentersComponent implements OnInit {
 
   async deleteCostCenter(costCenter: CostCenter): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
-      `Delete cost center "${costCenter.costCenterCode}"? This cannot be undone.`,
+      `Delete cost center "${costCenter.code}"? This cannot be undone.`,
     );
     if (!confirmed) return;
 
     this.deleteError.set(null);
     try {
-      await firstValueFrom(this.costCenterService.deleteCostCenter(costCenter.guid));
+      await firstValueFrom(this.costCenterService.deleteCostCenter(costCenter.costCenterId));
     } catch (error) {
       this.deleteError.set(
         extractErrorMessage(error as HttpErrorResponse, 'Failed to delete cost center'),
@@ -115,17 +115,17 @@ export class CostCentersComponent implements OnInit {
   }
 
   toggleEmployees(costCenter: CostCenter): void {
-    if (this.expandedCostCenterGuid() === costCenter.guid) {
-      this.expandedCostCenterGuid.set(null);
+    if (this.expandedCostCenterId() === costCenter.costCenterId) {
+      this.expandedCostCenterId.set(null);
       return;
     }
 
-    this.expandedCostCenterGuid.set(costCenter.guid);
+    this.expandedCostCenterId.set(costCenter.costCenterId);
     this.expandedEmployees.set([]);
     this.expandedEmployeesError.set(null);
     this.expandedEmployeesLoading.set(true);
 
-    this.costCenterService.getEmployees(costCenter.guid).subscribe({
+    this.costCenterService.getEmployees(costCenter.costCenterId).subscribe({
       next: (employees) => {
         this.expandedEmployees.set(employees);
         this.expandedEmployeesLoading.set(false);

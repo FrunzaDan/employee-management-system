@@ -11,7 +11,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class SalaryHistoryService {
-  private readonly API_URL = `${environment.EmployeeManagementSystemAPI}/api/Employee/salaryHistory`;
+  private readonly API_URL = `${environment.apiUrl}/api/employee/salary-history`;
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -27,10 +27,10 @@ export class SalaryHistoryService {
   readonly loadingSignal = computed(() => this.state().loading);
   readonly errorSignal = computed(() => this.state().error);
 
-  loadHistory(employeeGuid: string): void {
+  loadHistory(employeeId: string): void {
     this.state.update((s) => ({ ...s, loading: true, error: null }));
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeGuid', employeeGuid);
+    const params = new HttpParams().set('employeeId', employeeId);
 
     this.http
       .get<GenericResponse<SalaryHistoryEntry[]>>(this.API_URL, { headers, params })
@@ -47,7 +47,7 @@ export class SalaryHistoryService {
   }
 
   addSalary(
-    entry: Pick<SalaryHistoryEntry, 'employeeGuid' | 'bruttoSalary' | 'effectiveDate'>,
+    entry: Pick<SalaryHistoryEntry, 'employeeId' | 'grossSalary' | 'effectiveDate'>,
   ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
@@ -55,7 +55,7 @@ export class SalaryHistoryService {
       .pipe(
         tap(() => {
           this.notificationService.show('Salary entry added successfully.');
-          this.loadHistory(entry.employeeGuid);
+          this.loadHistory(entry.employeeId);
         }),
       );
   }
@@ -66,7 +66,7 @@ export class SalaryHistoryService {
    * entries for employees whose history page isn't even open.
    */
   addSalarySilently(
-    entry: Pick<SalaryHistoryEntry, 'employeeGuid' | 'bruttoSalary' | 'effectiveDate'>,
+    entry: Pick<SalaryHistoryEntry, 'employeeId' | 'grossSalary' | 'effectiveDate'>,
   ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http.post<GenericResponse<object>>(this.API_URL, entry, { headers });

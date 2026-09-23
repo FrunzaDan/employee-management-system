@@ -16,7 +16,7 @@ export interface LoadEmployeesParams {
   pageNumber: number;
   pageSize: number;
   searchTerm?: string;
-  sortColumn?: 'name' | 'email' | 'msisdn';
+  sortColumn?: 'name' | 'email' | 'phoneNumber';
   sortDirection?: 'asc' | 'desc';
 }
 
@@ -26,8 +26,8 @@ const DEFAULT_PAGE_SIZE = 10;
   providedIn: 'root',
 })
 export class GetEmployeeService {
-  private readonly API_URL_GET_ALL = `${environment.EmployeeManagementSystemAPI}/api/Employee/all`;
-  private readonly API_URL_GET_SINGLE = `${environment.EmployeeManagementSystemAPI}/api/Employee/get`;
+  private readonly API_URL_GET_ALL = `${environment.apiUrl}/api/employee/all`;
+  private readonly API_URL_GET_SINGLE = `${environment.apiUrl}/api/employee/get`;
 
   private readonly state = signal({
     employees: [] as Employee[],
@@ -116,7 +116,7 @@ export class GetEmployeeService {
     this.setLoading(true);
 
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('searchVariable', queryString);
+    const params = new HttpParams().set('searchTerm', queryString);
 
     this.http
       .get<GenericResponse<Employee>>(this.API_URL_GET_SINGLE, {
@@ -136,49 +136,25 @@ export class GetEmployeeService {
       });
   }
 
-  /**
-   * Looks a employee up by email and returns its GUID, without touching any of this
-   * service's signals (unlike {@link getEmployee}, which drives the details page's state).
-   * Registration doesn't return the new employee's server-generated GUID, so bulk callers
-   * (test-data generation) use this to find it afterwards.
-   */
-  findEmployeeGuid(email: string): Observable<string> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('searchVariable', email);
-
-    return this.http
-      .get<GenericResponse<Employee>>(this.API_URL_GET_SINGLE, {
-        headers,
-        params,
-      })
-      .pipe(
-        map((response) => {
-          const guid = response?.data?.guid;
-          if (!guid) throw new Error(`No employee found for ${email}.`);
-          return guid;
-        }),
-      );
-  }
-
   updateEmployeeLocally(updatedEmployee: Employee): void {
     this.state.update((state) => ({
       ...state,
       employees: state.employees.map((c) =>
-        c.guid === updatedEmployee.guid ? updatedEmployee : c,
+        c.employeeId === updatedEmployee.employeeId ? updatedEmployee : c,
       ),
       selectedEmployee:
-        state.selectedEmployee?.guid === updatedEmployee.guid
+        state.selectedEmployee?.employeeId === updatedEmployee.employeeId
           ? updatedEmployee
           : state.selectedEmployee,
     }));
   }
 
-  removeEmployeeLocally(employeeGUID: string): void {
+  removeEmployeeLocally(employeeId: string): void {
     this.state.update((state) => ({
       ...state,
-      employees: state.employees.filter((c) => c.guid !== employeeGUID),
+      employees: state.employees.filter((c) => c.employeeId !== employeeId),
       selectedEmployee:
-        state.selectedEmployee?.guid === employeeGUID
+        state.selectedEmployee?.employeeId === employeeId
           ? null
           : state.selectedEmployee,
     }));

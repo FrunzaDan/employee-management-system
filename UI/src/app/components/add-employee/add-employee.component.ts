@@ -10,7 +10,7 @@ import {
   employeeFormSchema,
   emptyEmployeeForm,
   isEmployeeFormDirty,
-  toEmployee,
+  toCreateEmployeeRequest,
 } from '../employee-form-fields/employee-form';
 import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-form-fields.component';
 
@@ -58,7 +58,7 @@ export class AddEmployeeComponent {
 
     try {
       await firstValueFrom(
-        this.addEmployeeService.addEmployee(toEmployee(this.model())),
+        this.addEmployeeService.addEmployee(toCreateEmployeeRequest(this.model())),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);

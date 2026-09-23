@@ -47,7 +47,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Label / value rows (.detail-list/.detail-row/.guid — shared, styles.css) */
+/* Label / value rows (.detail-list/.detail-row/.entity-id — shared, styles.css) */
 
 /* Audit trail */
 .audit-list {

@@ -6,7 +6,7 @@ import {
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { Employee, EmployeeActivationStatus } from '../interfaces/employee-response';
+import { Employee, EmployeeStatus } from '../interfaces/employee-response';
 import { ActivateEmployeeService } from './activate-employee.service';
 import { GetEmployeeService } from './get-employee.service';
 import { HttpHeaderService } from './http-header-service';
@@ -20,28 +20,28 @@ describe('ActivateEmployeeService', () => {
   let notificationShow: ReturnType<typeof vi.fn>;
 
   const DEACTIVATE_URL =
-    environment.EmployeeManagementSystemAPI + '/api/Employee/deactivate';
+    environment.apiUrl + '/api/employee/deactivate';
   const REACTIVATE_URL =
-    environment.EmployeeManagementSystemAPI + '/api/Employee/reactivate';
+    environment.apiUrl + '/api/employee/reactivate';
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
-    guid: 'guid-1',
+    employeeId: 'employeeId-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    employeeStatus: EmployeeActivationStatus.Active,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: EmployeeStatus.Active,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     ...overrides,
   });
@@ -78,7 +78,7 @@ describe('ActivateEmployeeService', () => {
   });
 
   it('sets loadingSignal true synchronously while deactivation is in flight', () => {
-    service.deactivateEmployee('guid-1');
+    service.deactivateEmployee('employeeId-1');
 
     expect(service.loadingSignal()).toBe(true);
 
@@ -88,17 +88,17 @@ describe('ActivateEmployeeService', () => {
   });
 
   it('deactivateEmployee marks the local employee Deactivated and notifies on success', () => {
-    service.deactivateEmployee('guid-1');
+    service.deactivateEmployee('employeeId-1');
 
     const req = httpMock.expectOne((r) => r.url === DEACTIVATE_URL);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.params.get('employeeGUID')).toBe('guid-1');
+    expect(req.request.params.get('employeeId')).toBe('employeeId-1');
     req.flush({ status: 200, responseMessage: 'ok' });
 
     expect(updateEmployeeLocally).toHaveBeenCalledWith(
       expect.objectContaining({
-        guid: 'guid-1',
-        employeeStatus: EmployeeActivationStatus.Deactivated,
+        employeeId: 'employeeId-1',
+        status: EmployeeStatus.Deactivated,
       }),
     );
     expect(notificationShow).toHaveBeenCalledWith(
@@ -109,9 +109,9 @@ describe('ActivateEmployeeService', () => {
   });
 
   it('reactivateEmployee marks the local employee Active and hits the reactivate endpoint', () => {
-    employeesSignal.set([buildEmployee({ employeeStatus: EmployeeActivationStatus.Deactivated })]);
+    employeesSignal.set([buildEmployee({ status: EmployeeStatus.Deactivated })]);
 
-    service.reactivateEmployee('guid-1');
+    service.reactivateEmployee('employeeId-1');
 
     const req = httpMock.expectOne((r) => r.url === REACTIVATE_URL);
     expect(req.request.method).toBe('PATCH');
@@ -119,8 +119,8 @@ describe('ActivateEmployeeService', () => {
 
     expect(updateEmployeeLocally).toHaveBeenCalledWith(
       expect.objectContaining({
-        guid: 'guid-1',
-        employeeStatus: EmployeeActivationStatus.Active,
+        employeeId: 'employeeId-1',
+        status: EmployeeStatus.Active,
       }),
     );
     expect(notificationShow).toHaveBeenCalledWith(
@@ -129,7 +129,7 @@ describe('ActivateEmployeeService', () => {
   });
 
   it('sets an error and skips the local update/notification when the response status is not 200', () => {
-    service.deactivateEmployee('guid-1');
+    service.deactivateEmployee('employeeId-1');
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -144,7 +144,7 @@ describe('ActivateEmployeeService', () => {
   it('sets a not-found error and skips notification when the employee is not in the local cache', () => {
     employeesSignal.set([]);
 
-    service.deactivateEmployee('missing-guid');
+    service.deactivateEmployee('missing-employeeId');
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -156,7 +156,7 @@ describe('ActivateEmployeeService', () => {
   });
 
   it('does not retry a definitive 4xx error and surfaces the server message', () => {
-    service.deactivateEmployee('guid-1');
+    service.deactivateEmployee('employeeId-1');
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -173,7 +173,7 @@ describe('ActivateEmployeeService', () => {
   it('retries once on a transient (5xx) failure and then succeeds', () => {
     vi.useFakeTimers();
 
-    service.deactivateEmployee('guid-1');
+    service.deactivateEmployee('employeeId-1');
 
     const firstAttempt = httpMock.expectOne((r) => r.url === DEACTIVATE_URL);
     firstAttempt.flush(null, { status: 500, statusText: 'Server Error' });
@@ -184,7 +184,7 @@ describe('ActivateEmployeeService', () => {
     secondAttempt.flush({ status: 200, responseMessage: 'ok' });
 
     expect(updateEmployeeLocally).toHaveBeenCalledWith(
-      expect.objectContaining({ employeeStatus: EmployeeActivationStatus.Deactivated }),
+      expect.objectContaining({ status: EmployeeStatus.Deactivated }),
     );
     expect(service.loadingSignal()).toBe(false);
     expect(service.errorSignal()).toBeNull();

@@ -1,9 +1,9 @@
 CREATE PROCEDURE [dbo].[Employee_List]
     @PageNumber INT = 1,
     @PageSize INT = 10,
-    @SearchTerm NVARCHAR(200) = NULL,
-    @SortColumn NVARCHAR(20) = 'name',
-    @SortDirection NVARCHAR(4) = 'asc'
+    @SearchTerm NVARCHAR(254) = NULL,
+    @SortColumn VARCHAR(20) = 'name',
+    @SortDirection VARCHAR(4) = 'asc'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -12,7 +12,7 @@ BEGIN
     -- more than the user typed (e.g. a search for "_" matching almost every employee).
     -- Still fully parameterized (no string concatenation of SQL) — this only escapes the
     -- pattern characters inside the parameter's own value.
-    DECLARE @EscapedSearchTerm NVARCHAR(200) =
+    DECLARE @EscapedSearchTerm NVARCHAR(508) =
         REPLACE(REPLACE(REPLACE(@SearchTerm, '\', '\\'), '%', '\%'), '_', '\_');
 
     SELECT
@@ -67,7 +67,7 @@ BEGIN
         -- below evaluates to non-NULL for every row, so it's the only pair
         -- that actually influences row order — the rest are NULL for every
         -- row and are no-ops. Ties within name always break by FirstName.
-        -- The sort keys ('name', 'email', 'msisdn') are the API's sortColumn values,
+        -- The sort keys ('name', 'email', 'phonenumber') are the API's EmployeeSortColumn values,
         -- not column names.
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN e.LastName END ASC,
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN e.FirstName END ASC,
@@ -75,8 +75,8 @@ BEGIN
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'desc' THEN e.FirstName END DESC,
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'asc' THEN e.Email END ASC,
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'desc' THEN e.Email END DESC,
-        CASE WHEN @SortColumn = 'msisdn' AND @SortDirection = 'asc' THEN e.PhoneNumber END ASC,
-        CASE WHEN @SortColumn = 'msisdn' AND @SortDirection = 'desc' THEN e.PhoneNumber END DESC
+        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'asc' THEN e.PhoneNumber END ASC,
+        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'desc' THEN e.PhoneNumber END DESC
     OFFSET (@PageNumber - 1) * @PageSize ROWS
     FETCH NEXT @PageSize ROWS ONLY;
 END

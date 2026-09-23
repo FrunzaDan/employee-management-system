@@ -4,10 +4,10 @@ namespace EmployeeManagementSystem.BusinessLogic.Services;
 
 public interface ICostCenterService
 {
-    Task<ResponseModel<object>> CreateCostCenter(CostCenterModel request, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetCostCenter(Guid guid, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetCostCenters(CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> EditCostCenter(CostCenterModel request, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> DeleteCostCenter(Guid guid, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetEmployeesByCostCenter(Guid guid, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateCostCenter(CreateCostCenterRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<CostCenterModel>> GetCostCenter(Guid costCenterId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<CostCenterModel>>> GetCostCenters(CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> EditCostCenter(UpdateCostCenterRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteCostCenter(Guid costCenterId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByCostCenter(Guid costCenterId, CancellationToken cancellationToken = default);
 }

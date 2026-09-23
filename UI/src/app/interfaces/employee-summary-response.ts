@@ -1,12 +1,12 @@
-import { EmployeeActivationStatus } from './employee-response';
+import { EmployeeStatus } from './employee-response';
 
 // A minimal projection of an employee, returned by the "employees belonging
 // to this office/department/cost center" endpoints — not the full Employee
 // shape (no address/hire-date/salary), which those endpoints don't join.
 export interface EmployeeSummary {
-  guid: string;
+  employeeId: string;
   firstName: string;
   lastName: string;
   email: string;
-  employeeStatus: EmployeeActivationStatus;
+  status: EmployeeStatus;
 }

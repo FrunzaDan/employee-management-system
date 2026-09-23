@@ -5,20 +5,20 @@ namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 
 public class EmployeeDeletion(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> DeleteEmployee(Guid guid, string employerId,
+    public async Task<ResponseModel<object>> DeleteEmployee(Guid employeeId, string performedBy,
         CancellationToken cancellationToken = default)
     {
-        if (guid == Guid.Empty)
-            return new ResponseModel<object>(400, "Invalid or empty Guid.");
+        if (employeeId == Guid.Empty)
+            return new ResponseModel<object>(400, "Invalid or empty employee ID.");
 
-        var response = await dbUtils.DeleteEmployee(guid, cancellationToken);
+        var response = await dbUtils.DeleteEmployee(employeeId, cancellationToken);
 
         // No FK from EmployeeAuditLog to Employee, deliberately — this row
         // is the one place that outlives the employee it's about. Also not forwarding
         // cancellationToken here: the delete already succeeded, so the log entry should
         // still be attempted even if the client has since disconnected.
         if (response.Status == 200)
-            await auditLogger.Log(guid, employerId, "Deleted");
+            await auditLogger.Log(employeeId, performedBy, AuditAction.Deleted);
 
         return response;
     }

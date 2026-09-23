@@ -11,7 +11,7 @@ import { ExportEmployeeService } from '../../services/export-employee.service';
 import { NotificationService } from '../../services/notification.service';
 import {
   Employee,
-  EmployeeActivationStatus,
+  EmployeeStatus,
 } from '../../interfaces/employee-response';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
@@ -46,13 +46,13 @@ export class EmployeeListComponent implements OnInit {
   // reference rows that actually exist in the browser, and selection is reset
   // on every fetchEmployees() (page/search/sort change, or after the bulk
   // action itself refreshes the page).
-  readonly selectedGuids = signal<ReadonlySet<string>>(new Set());
+  readonly selectedEmployeeIds = signal<ReadonlySet<string>>(new Set());
   readonly bulkActionInProgress = signal(false);
 
   readonly allOnPageSelected = computed(
     () =>
       this.employees().length > 0 &&
-      this.employees().every((c) => this.selectedGuids().has(c.guid)),
+      this.employees().every((c) => this.selectedEmployeeIds().has(c.employeeId)),
   );
 
   // CSV export exports whatever the list is currently searching/sorted by,
@@ -61,12 +61,12 @@ export class EmployeeListComponent implements OnInit {
   readonly exportError = this.exportEmployeeService.errorSignal;
 
   // Add EmployeeStatus enum for better type checking
-  readonly EmployeeStatus = EmployeeActivationStatus;
+  readonly EmployeeStatus = EmployeeStatus;
 
-  readonly statusLabels = new Map<Employee['employeeStatus'], string>([
-    [EmployeeActivationStatus.Active, 'Active'],
-    [EmployeeActivationStatus.Deactivated, 'Deactivated'],
-    [EmployeeActivationStatus.Test, 'Test'],
+  readonly statusLabels = new Map<Employee['status'], string>([
+    [EmployeeStatus.Active, 'Active'],
+    [EmployeeStatus.Deactivated, 'Deactivated'],
+    [EmployeeStatus.Test, 'Test'],
   ]);
 
   // Search, sorting, and pagination are all server-side now: every change to
@@ -74,7 +74,7 @@ export class EmployeeListComponent implements OnInit {
   // filtering/sorting an already-loaded full list in memory (see
   // GetEmployeeService.loadEmployees and Employee_List).
   readonly searchTerm = signal('');
-  readonly sortColumn = signal<'name' | 'email' | 'msisdn'>('name');
+  readonly sortColumn = signal<'name' | 'email' | 'phoneNumber'>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
   readonly pageSize = 50;
@@ -106,16 +106,16 @@ export class EmployeeListComponent implements OnInit {
   // Computed signal for duplicate GUIDs
   readonly duplicateGuids = computed(() => {
     const employees = this.employees();
-    const guidCount = new Map<string, number>();
+    const employeeIdCount = new Map<string, number>();
 
     employees.forEach((employee) => {
-      const count = guidCount.get(employee.guid) ?? 0;
-      guidCount.set(employee.guid, count + 1);
+      const count = employeeIdCount.get(employee.employeeId) ?? 0;
+      employeeIdCount.set(employee.employeeId, count + 1);
     });
 
-    return Array.from(guidCount.entries())
+    return Array.from(employeeIdCount.entries())
       .filter(([_, count]) => count > 1)
-      .map(([guid]) => guid);
+      .map(([employeeId]) => employeeId);
   });
 
   constructor() {
@@ -152,12 +152,12 @@ export class EmployeeListComponent implements OnInit {
   }
 
   // Exposed on the <th> so assistive tech announces the current sort.
-  ariaSort(column: 'name' | 'email' | 'msisdn'): 'ascending' | 'descending' | 'none' {
+  ariaSort(column: 'name' | 'email' | 'phoneNumber'): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
   }
 
-  setSort(column: 'name' | 'email' | 'msisdn'): void {
+  setSort(column: 'name' | 'email' | 'phoneNumber'): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -181,7 +181,7 @@ export class EmployeeListComponent implements OnInit {
   }
 
   private fetchEmployees(): void {
-    this.selectedGuids.set(new Set());
+    this.selectedEmployeeIds.set(new Set());
     this.getEmployeeService.loadEmployees({
       pageNumber: this.currentPage(),
       pageSize: this.pageSize,
@@ -192,19 +192,19 @@ export class EmployeeListComponent implements OnInit {
   }
 
   // Employee action methods
-  async deactivateEmployee(guid: string): Promise<void> {
+  async deactivateEmployee(employeeId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this employee?',
     );
     if (!confirmed) return;
-    this.activateEmployeeService.deactivateEmployee(guid);
+    this.activateEmployeeService.deactivateEmployee(employeeId);
   }
 
-  reactivateEmployee(guid: string): void {
-    this.activateEmployeeService.reactivateEmployee(guid);
+  reactivateEmployee(employeeId: string): void {
+    this.activateEmployeeService.reactivateEmployee(employeeId);
   }
 
-  async deleteEmployee(guid: string): Promise<void> {
+  async deleteEmployee(employeeId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete this employee? This cannot be undone.',
     );
@@ -213,7 +213,7 @@ export class EmployeeListComponent implements OnInit {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.deleteEmployeeService.deleteEmployee(guid).subscribe({
+    this.deleteEmployeeService.deleteEmployee(employeeId).subscribe({
       next: () => {
         this.deleting.set(false);
         // removeEmployeeLocally() (called by DeleteEmployeeService) only
@@ -228,30 +228,30 @@ export class EmployeeListComponent implements OnInit {
     });
   }
 
-  isSelected(guid: string): boolean {
-    return this.selectedGuids().has(guid);
+  isSelected(employeeId: string): boolean {
+    return this.selectedEmployeeIds().has(employeeId);
   }
 
-  toggleSelection(guid: string, checked: boolean): void {
-    const next = new Set(this.selectedGuids());
+  toggleSelection(employeeId: string, checked: boolean): void {
+    const next = new Set(this.selectedEmployeeIds());
     if (checked) {
-      next.add(guid);
+      next.add(employeeId);
     } else {
-      next.delete(guid);
+      next.delete(employeeId);
     }
-    this.selectedGuids.set(next);
+    this.selectedEmployeeIds.set(next);
   }
 
   toggleSelectAllOnPage(checked: boolean): void {
-    const next = new Set(this.selectedGuids());
+    const next = new Set(this.selectedEmployeeIds());
     for (const employee of this.employees()) {
       if (checked) {
-        next.add(employee.guid);
+        next.add(employee.employeeId);
       } else {
-        next.delete(employee.guid);
+        next.delete(employee.employeeId);
       }
     }
-    this.selectedGuids.set(next);
+    this.selectedEmployeeIds.set(next);
   }
 
   // A employee must be Deactivated (or Test, which is exempt from that rule —
@@ -259,15 +259,15 @@ export class EmployeeListComponent implements OnInit {
   // deactivated as part of this action, not deleted, same as the single-row
   // buttons would require.
   async bulkDeleteSelected(): Promise<void> {
-    const guids = this.selectedGuids();
-    const selected = this.employees().filter((c) => guids.has(c.guid));
+    const employeeIds = this.selectedEmployeeIds();
+    const selected = this.employees().filter((c) => employeeIds.has(c.employeeId));
     if (selected.length === 0) return;
 
     const toDeactivate = selected.filter(
-      (c) => c.employeeStatus === EmployeeActivationStatus.Active,
+      (c) => c.status === EmployeeStatus.Active,
     );
     const toDelete = selected.filter(
-      (c) => c.employeeStatus !== EmployeeActivationStatus.Active,
+      (c) => c.status !== EmployeeStatus.Active,
     );
 
     const lines = [`Of the ${selected.length} selected employees:`];
@@ -290,13 +290,13 @@ export class EmployeeListComponent implements OnInit {
 
     const operations = [
       ...toDeactivate.map((c) =>
-        this.activateEmployeeService.deactivateEmployeeSilently(c.guid).pipe(
+        this.activateEmployeeService.deactivateEmployeeSilently(c.employeeId).pipe(
           map(() => true),
           catchError(() => of(false)),
         ),
       ),
       ...toDelete.map((c) =>
-        this.deleteEmployeeService.deleteEmployeeSilently(c.guid).pipe(
+        this.deleteEmployeeService.deleteEmployeeSilently(c.employeeId).pipe(
           map(() => true),
           catchError(() => of(false)),
         ),

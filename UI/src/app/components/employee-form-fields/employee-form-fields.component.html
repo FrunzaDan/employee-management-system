@@ -48,21 +48,21 @@
           }
         </div>
 
-        @let birthdate = form().birthdate();
-        @let birthdateError = birthdate.touched() && birthdate.invalid();
+        @let birthDate = form().birthDate();
+        @let birthDateError = birthDate.touched() && birthDate.invalid();
         <div class="mb-3">
-          <label class="form-label" for="birthdate">Birthdate</label>
+          <label class="form-label" for="birthDate">Birth date</label>
           <input
-            id="birthdate"
+            id="birthDate"
             type="date"
             class="form-control"
-            [formField]="form().birthdate"
-            [class.is-invalid]="birthdateError"
-            [attr.aria-invalid]="birthdateError"
-            [attr.aria-describedby]="birthdateError ? 'birthdate-error' : null"
+            [formField]="form().birthDate"
+            [class.is-invalid]="birthDateError"
+            [attr.aria-invalid]="birthDateError"
+            [attr.aria-describedby]="birthDateError ? 'birthDate-error' : null"
           />
-          @if (birthdateError) {
-          <div class="invalid-feedback" id="birthdate-error">{{ birthdate.errors()[0].message }}</div>
+          @if (birthDateError) {
+          <div class="invalid-feedback" id="birthDate-error">{{ birthDate.errors()[0].message }}</div>
           }
         </div>
       </fieldset>
@@ -124,73 +124,73 @@
           </div>
 
           <div class="col-12 col-md-6">
-            @let office = form().officeGuid();
+            @let office = form().officeId();
             @let officeError = office.touched() && office.invalid();
             <div class="mb-3">
-              <label class="form-label" for="officeGuid">Office</label>
+              <label class="form-label" for="officeId">Office</label>
               <select
-                id="officeGuid"
+                id="officeId"
                 class="form-select"
-                [formField]="form().officeGuid"
+                [formField]="form().officeId"
                 [class.is-invalid]="officeError"
                 [attr.aria-invalid]="officeError"
-                [attr.aria-describedby]="officeError ? 'officeGuid-error' : null"
+                [attr.aria-describedby]="officeError ? 'officeId-error' : null"
               >
                 <option value="">Select an office</option>
-                @for (o of offices(); track o.guid) {
-                <option [value]="o.guid">{{ o.officeName }}</option>
+                @for (o of offices(); track o.officeId) {
+                <option [value]="o.officeId">{{ o.name }}</option>
                 }
               </select>
               @if (officeError) {
-              <div class="invalid-feedback" id="officeGuid-error">{{ office.errors()[0].message }}</div>
+              <div class="invalid-feedback" id="officeId-error">{{ office.errors()[0].message }}</div>
               }
             </div>
           </div>
 
           <div class="col-12 col-md-6">
-            @let department = form().departmentGuid();
+            @let department = form().departmentId();
             @let departmentError = department.touched() && department.invalid();
             <div class="mb-3">
-              <label class="form-label" for="departmentGuid">Department</label>
+              <label class="form-label" for="departmentId">Department</label>
               <select
-                id="departmentGuid"
+                id="departmentId"
                 class="form-select"
-                [formField]="form().departmentGuid"
+                [formField]="form().departmentId"
                 [class.is-invalid]="departmentError"
                 [attr.aria-invalid]="departmentError"
-                [attr.aria-describedby]="departmentError ? 'departmentGuid-error' : null"
+                [attr.aria-describedby]="departmentError ? 'departmentId-error' : null"
               >
                 <option value="">Select a department</option>
-                @for (d of departments(); track d.guid) {
-                <option [value]="d.guid">{{ d.departmentName }}</option>
+                @for (d of departments(); track d.departmentId) {
+                <option [value]="d.departmentId">{{ d.name }}</option>
                 }
               </select>
               @if (departmentError) {
-              <div class="invalid-feedback" id="departmentGuid-error">{{ department.errors()[0].message }}</div>
+              <div class="invalid-feedback" id="departmentId-error">{{ department.errors()[0].message }}</div>
               }
             </div>
           </div>
 
           <div class="col-12 col-md-6">
-            @let costCenter = form().costCenterGuid();
+            @let costCenter = form().costCenterId();
             @let costCenterError = costCenter.touched() && costCenter.invalid();
             <div class="mb-3">
-              <label class="form-label" for="costCenterGuid">Cost center</label>
+              <label class="form-label" for="costCenterId">Cost center</label>
               <select
-                id="costCenterGuid"
+                id="costCenterId"
                 class="form-select"
-                [formField]="form().costCenterGuid"
+                [formField]="form().costCenterId"
                 [class.is-invalid]="costCenterError"
                 [attr.aria-invalid]="costCenterError"
-                [attr.aria-describedby]="costCenterError ? 'costCenterGuid-error' : null"
+                [attr.aria-describedby]="costCenterError ? 'costCenterId-error' : null"
               >
                 <option value="">Select a cost center</option>
-                @for (cc of costCenters(); track cc.guid) {
-                <option [value]="cc.guid">{{ cc.costCenterCode }} — {{ cc.costCenterName }}</option>
+                @for (cc of costCenters(); track cc.costCenterId) {
+                <option [value]="cc.costCenterId">{{ cc.code }} — {{ cc.name }}</option>
                 }
               </select>
               @if (costCenterError) {
-              <div class="invalid-feedback" id="costCenterGuid-error">{{ costCenter.errors()[0].message }}</div>
+              <div class="invalid-feedback" id="costCenterId-error">{{ costCenter.errors()[0].message }}</div>
               }
             </div>
           </div>

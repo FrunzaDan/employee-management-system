@@ -25,14 +25,14 @@
           >
             <a
               class="btn btn-primary shadow-none"
-              routerLink="/editEmployee"
-              [queryParams]="{ id: employee()?.guid }"
+              routerLink="/edit-employee"
+              [queryParams]="{ id: employee()?.employeeId }"
               >Edit</a
             >
 
             @if (
-              employee()?.employeeStatus === EmployeeStatus.Active ||
-              employee()?.employeeStatus === EmployeeStatus.Test
+              employee()?.status === EmployeeStatus.Active ||
+              employee()?.status === EmployeeStatus.Test
             ) {
               <button
                 (click)="deactivateEmployee()"
@@ -43,7 +43,7 @@
                 Deactivate
               </button>
             }
-            @if (employee()?.employeeStatus === EmployeeStatus.Deactivated) {
+            @if (employee()?.status === EmployeeStatus.Deactivated) {
               <button
                 (click)="reactivateEmployee()"
                 type="button"
@@ -101,16 +101,16 @@
                   <span
                     class="badge rounded-pill"
                     [class.bg-success]="
-                      employee()?.employeeStatus === EmployeeStatus.Active
+                      employee()?.status === EmployeeStatus.Active
                     "
                     [class.bg-secondary]="
-                      employee()?.employeeStatus === EmployeeStatus.Deactivated
+                      employee()?.status === EmployeeStatus.Deactivated
                     "
                     [class.bg-warning]="
-                      employee()?.employeeStatus === EmployeeStatus.Test
+                      employee()?.status === EmployeeStatus.Test
                     "
                     [class.text-dark]="
-                      employee()?.employeeStatus === EmployeeStatus.Test
+                      employee()?.status === EmployeeStatus.Test
                     "
                   >
                     {{ employeeStatusLabel() }}
@@ -133,12 +133,12 @@
                   <dd class="text-capitalize">{{ employeeGender() || '—' }}</dd>
                 </div>
                 <div class="detail-row">
-                  <dt>Birthdate</dt>
-                  <dd>{{ employee()?.birthdate || '—' }}</dd>
+                  <dt>Birth date</dt>
+                  <dd>{{ employee()?.birthDate || '—' }}</dd>
                 </div>
                 <div class="detail-row">
-                  <dt>Internal GUID</dt>
-                  <dd class="guid">{{ employee()?.guid || '—' }}</dd>
+                  <dt>Employee ID</dt>
+                  <dd class="entity-id">{{ employee()?.employeeId || '—' }}</dd>
                 </div>
               </dl>
             </div>
@@ -154,7 +154,7 @@
                 </div>
                 <div class="detail-row">
                   <dt>Phone</dt>
-                  <dd>{{ employee()?.msisdn || '—' }}</dd>
+                  <dd>{{ employee()?.phoneNumber || '—' }}</dd>
                 </div>
               </dl>
             </div>
@@ -181,8 +181,8 @@
                   <dd>{{ employee()?.costCenterName || '—' }}</dd>
                 </div>
                 <div class="detail-row">
-                  <dt>Current brutto salary</dt>
-                  <dd>{{ employee()?.currentBruttoSalary ?? '—' }}</dd>
+                  <dt>Current gross salary</dt>
+                  <dd>{{ employee()?.currentGrossSalary ?? '—' }}</dd>
                 </div>
               </dl>
             </div>
@@ -203,20 +203,20 @@
                   <dd>{{ employee()?.address?.county || '—' }}</dd>
                 </div>
                 <div class="detail-row">
-                  <dt>Town</dt>
-                  <dd>{{ employee()?.address?.town || '—' }}</dd>
+                  <dt>City</dt>
+                  <dd>{{ employee()?.address?.city || '—' }}</dd>
                 </div>
                 <div class="detail-row">
                   <dt>Street</dt>
                   <dd>{{ employee()?.address?.street || '—' }}</dd>
                 </div>
                 <div class="detail-row">
-                  <dt>Number</dt>
-                  <dd>{{ employee()?.address?.number || '—' }}</dd>
+                  <dt>Street number</dt>
+                  <dd>{{ employee()?.address?.streetNumber || '—' }}</dd>
                 </div>
                 <div class="detail-row">
-                  <dt>ZIP</dt>
-                  <dd>{{ employee()?.address?.zip || '—' }}</dd>
+                  <dt>Postal code</dt>
+                  <dd>{{ employee()?.address?.postalCode || '—' }}</dd>
                 </div>
               </dl>
             </div>
@@ -228,18 +228,18 @@
               <dl class="detail-list">
                 <div class="detail-row">
                   <dt>Created</dt>
-                  <dd>{{ (employee()?.creationDate | date: 'medium') || '—' }}</dd>
+                  <dd>{{ (employee()?.createdAt | date: 'medium') || '—' }}</dd>
                 </div>
                 <div class="detail-row">
                   <dt>Last interaction</dt>
-                  <dd>{{ (employee()?.interactionDate | date: 'medium') || '—' }}</dd>
+                  <dd>{{ (employee()?.lastInteractionAt | date: 'medium') || '—' }}</dd>
                 </div>
                 <div class="detail-row">
                   <dt>Status</dt>
                   <dd>
                     {{ employeeStatusLabel() }}
                     <span class="text-muted small"
-                      >({{ employee()?.employeeStatus }})</span
+                      >({{ employee()?.status }})</span
                     >
                   </dd>
                 </div>
@@ -258,9 +258,9 @@
                 <p class="text-muted mb-0">No salary entries yet.</p>
               } @else {
                 <ul class="audit-list">
-                  @for (entry of salaryHistory(); track entry.salaryGuid) {
+                  @for (entry of salaryHistory(); track entry.employeeSalaryId) {
                     <li class="audit-item">
-                      <div class="audit-action">{{ entry.bruttoSalary }}</div>
+                      <div class="audit-action">{{ entry.grossSalary }}</div>
                       <div class="audit-meta">effective {{ entry.effectiveDate }}</div>
                     </li>
                   }
@@ -273,7 +273,7 @@
 
               <div class="row g-2 align-items-end mt-2">
                 <div class="col-12 col-sm-5">
-                  <label class="form-label" for="newSalaryAmount">Brutto salary</label>
+                  <label class="form-label" for="newSalaryAmount">Gross salary</label>
                   <input
                     id="newSalaryAmount"
                     type="number"
@@ -323,12 +323,12 @@
                 <p class="text-muted mb-0">No recorded actions yet.</p>
               } @else {
                 <ul class="audit-list">
-                  @for (entry of auditLog(); track entry.auditId) {
+                  @for (entry of auditLog(); track entry.employeeAuditLogId) {
                     <li class="audit-item">
-                      <div class="audit-action">{{ entry.action }}</div>
+                      <div class="audit-action">{{ auditActionLabel(entry.actionType) }}</div>
                       <div class="audit-meta">
-                        by {{ entry.employerId }} ·
-                        {{ entry.actionDate | date: 'medium' }}
+                        by {{ entry.performedBy }} ·
+                        {{ entry.occurredAt | date: 'medium' }}
                       </div>
                       @if (entry.details) {
                         <div class="audit-details">{{ entry.details }}</div>

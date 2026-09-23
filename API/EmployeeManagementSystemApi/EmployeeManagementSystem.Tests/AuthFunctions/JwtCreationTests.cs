@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Configuration;
@@ -13,16 +14,16 @@ public class JwtCreationTests
         var config = new Mock<IAppSettingsConfig>();
         config.Setup(c => c.SecureJwtKey)
             .Returns("UGxlYXNlIHN0b3JlIHRoaXMgc2VjdXJpdHkga2V5IGluIGEgc2VjdXJlIGVudmlyb25tZW50IQ==");
-        config.Setup(c => c.JwtIssuer).Returns("https://localhost:7146/");
-        config.Setup(c => c.JwtAudience).Returns("https://localhost:7146/");
+        config.Setup(c => c.JwtIssuer).Returns("https://localhost:7145/");
+        config.Setup(c => c.JwtAudience).Returns("https://localhost:7145/");
         config.Setup(c => c.AccessTokenTimeout).Returns(accessTokenTimeout);
         return config;
     }
 
     private static EmployerCredentials Credentials => new()
     {
-        EmployerId = "TestEmployerID",
-        EmployerPassword = "Employer123",
+        Username = "TestEmployer",
+        Password = "Employer123",
     };
 
     [Fact]
@@ -30,15 +31,33 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
+            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         var data = Assert.IsType<AccessTokenResponse>(result.Data);
+        Assert.Equal(DateTimeKind.Utc, data.ExpiresAt.Kind);
         Assert.False(string.IsNullOrWhiteSpace(data.AccessToken));
-        Assert.True(data.ValidUntil > DateTime.UtcNow);
+        Assert.True(data.ExpiresAt > DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwt_WritesIatAsANumericDate_AndTheRoleAsItsNumericCode()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
+        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+
+        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(result.Data!.AccessToken);
+
+        // RFC 7519: iat is seconds since the Unix epoch (a JSON number), not a date string.
+        Assert.IsType<long>(token.Payload[JwtRegisteredClaimNames.Iat]);
+        // [Authorize(Roles = "1801")] matches on the code, not the enum member's name.
+        Assert.Contains(token.Claims, c => c.Type == "role" && c.Value == "1801");
     }
 
     [Fact]
@@ -46,7 +65,7 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(403, "Invalid employer credentials."));
+            .ReturnsAsync(new ResponseModel<EmployerRole?>(403, "Invalid employer credentials."));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
@@ -59,11 +78,11 @@ public class JwtCreationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GenerateBearerJwt_ReturnsForbidden_WithoutTouchingTheDb_WhenEmployerIdIsMissing(string? employerId)
+    public async Task GenerateBearerJwt_ReturnsForbidden_WithoutTouchingTheDb_WhenUsernameIsMissing(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
-        var credentials = new EmployerCredentials { EmployerId = employerId, EmployerPassword = "Employer123" };
+        var credentials = new EmployerCredentials { Username = username, Password = "Employer123" };
 
         var result = await jwtCreation.GenerateBearerJwt(credentials, TestContext.Current.CancellationToken);
 
@@ -76,7 +95,7 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
+            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
         var jwtCreation = new JwtCreation(CreateConfig(accessTokenTimeout: "not-a-number").Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);

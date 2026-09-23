@@ -4,10 +4,10 @@ namespace EmployeeManagementSystem.BusinessLogic.Services;
 
 public interface IDepartmentService
 {
-    Task<ResponseModel<object>> CreateDepartment(DepartmentModel request, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetDepartment(Guid guid, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetDepartments(CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> EditDepartment(DepartmentModel request, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> DeleteDepartment(Guid guid, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetEmployeesByDepartment(Guid guid, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateDepartment(CreateDepartmentRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<DepartmentModel>> GetDepartment(Guid departmentId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<DepartmentModel>>> GetDepartments(CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> EditDepartment(UpdateDepartmentRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteDepartment(Guid departmentId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByDepartment(Guid departmentId, CancellationToken cancellationToken = default);
 }

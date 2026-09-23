@@ -12,23 +12,23 @@ import { NotificationService } from './notification.service';
 })
 export class DeleteEmployeeService {
   readonly APIURL =
-    environment.EmployeeManagementSystemAPI + '/api/Employee/delete';
+    environment.apiUrl + '/api/employee/delete';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly getEmployeeService = inject(GetEmployeeService);
   private readonly notificationService = inject(NotificationService);
 
-  deleteEmployee(employeeGUID: string): Observable<GenericResponse<object>> {
+  deleteEmployee(employeeId: string): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeGUID', employeeGUID);
+    const params = new HttpParams().set('employeeId', employeeId);
 
     return this.http
       .delete<GenericResponse<object>>(this.APIURL, { headers, params })
       .pipe(
         tap(() => {
-          this.getEmployeeService.removeEmployeeLocally(employeeGUID);
+          this.getEmployeeService.removeEmployeeLocally(employeeId);
           this.notificationService.show('Employee deleted successfully.');
         }),
       );
@@ -40,14 +40,14 @@ export class DeleteEmployeeService {
    * employee.
    */
   deleteEmployeeSilently(
-    employeeGUID: string,
+    employeeId: string,
   ): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeGUID', employeeGUID);
+    const params = new HttpParams().set('employeeId', employeeId);
 
     return this.http
       .delete<GenericResponse<object>>(this.APIURL, { headers, params })
-      .pipe(tap(() => this.getEmployeeService.removeEmployeeLocally(employeeGUID)));
+      .pipe(tap(() => this.getEmployeeService.removeEmployeeLocally(employeeId)));
   }
 }

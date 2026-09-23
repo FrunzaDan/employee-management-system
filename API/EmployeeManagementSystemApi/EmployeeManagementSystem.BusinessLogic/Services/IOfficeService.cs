@@ -4,10 +4,10 @@ namespace EmployeeManagementSystem.BusinessLogic.Services;
 
 public interface IOfficeService
 {
-    Task<ResponseModel<object>> CreateOffice(OfficeModel request, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetOffice(Guid guid, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetOffices(CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> EditOffice(OfficeModel request, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> DeleteOffice(Guid guid, CancellationToken cancellationToken = default);
-    Task<ResponseModel<object>> GetEmployeesByOffice(Guid guid, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateOffice(CreateOfficeRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<OfficeModel>> GetOffice(Guid officeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<OfficeModel>>> GetOffices(CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> EditOffice(UpdateOfficeRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteOffice(Guid officeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByOffice(Guid officeId, CancellationToken cancellationToken = default);
 }

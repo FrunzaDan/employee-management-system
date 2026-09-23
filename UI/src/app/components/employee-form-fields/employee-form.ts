@@ -1,6 +1,10 @@
 import { pattern, required, schema } from '@angular/forms/signals';
 import { environment } from '../../../environments/environment';
-import { Employee } from '../../interfaces/employee-response';
+import {
+  CreateEmployeeRequest,
+  Employee,
+  Gender,
+} from '../../interfaces/employee-response';
 
 // Shared by add-employee and edit-employee: one model shape, one validation
 // schema, and the two-way mapping between the form and the API's Employee.
@@ -8,70 +12,70 @@ export interface EmployeeFormModel {
   firstName: string;
   lastName: string;
   email: string;
-  msisdn: string;
-  gender: string; // <select> emits strings; the API wants an integer (see toEmployee)
-  birthdate: string;
+  phoneNumber: string;
+  gender: string; // <select> emits strings; the API wants a Gender number (see toCreateEmployeeRequest)
+  birthDate: string;
   country: string;
   county: string;
-  town: string;
+  city: string;
   street: string;
-  number: string;
-  zip: string;
+  streetNumber: string;
+  postalCode: string;
   hireDate: string;
-  officeGuid: string;
-  departmentGuid: string;
-  costCenterGuid: string;
+  officeId: string;
+  departmentId: string;
+  costCenterId: string;
 }
 
 export const emptyEmployeeForm = (): EmployeeFormModel => ({
   firstName: '',
   lastName: '',
   email: '',
-  msisdn: '',
+  phoneNumber: '',
   gender: '',
-  birthdate: '',
+  birthDate: '',
   country: '',
   county: '',
-  town: '',
+  city: '',
   street: '',
-  number: '',
-  zip: '',
+  streetNumber: '',
+  postalCode: '',
   hireDate: '',
-  officeGuid: '',
-  departmentGuid: '',
-  costCenterGuid: '',
+  officeId: '',
+  departmentId: '',
+  costCenterId: '',
 });
 
 export const employeeFormSchema = schema<EmployeeFormModel>((p) => {
   required(p.firstName, { message: 'First Name is required' });
   required(p.lastName, { message: 'Last Name is required' });
   required(p.email, { message: 'Email is required' });
-  pattern(p.email, new RegExp(environment.EmailRegex), {
+  pattern(p.email, new RegExp(environment.emailRegex), {
     message: 'The Email should be a valid one',
   });
-  required(p.msisdn, { message: 'Phone Number is required' });
-  pattern(p.msisdn, new RegExp(environment.PhoneRegex), {
+  required(p.phoneNumber, { message: 'Phone Number is required' });
+  pattern(p.phoneNumber, new RegExp(environment.phoneNumberRegex), {
     message: 'The phone number should be a valid one',
   });
   required(p.gender, { message: 'Gender is required' });
-  required(p.birthdate, { message: 'Birthdate is required' });
+  required(p.birthDate, { message: 'Birth date is required' });
   required(p.country, { message: 'Country is required' });
   required(p.county, { message: 'County is required' });
-  required(p.town, { message: 'Town is required' });
+  required(p.city, { message: 'City is required' });
   required(p.street, { message: 'Street is required' });
-  required(p.number, { message: 'Street number is required' });
-  required(p.zip, { message: 'Zip code is required' });
+  required(p.streetNumber, { message: 'Street number is required' });
+  required(p.postalCode, { message: 'Postal code is required' });
   required(p.hireDate, { message: 'Hire date is required' });
-  required(p.officeGuid, { message: 'Office is required' });
-  required(p.departmentGuid, { message: 'Department is required' });
-  required(p.costCenterGuid, { message: 'Cost center is required' });
+  required(p.officeId, { message: 'Office is required' });
+  required(p.departmentId, { message: 'Department is required' });
+  required(p.costCenterId, { message: 'Cost center is required' });
 });
 
 // <input type="date"> requires a strictly zero-padded "YYYY-MM-DD" value to
 // pre-fill correctly. Older records saved via the previous year/month/day
 // text-box form could store unpadded values (e.g. "2020-1-5"), so normalize.
-export function toDateInputValue(birthdate: string): string {
-  const [year, month, day] = birthdate.split('-');
+export function toDateInputValue(date: string): string {
+  const [year, month, day] = date.split('-');
   if (!year || !month || !day) return '';
   return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
@@ -81,49 +85,55 @@ export function toFormModel(employee: Employee): EmployeeFormModel {
     firstName: employee.firstName,
     lastName: employee.lastName,
     email: employee.email,
-    msisdn: employee.msisdn,
-    gender: employee.gender?.toString() ?? '',
-    birthdate: toDateInputValue(employee.birthdate ?? ''),
-    country: employee.address.country ?? '',
-    county: employee.address.county ?? '',
-    town: employee.address.town ?? '',
-    street: employee.address.street ?? '',
-    number: employee.address.number ?? '',
-    zip: employee.address.zip ?? '',
+    phoneNumber: employee.phoneNumber,
+    gender: employee.gender.toString(),
+    birthDate: toDateInputValue(employee.birthDate ?? ''),
+    country: employee.address.country,
+    county: employee.address.county,
+    city: employee.address.city,
+    street: employee.address.street,
+    streetNumber: employee.address.streetNumber,
+    postalCode: employee.address.postalCode,
     hireDate: toDateInputValue(employee.hireDate ?? ''),
-    officeGuid: employee.officeGuid ?? '',
-    departmentGuid: employee.departmentGuid ?? '',
-    costCenterGuid: employee.costCenterGuid ?? '',
+    officeId: employee.officeId ?? '',
+    departmentId: employee.departmentId ?? '',
+    costCenterId: employee.costCenterId ?? '',
   };
 }
 
-// `base` carries the server-owned fields (guid, status, dates) when editing;
-// for a new employee they're simply absent and the server generates them.
-export function toEmployee(
+export function toCreateEmployeeRequest(
   model: EmployeeFormModel,
-  base: Partial<Employee> = {},
-): Employee {
+): CreateEmployeeRequest {
   return {
-    ...base,
     firstName: model.firstName,
     lastName: model.lastName,
     email: model.email,
-    msisdn: model.msisdn,
-    gender: Number(model.gender),
-    birthdate: model.birthdate,
+    phoneNumber: model.phoneNumber,
+    gender: Number(model.gender) as Gender,
+    birthDate: model.birthDate || undefined,
     address: {
       country: model.country,
       county: model.county,
-      town: model.town,
+      city: model.city,
       street: model.street,
-      number: model.number,
-      zip: model.zip,
+      streetNumber: model.streetNumber,
+      postalCode: model.postalCode,
     },
-    hireDate: model.hireDate,
-    officeGuid: model.officeGuid,
-    departmentGuid: model.departmentGuid,
-    costCenterGuid: model.costCenterGuid,
-  } as Employee;
+    hireDate: model.hireDate || undefined,
+    officeId: model.officeId || undefined,
+    departmentId: model.departmentId || undefined,
+    costCenterId: model.costCenterId || undefined,
+  };
+}
+
+// The loaded employee with the form's values applied — what the edit page saves, and what
+// the local employee list is updated to once the save succeeds. Server-owned fields
+// (employeeId, status, dates) come from `current` unchanged.
+export function applyFormModel(
+  model: EmployeeFormModel,
+  current: Employee,
+): Employee {
+  return { ...current, ...toCreateEmployeeRequest(model) };
 }
 
 // True when the user has changed anything relative to `baseline` (the blank
