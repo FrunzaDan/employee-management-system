@@ -14,7 +14,7 @@ import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { EmployeeService } from '../../services/employee.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { NotificationService } from '../../services/notification.service';
-import { Employee, EmployeeStatus } from '../../interfaces/employee-response';
+import { Employee, EmployeeStatus } from '../../interfaces/employee';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
@@ -61,7 +61,7 @@ export class EmployeeListComponent implements OnInit {
   readonly exportLoading = this.employeeService.exportLoading;
   readonly exportError = this.employeeService.exportError;
 
-  // Add EmployeeStatus enum for better type checking
+  // Register employeeStatus enum for better type checking
   readonly EmployeeStatus = EmployeeStatus;
 
   readonly statusLabels = new Map<Employee['status'], string>([

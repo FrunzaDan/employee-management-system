@@ -15,9 +15,9 @@ describe('AboutComponent', () => {
   let toggle: ReturnType<typeof vi.fn>;
   let enabled: ReturnType<typeof signal<boolean>>;
   let show: ReturnType<typeof vi.fn>;
-  let fetchOfficesOnce: ReturnType<typeof vi.fn>;
-  let fetchDepartmentsOnce: ReturnType<typeof vi.fn>;
-  let fetchCostCentersOnce: ReturnType<typeof vi.fn>;
+  let fetchOffices: ReturnType<typeof vi.fn>;
+  let fetchDepartments: ReturnType<typeof vi.fn>;
+  let fetchCostCenters: ReturnType<typeof vi.fn>;
   let createSalarySilently: ReturnType<typeof vi.fn>;
 
   const office = {
@@ -42,9 +42,9 @@ describe('AboutComponent', () => {
     toggle = vi.fn();
     enabled = signal(true);
     show = vi.fn();
-    fetchOfficesOnce = vi.fn().mockReturnValue(of([office]));
-    fetchDepartmentsOnce = vi.fn().mockReturnValue(of([department]));
-    fetchCostCentersOnce = vi.fn().mockReturnValue(of([costCenter]));
+    fetchOffices = vi.fn().mockReturnValue(of([office]));
+    fetchDepartments = vi.fn().mockReturnValue(of([department]));
+    fetchCostCenters = vi.fn().mockReturnValue(of([costCenter]));
     createSalarySilently = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
@@ -54,9 +54,9 @@ describe('AboutComponent', () => {
         { provide: EmployeeService, useValue: { createEmployeeSilently } },
         { provide: ApiLoggerService, useValue: { enabled, toggle } },
         { provide: NotificationService, useValue: { show } },
-        { provide: OfficeService, useValue: { fetchOfficesOnce } },
-        { provide: DepartmentService, useValue: { fetchDepartmentsOnce } },
-        { provide: CostCenterService, useValue: { fetchCostCentersOnce } },
+        { provide: OfficeService, useValue: { fetchOffices } },
+        { provide: DepartmentService, useValue: { fetchDepartments } },
+        { provide: CostCenterService, useValue: { fetchCostCenters } },
         { provide: SalaryHistoryService, useValue: { createSalarySilently } },
       ],
     });

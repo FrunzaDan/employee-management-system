@@ -4,10 +4,11 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { OfficeService } from '../../../services/office.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
-import { Office } from '../../../interfaces/office-response';
-import { EmployeeSummary } from '../../../interfaces/employee-summary-response';
+import { Office } from '../../../interfaces/office';
+import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
+import { RonPipe } from '../../../pipes/ron.pipe';
 
 interface OfficeDraft {
   officeId: string | null; // null = creating a new office, not editing an existing one
@@ -23,7 +24,7 @@ interface OfficeDraft {
   selector: 'app-offices',
   templateUrl: './offices.component.html',
   styleUrl: './offices.component.css',
-  imports: [RouterLink],
+  imports: [RonPipe, RouterLink],
 })
 export class OfficesComponent implements OnInit {
   private readonly officeService = inject(OfficeService);

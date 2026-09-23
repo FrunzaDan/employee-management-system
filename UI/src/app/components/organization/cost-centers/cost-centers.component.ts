@@ -4,10 +4,11 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CostCenterService } from '../../../services/cost-center.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
-import { CostCenter } from '../../../interfaces/cost-center-response';
-import { EmployeeSummary } from '../../../interfaces/employee-summary-response';
+import { CostCenter } from '../../../interfaces/cost-center';
+import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
+import { RonPipe } from '../../../pipes/ron.pipe';
 
 interface CostCenterDraft {
   costCenterId: string | null;
@@ -19,7 +20,7 @@ interface CostCenterDraft {
   selector: 'app-cost-centers',
   templateUrl: './cost-centers.component.html',
   styleUrl: './cost-centers.component.css',
-  imports: [RouterLink],
+  imports: [RonPipe, RouterLink],
 })
 export class CostCentersComponent implements OnInit {
   private readonly costCenterService = inject(CostCenterService);

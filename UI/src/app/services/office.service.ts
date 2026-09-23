@@ -7,8 +7,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
-import { Office } from '../interfaces/office-response';
-import { EmployeeSummary } from '../interfaces/employee-summary-response';
+import { Office } from '../interfaces/office';
+import { EmployeeSummary } from '../interfaces/employee-summary';
 import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
@@ -63,7 +63,7 @@ export class OfficeService {
    * generation) that need the list once, up front, without touching the page
    * that's actually browsing/managing offices.
    */
-  fetchOfficesOnce(): Observable<Office[]> {
+  fetchOffices(): Observable<Office[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
       .get<GenericResponse<Office[]>>(`${this.API_URL}/all`, { headers })

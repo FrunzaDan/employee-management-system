@@ -7,8 +7,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
-import { CostCenter } from '../interfaces/cost-center-response';
-import { EmployeeSummary } from '../interfaces/employee-summary-response';
+import { CostCenter } from '../interfaces/cost-center';
+import { EmployeeSummary } from '../interfaces/employee-summary';
 import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
@@ -54,8 +54,8 @@ export class CostCenterService {
       });
   }
 
-  /** See OfficeService.fetchOfficesOnce for why this exists alongside loadCostCenters. */
-  fetchCostCentersOnce(): Observable<CostCenter[]> {
+  /** See OfficeService.fetchOffices for why this exists alongside loadCostCenters. */
+  fetchCostCenters(): Observable<CostCenter[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
       .get<GenericResponse<CostCenter[]>>(`${this.API_URL}/all`, { headers })

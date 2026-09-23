@@ -7,8 +7,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
-import { Department } from '../interfaces/department-response';
-import { EmployeeSummary } from '../interfaces/employee-summary-response';
+import { Department } from '../interfaces/department';
+import { EmployeeSummary } from '../interfaces/employee-summary';
 import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
@@ -54,8 +54,8 @@ export class DepartmentService {
       });
   }
 
-  /** See OfficeService.fetchOfficesOnce for why this exists alongside loadDepartments. */
-  fetchDepartmentsOnce(): Observable<Department[]> {
+  /** See OfficeService.fetchOffices for why this exists alongside loadDepartments. */
+  fetchDepartments(): Observable<Department[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
       .get<GenericResponse<Department[]>>(`${this.API_URL}/all`, { headers })

@@ -10,7 +10,7 @@ import {
   Employee,
   EmployeeStatus,
   Gender,
-} from '../interfaces/employee-response';
+} from '../interfaces/employee';
 import { EmployeeService } from './employee.service';
 import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';

@@ -133,7 +133,9 @@
                 </div>
                 <div class="detail-row">
                   <dt>Birth date</dt>
-                  <dd>{{ employee()?.birthDate || '—' }}</dd>
+                  <dd>
+                    {{ (employee()?.birthDate | date: 'longDate') || '—' }}
+                  </dd>
                 </div>
                 <div class="detail-row">
                   <dt>Employee ID</dt>
@@ -165,7 +167,9 @@
               <dl class="detail-list">
                 <div class="detail-row">
                   <dt>Hire date</dt>
-                  <dd>{{ employee()?.hireDate || '—' }}</dd>
+                  <dd>
+                    {{ (employee()?.hireDate | date: 'longDate') || '—' }}
+                  </dd>
                 </div>
                 <div class="detail-row">
                   <dt>Office</dt>
@@ -181,7 +185,7 @@
                 </div>
                 <div class="detail-row">
                   <dt>Current gross salary</dt>
-                  <dd>{{ employee()?.currentGrossSalary ?? '—' }}</dd>
+                  <dd>{{ (employee()?.currentGrossSalary | ron) || '—' }}</dd>
                 </div>
               </dl>
             </div>
@@ -270,9 +274,11 @@
                     track entry.employeeSalaryId
                   ) {
                     <li class="audit-item">
-                      <div class="audit-action">{{ entry.grossSalary }}</div>
+                      <div class="audit-action">
+                        {{ entry.grossSalary | ron }}
+                      </div>
                       <div class="audit-meta">
-                        effective {{ entry.effectiveDate }}
+                        effective {{ entry.effectiveDate | date: 'longDate' }}
                       </div>
                     </li>
                   }

@@ -7,7 +7,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
-import { SalaryHistoryEntry } from '../interfaces/salary-history-response';
+import { SalaryHistoryEntry } from '../interfaces/salary-history';
 import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 

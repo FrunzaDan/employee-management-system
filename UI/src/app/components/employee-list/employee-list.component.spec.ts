@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { EmployeeService } from '../../services/employee.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { NotificationService } from '../../services/notification.service';
-import { Employee, EmployeeStatus } from '../../interfaces/employee-response';
+import { Employee, EmployeeStatus } from '../../interfaces/employee';
 import { EmployeeListComponent } from './employee-list.component';
 
 describe('EmployeeListComponent', () => {

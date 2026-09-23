@@ -7,14 +7,14 @@ import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
-import { Office } from '../../interfaces/office-response';
-import { Department } from '../../interfaces/department-response';
-import { CostCenter } from '../../interfaces/cost-center-response';
+import { Office } from '../../interfaces/office';
+import { Department } from '../../interfaces/department';
+import { CostCenter } from '../../interfaces/cost-center';
 import {
   CreateEmployeeRequest,
   EmployeeStatus,
   Gender,
-} from '../../interfaces/employee-response';
+} from '../../interfaces/employee';
 
 const TEST_EMPLOYEE_COUNT = 50;
 
@@ -249,11 +249,11 @@ export class AboutComponent {
       // Fetched once up front (not via the services' loadX()/signal state,
       // which is for the admin CRUD pages) so every generated employee can
       // pick a random, real office/department/cost-center employeeId — see
-      // OfficeService.fetchOfficesOnce.
+      // OfficeService.fetchOffices.
       const [offices, departments, costCenters] = await Promise.all([
-        firstValueFrom(this.officeService.fetchOfficesOnce()),
-        firstValueFrom(this.departmentService.fetchDepartmentsOnce()),
-        firstValueFrom(this.costCenterService.fetchCostCentersOnce()),
+        firstValueFrom(this.officeService.fetchOffices()),
+        firstValueFrom(this.departmentService.fetchDepartments()),
+        firstValueFrom(this.costCenterService.fetchCostCenters()),
       ]);
 
       // An index-based suffix (rather than pure randomness) guarantees no

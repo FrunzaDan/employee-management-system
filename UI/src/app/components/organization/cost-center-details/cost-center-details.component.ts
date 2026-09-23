@@ -9,8 +9,8 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { CostCenterService } from '../../../services/cost-center.service';
-import { CostCenter } from '../../../interfaces/cost-center-response';
-import { EmployeeSummary } from '../../../interfaces/employee-summary-response';
+import { CostCenter } from '../../../interfaces/cost-center';
+import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 

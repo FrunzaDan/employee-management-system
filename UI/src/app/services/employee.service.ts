@@ -21,7 +21,7 @@ import {
   Employee,
   EmployeeStatus,
   UpdateEmployeeRequest,
-} from '../interfaces/employee-response';
+} from '../interfaces/employee';
 import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
@@ -57,7 +57,7 @@ const TRANSIENT_ERROR_RETRY_CONFIG = {
       : throwError(() => error),
 };
 
-// Every /api/employee call, in one service (like Imalo's ScholarsService). It also holds
+// Every /api/employee call, in one service (like Imalo's ScholarService). It also holds
 // the loaded page of employees and the selected employee, and keeps them in step with
 // each successful update, status change and delete.
 @Injectable({

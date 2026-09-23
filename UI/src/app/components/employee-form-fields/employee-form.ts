@@ -4,7 +4,7 @@ import {
   CreateEmployeeRequest,
   Employee,
   Gender,
-} from '../../interfaces/employee-response';
+} from '../../interfaces/employee';
 
 // Shared by create-employee and update-employee: one model shape, one validation
 // schema, and the two-way mapping between the form and the API's Employee.
@@ -47,8 +47,8 @@ export const emptyEmployeeForm = (): EmployeeFormModel => ({
 });
 
 export const employeeFormSchema = schema<EmployeeFormModel>((p) => {
-  required(p.firstName, { message: 'First Name is required' });
-  required(p.lastName, { message: 'Last Name is required' });
+  required(p.firstName, { message: 'First name is required' });
+  required(p.lastName, { message: 'Last name is required' });
   required(p.email, { message: 'Email is required' });
   pattern(p.email, new RegExp(environment.emailRegex), {
     message: 'The Email should be a valid one',

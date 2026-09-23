@@ -1,4 +1,4 @@
-import { EmployeeStatus } from '../interfaces/employee-response';
+import { EmployeeStatus } from '../interfaces/employee';
 
 // Shared by any page that renders an EmployeeSummary/Employee status badge
 // outside the main employee list (which keeps its own Map for historical

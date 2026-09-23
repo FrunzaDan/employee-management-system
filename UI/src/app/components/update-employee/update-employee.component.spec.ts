@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { Employee } from '../../interfaces/employee-response';
+import { Employee } from '../../interfaces/employee';
 import { EmployeeService } from '../../services/employee.service';
 import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';

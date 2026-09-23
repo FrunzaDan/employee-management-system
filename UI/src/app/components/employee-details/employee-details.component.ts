@@ -9,17 +9,14 @@ import {
   untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RonPipe } from '../../pipes/ron.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { EmployeeService } from '../../services/employee.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
-import {
-  Employee,
-  EmployeeStatus,
-  Gender,
-} from '../../interfaces/employee-response';
+import { Employee, EmployeeStatus, Gender } from '../../interfaces/employee';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import { auditActionLabel } from '../../utils/audit-action-label';
@@ -28,7 +25,7 @@ import { auditActionLabel } from '../../utils/audit-action-label';
   selector: 'app-employee-details',
   templateUrl: './employee-details.component.html',
   styleUrl: './employee-details.component.css',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RonPipe, RouterLink],
 })
 export class EmployeeDetailsComponent {
   private readonly employeeService = inject(EmployeeService);

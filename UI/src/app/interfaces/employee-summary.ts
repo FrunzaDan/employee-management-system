@@ -1,4 +1,4 @@
-import { EmployeeStatus } from './employee-response';
+import { EmployeeStatus } from './employee';
 
 // A minimal projection of an employee, returned by the "employees belonging
 // to this office/department/cost center" endpoints — not the full Employee

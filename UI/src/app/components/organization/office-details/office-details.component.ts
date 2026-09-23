@@ -9,8 +9,8 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { OfficeService } from '../../../services/office.service';
-import { Office } from '../../../interfaces/office-response';
-import { EmployeeSummary } from '../../../interfaces/employee-summary-response';
+import { Office } from '../../../interfaces/office';
+import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
