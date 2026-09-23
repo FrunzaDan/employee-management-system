@@ -12,7 +12,7 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 @Component({
   selector: 'app-department-details',
   templateUrl: './department-details.component.html',
-  styleUrls: ['./department-details.component.css'],
+  styleUrl: './department-details.component.css',
   imports: [RouterLink],
 })
 export class DepartmentDetailsComponent {

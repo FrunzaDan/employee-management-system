@@ -8,9 +8,9 @@
       type="button"
       class="btn btn-danger shadow-none"
       (click)="clearAuditLog()"
-      [disabled]="isLoading() || clearing() || entries().length === 0"
+      [disabled]="isLoading() || clearing() || totalItems() === 0"
     >
-      Clear Audit Log
+      {{ clearing() ? 'Clearing…' : 'Clear audit log' }}
     </button>
   </div>
 @if (clearError(); as error) {
@@ -35,7 +35,7 @@
       <tr>
         <th scope="col" class="text-center">Date</th>
         <th scope="col" class="text-center">Employee</th>
-        <th scope="col" class="text-center">Employer</th>
+        <th scope="col" class="text-center">Performed by</th>
         <th scope="col" class="text-center">Action</th>
         <th scope="col" class="text-center">Details</th>
       </tr>

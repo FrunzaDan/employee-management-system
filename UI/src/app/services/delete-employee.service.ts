@@ -20,18 +20,9 @@ export class DeleteEmployeeService {
   private readonly notificationService = inject(NotificationService);
 
   deleteEmployee(employeeId: string): Observable<GenericResponse<object>> {
-    const headers: HttpHeaders =
-      this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeId', employeeId);
-
-    return this.http
-      .delete<GenericResponse<object>>(this.APIURL, { headers, params })
-      .pipe(
-        tap(() => {
-          this.getEmployeeService.removeEmployeeLocally(employeeId);
-          this.notificationService.show('Employee deleted successfully.');
-        }),
-      );
+    return this.deleteEmployeeSilently(employeeId).pipe(
+      tap(() => this.notificationService.show('Employee deleted successfully.')),
+    );
   }
 
   /**

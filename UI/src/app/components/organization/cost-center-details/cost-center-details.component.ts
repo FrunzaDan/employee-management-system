@@ -12,7 +12,7 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 @Component({
   selector: 'app-cost-center-details',
   templateUrl: './cost-center-details.component.html',
-  styleUrls: ['./cost-center-details.component.css'],
+  styleUrl: './cost-center-details.component.css',
   imports: [RouterLink],
 })
 export class CostCenterDetailsComponent {

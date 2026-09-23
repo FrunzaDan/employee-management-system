@@ -90,11 +90,11 @@ describe('ExportEmployeeService', () => {
 
     expect(service.loadingSignal()).toBe(false);
     expect(service.errorSignal()).toBe(
-      'Network error - please check your connection.',
+      'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
     );
   });
 
-  it('sets a generic message on a server error (status 500)', () => {
+  it('names the failed export on a server error (status 500)', () => {
     service.exportEmployees({});
 
     httpMock
@@ -102,6 +102,6 @@ describe('ExportEmployeeService', () => {
       .flush(new Blob(['error']), { status: 500, statusText: 'Server Error' });
 
     expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('Server error - please try again later.');
+    expect(service.errorSignal()).toBe('Failed to export employees (500). Please try again.');
   });
 });

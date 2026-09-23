@@ -17,7 +17,7 @@ import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-fo
 @Component({
   selector: 'app-add-employee',
   templateUrl: './add-employee.component.html',
-  styleUrls: ['./add-employee.component.css'],
+  styleUrl: './add-employee.component.css',
   imports: [EmployeeFormFieldsComponent, FormRoot, RouterLink],
   // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },

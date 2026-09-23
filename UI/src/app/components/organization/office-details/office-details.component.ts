@@ -13,7 +13,7 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 @Component({
   selector: 'app-office-details',
   templateUrl: './office-details.component.html',
-  styleUrls: ['./office-details.component.css'],
+  styleUrl: './office-details.component.css',
   imports: [RouterLink],
 })
 export class OfficeDetailsComponent {

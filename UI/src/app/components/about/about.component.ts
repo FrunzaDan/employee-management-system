@@ -211,7 +211,7 @@ function pickId<T>(values: readonly T[], idOf: (value: T) => string): string | u
 @Component({
   selector: 'app-about',
   templateUrl: './about.component.html',
-  styleUrls: ['./about.component.css'],
+  styleUrl: './about.component.css',
   imports: [],
 })
 export class AboutComponent {

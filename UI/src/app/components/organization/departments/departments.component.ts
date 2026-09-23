@@ -17,7 +17,7 @@ interface DepartmentDraft {
 @Component({
   selector: 'app-departments',
   templateUrl: './departments.component.html',
-  styleUrls: ['./departments.component.css'],
+  styleUrl: './departments.component.css',
   imports: [RouterLink],
 })
 export class DepartmentsComponent implements OnInit {
@@ -95,6 +95,7 @@ export class DepartmentsComponent implements OnInit {
   async deleteDepartment(department: Department): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       `Delete department "${department.name}"? This cannot be undone.`,
+      { title: 'Delete department?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 

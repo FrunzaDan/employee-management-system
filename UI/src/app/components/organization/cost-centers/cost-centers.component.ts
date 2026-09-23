@@ -18,7 +18,7 @@ interface CostCenterDraft {
 @Component({
   selector: 'app-cost-centers',
   templateUrl: './cost-centers.component.html',
-  styleUrls: ['./cost-centers.component.css'],
+  styleUrl: './cost-centers.component.css',
   imports: [RouterLink],
 })
 export class CostCentersComponent implements OnInit {
@@ -101,6 +101,7 @@ export class CostCentersComponent implements OnInit {
   async deleteCostCenter(costCenter: CostCenter): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       `Delete cost center "${costCenter.code}"? This cannot be undone.`,
+      { title: 'Delete cost center?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 

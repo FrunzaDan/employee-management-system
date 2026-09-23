@@ -18,7 +18,7 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
 @Component({
   selector: 'app-employee-list',
   templateUrl: './employee-list.component.html',
-  styleUrls: ['./employee-list.component.css'],
+  styleUrl: './employee-list.component.css',
   imports: [RouterLink],
 })
 export class EmployeeListComponent implements OnInit {
@@ -195,6 +195,7 @@ export class EmployeeListComponent implements OnInit {
   async deactivateEmployee(employeeId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this employee?',
+      { title: 'Deactivate employee?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
     this.activateEmployeeService.deactivateEmployee(employeeId);
@@ -207,6 +208,7 @@ export class EmployeeListComponent implements OnInit {
   async deleteEmployee(employeeId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete this employee? This cannot be undone.',
+      { title: 'Delete employee?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 
@@ -283,7 +285,11 @@ export class EmployeeListComponent implements OnInit {
     }
     lines.push('Continue?');
 
-    const confirmed = await this.confirmDialogService.confirm(lines.join('\n'));
+    const confirmed = await this.confirmDialogService.confirm(lines.join('\n'), {
+      title: 'Apply bulk action?',
+      confirmLabel: 'Apply',
+      variant: toDelete.length > 0 ? 'danger' : 'default',
+    });
     if (!confirmed) return;
 
     this.bulkActionInProgress.set(true);

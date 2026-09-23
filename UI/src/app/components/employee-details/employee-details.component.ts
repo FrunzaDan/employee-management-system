@@ -29,7 +29,7 @@ import { auditActionLabel } from '../../utils/audit-action-label';
 @Component({
   selector: 'app-employee-details',
   templateUrl: './employee-details.component.html',
-  styleUrls: ['./employee-details.component.css'],
+  styleUrl: './employee-details.component.css',
   imports: [DatePipe, RouterLink],
 })
 export class EmployeeDetailsComponent {
@@ -148,6 +148,7 @@ export class EmployeeDetailsComponent {
     if (!employeeId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this employee?',
+      { title: 'Deactivate employee?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
     this.activateEmployeeService.deactivateEmployee(employeeId);
@@ -200,6 +201,7 @@ export class EmployeeDetailsComponent {
     if (!employeeId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete this employee? This cannot be undone.',
+      { title: 'Delete employee?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 

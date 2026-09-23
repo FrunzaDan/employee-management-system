@@ -17,7 +17,7 @@ import { auditActionLabel } from '../../utils/audit-action-label';
 @Component({
   selector: 'app-global-audit-log',
   templateUrl: './global-audit-log.component.html',
-  styleUrls: ['./global-audit-log.component.css'],
+  styleUrl: './global-audit-log.component.css',
   imports: [DatePipe, RouterLink],
 })
 export class GlobalAuditLogComponent implements OnInit {
@@ -62,6 +62,7 @@ export class GlobalAuditLogComponent implements OnInit {
   async clearAuditLog(): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete the entire audit log? This cannot be undone.',
+      { title: 'Delete audit log?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 
@@ -75,7 +76,7 @@ export class GlobalAuditLogComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.clearing.set(false);
-        this.clearError.set(extractErrorMessage(error));
+        this.clearError.set(extractErrorMessage(error, 'Failed to clear the audit log'));
       },
     });
   }

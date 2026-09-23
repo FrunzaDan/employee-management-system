@@ -53,7 +53,7 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
 
     [HttpGet("audit-log/all")]
     public async Task<ActionResult<ResponseModel<PagedResponse<GlobalAuditLogEntry>>>> GetAllEmployeeAuditLog(
-        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default) =>
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) =>
         Reply(await employeeService.GetAllEmployeeAuditLog(pageNumber, pageSize, cancellationToken));
 
     [HttpPatch("edit")]

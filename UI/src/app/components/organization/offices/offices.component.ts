@@ -22,7 +22,7 @@ interface OfficeDraft {
 @Component({
   selector: 'app-offices',
   templateUrl: './offices.component.html',
-  styleUrls: ['./offices.component.css'],
+  styleUrl: './offices.component.css',
   imports: [RouterLink],
 })
 export class OfficesComponent implements OnInit {
@@ -104,6 +104,7 @@ export class OfficesComponent implements OnInit {
   async deleteOffice(office: Office): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       `Delete office "${office.name}"? This cannot be undone.`,
+      { title: 'Delete office?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 

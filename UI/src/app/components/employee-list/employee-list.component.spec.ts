@@ -378,7 +378,10 @@ describe('EmployeeListComponent', () => {
 
       await component.bulkDeleteSelected();
 
-      expect(confirm).toHaveBeenCalledWith(expect.stringContaining('1 is active'));
+      expect(confirm).toHaveBeenCalledWith(
+        expect.stringContaining('1 is active'),
+        expect.objectContaining({ confirmLabel: 'Apply', variant: 'danger' }),
+      );
       expect(deactivateEmployeeSilently).toHaveBeenCalledWith('active-1');
       expect(deleteEmployeeSilently).toHaveBeenCalledWith('deactivated-1');
       expect(deleteEmployeeSilently).toHaveBeenCalledWith('test-1');

@@ -37,7 +37,9 @@ export class AuditLogService {
   public readonly loadingSignal = this.auditLog.isLoading;
   public readonly errorSignal = computed(() => {
     const error = this.auditLog.error();
-    return error ? extractErrorMessage(error as HttpErrorResponse) : null;
+    return error
+      ? extractErrorMessage(error as HttpErrorResponse, 'Failed to load the audit trail')
+      : null;
   });
 
   loadAuditLog(employeeId: string): void {

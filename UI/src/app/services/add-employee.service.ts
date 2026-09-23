@@ -19,16 +19,9 @@ export class AddEmployeeService {
 
   // On success, `data` is the new employee's server-generated ID.
   addEmployee(employee: CreateEmployeeRequest): Observable<GenericResponse<string>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    return this.http
-      .post<GenericResponse<string>>(this.APIURL, employee, {
-        headers: headers,
-      })
-      .pipe(
-        tap(() =>
-          this.notificationService.show('Employee registered successfully.'),
-        ),
-      );
+    return this.addEmployeeSilently(employee).pipe(
+      tap(() => this.notificationService.show('Employee registered successfully.')),
+    );
   }
 
   /**
