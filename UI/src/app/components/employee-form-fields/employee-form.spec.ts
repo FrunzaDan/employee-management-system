@@ -2,7 +2,9 @@ import { emptyEmployeeForm, isEmployeeFormDirty } from './employee-form';
 
 describe('isEmployeeFormDirty', () => {
   it('is false when nothing differs from the baseline', () => {
-    expect(isEmployeeFormDirty(emptyEmployeeForm(), emptyEmployeeForm())).toBe(false);
+    expect(isEmployeeFormDirty(emptyEmployeeForm(), emptyEmployeeForm())).toBe(
+      false,
+    );
   });
 
   it('is true when any single field differs', () => {

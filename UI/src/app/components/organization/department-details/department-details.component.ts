@@ -1,4 +1,11 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { DepartmentService } from '../../../services/department.service';
@@ -18,7 +25,7 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 export class DepartmentDetailsComponent {
   private readonly departmentService = inject(DepartmentService);
 
-  readonly id = input<string>();
+  readonly departmentId = input<string>();
 
   readonly department = signal<Department | null>(null);
   readonly loading = signal(true);
@@ -32,7 +39,7 @@ export class DepartmentDetailsComponent {
 
   constructor() {
     effect(() => {
-      const id = this.id();
+      const id = this.departmentId();
       untracked(() => {
         if (!id) {
           this.error.set('No department specified.');
@@ -47,7 +54,9 @@ export class DepartmentDetailsComponent {
             this.loading.set(false);
           },
           error: (error: HttpErrorResponse) => {
-            this.error.set(extractErrorMessage(error, 'Failed to load department'));
+            this.error.set(
+              extractErrorMessage(error, 'Failed to load department'),
+            );
             this.loading.set(false);
           },
         });
@@ -58,7 +67,9 @@ export class DepartmentDetailsComponent {
             this.employeesLoading.set(false);
           },
           error: (error: HttpErrorResponse) => {
-            this.employeesError.set(extractErrorMessage(error, 'Failed to load employees'));
+            this.employeesError.set(
+              extractErrorMessage(error, 'Failed to load employees'),
+            );
             this.employeesLoading.set(false);
           },
         });

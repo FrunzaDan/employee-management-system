@@ -1,0 +1,569 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { environment } from '../../environments/environment';
+import {
+  CreateEmployeeRequest,
+  Employee,
+  EmployeeStatus,
+  Gender,
+} from '../interfaces/employee-response';
+import { EmployeeService } from './employee.service';
+import { HttpHeaderService } from './http-header.service';
+import { NotificationService } from './notification.service';
+
+describe('EmployeeService', () => {
+  let service: EmployeeService;
+  let httpMock: HttpTestingController;
+  let notificationShow: ReturnType<typeof vi.fn>;
+
+  const API_URL = `${environment.apiUrl}/api/employee`;
+
+  const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
+    employeeId: 'employee-1',
+    firstName: 'Dan',
+    lastName: 'Frunza',
+    phoneNumber: '123456789',
+    email: 'dan@example.com',
+    gender: Gender.Male,
+    status: EmployeeStatus.Active,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
+    address: {
+      country: 'Romania',
+      county: 'Cluj',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
+      street: 'Main',
+      streetNumber: '1',
+    },
+    hireDate: null,
+    officeId: null,
+    officeName: null,
+    departmentId: null,
+    departmentName: null,
+    costCenterId: null,
+    costCenterName: null,
+    currentGrossSalary: null,
+    ...overrides,
+  });
+
+  // Loads one page holding `employees`, the way the list page fills the service.
+  const seedEmployees = (employees: Employee[]) => {
+    service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+    httpMock
+      .expectOne((r) => r.url === `${API_URL}/all`)
+      .flush({
+        status: 200,
+        responseMessage: 'ok',
+        data: {
+          pageNumber: 1,
+          pageSize: 10,
+          totalItems: employees.length,
+          items: employees,
+        },
+      });
+  };
+
+  beforeEach(() => {
+    notificationShow = vi.fn();
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: HttpHeaderService,
+          useValue: { getHeadersWithTokenSet: () => ({}) },
+        },
+        { provide: NotificationService, useValue: { show: notificationShow } },
+      ],
+    });
+    service = TestBed.inject(EmployeeService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  describe('loadEmployees', () => {
+    const emptyPage = (pageNumber: number) => ({
+      status: 200,
+      responseMessage: 'ok',
+      data: { pageNumber, pageSize: 10, totalItems: 0, items: [] },
+    });
+
+    it('sends pageNumber, pageSize, sortColumn, and sortDirection as query params', () => {
+      service.loadEmployees({
+        pageNumber: 2,
+        pageSize: 10,
+        sortColumn: 'email',
+        sortDirection: 'desc',
+      });
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
+      expect(req.request.params.get('pageNumber')).toBe('2');
+      expect(req.request.params.get('pageSize')).toBe('10');
+      expect(req.request.params.get('sortColumn')).toBe('email');
+      expect(req.request.params.get('sortDirection')).toBe('desc');
+      expect(req.request.params.has('searchTerm')).toBe(false);
+
+      req.flush(emptyPage(2));
+    });
+
+    it('defaults sortColumn to name and sortDirection to asc when not provided', () => {
+      service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
+      expect(req.request.params.get('sortColumn')).toBe('name');
+      expect(req.request.params.get('sortDirection')).toBe('asc');
+
+      req.flush(emptyPage(1));
+    });
+
+    it('includes searchTerm only when a non-empty one is provided', () => {
+      service.loadEmployees({ pageNumber: 1, pageSize: 10, searchTerm: 'dan' });
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
+      expect(req.request.params.get('searchTerm')).toBe('dan');
+
+      req.flush(emptyPage(1));
+    });
+
+    it('populates employees/totalItems/pageNumber/pageSize from a successful response', () => {
+      const employee = buildEmployee();
+
+      seedEmployees([employee]);
+
+      expect(service.employees()).toEqual([employee]);
+      expect(service.totalItems()).toBe(1);
+      expect(service.pageNumber()).toBe(1);
+      expect(service.pageSize()).toBe(10);
+      expect(service.loading()).toBe(false);
+      expect(service.error()).toBeNull();
+    });
+
+    it('sets loading true synchronously while the request is in flight', () => {
+      service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+
+      expect(service.loading()).toBe(true);
+
+      httpMock.expectOne((r) => r.url === `${API_URL}/all`).flush(emptyPage(1));
+
+      expect(service.loading()).toBe(false);
+    });
+
+    it('sets a friendly message and clears loading on a network error (status 0)', () => {
+      service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/all`)
+        .error(new ProgressEvent('error'), { status: 0 });
+
+      expect(service.loading()).toBe(false);
+      expect(service.error()).toBe(
+        'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+      );
+    });
+  });
+
+  describe('createEmployee', () => {
+    const buildRequest = (): CreateEmployeeRequest => ({
+      firstName: 'Dan',
+      lastName: 'Frunza',
+      phoneNumber: '123456789',
+      email: 'dan@example.com',
+      gender: Gender.Male,
+      birthDate: '1990-01-01',
+      address: {
+        country: 'Romania',
+        county: 'Cluj',
+        city: 'Cluj-Napoca',
+        postalCode: '400000',
+        street: 'Main',
+        streetNumber: '1',
+      },
+    });
+
+    it('POSTs the employee to the create endpoint', () => {
+      service.createEmployee(buildRequest()).subscribe();
+
+      const req = httpMock.expectOne(`${API_URL}/create`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(buildRequest());
+
+      req.flush({
+        status: 200,
+        responseMessage: 'Employee created successfully.',
+      });
+    });
+
+    it('shows a success notification once the request resolves', () => {
+      service.createEmployee(buildRequest()).subscribe();
+
+      httpMock.expectOne(`${API_URL}/create`).flush({
+        status: 200,
+        responseMessage: 'Employee created successfully.',
+      });
+
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Employee registered successfully.',
+      );
+    });
+
+    it('createEmployeeSilently POSTs to the same endpoint without showing a notification', () => {
+      service.createEmployeeSilently(buildRequest()).subscribe();
+
+      const req = httpMock.expectOne(`${API_URL}/create`);
+      expect(req.request.method).toBe('POST');
+      req.flush({
+        status: 200,
+        responseMessage: 'Employee created successfully.',
+      });
+
+      expect(notificationShow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateEmployee', () => {
+    it('PATCHes only the editable fields to the update endpoint', () => {
+      const employee = buildEmployee({
+        hireDate: '2020-01-01',
+        officeId: 'office-1',
+        departmentId: 'department-1',
+        costCenterId: 'cost-center-1',
+      });
+      service.updateEmployee(employee).subscribe();
+
+      const req = httpMock.expectOne(`${API_URL}/update`);
+      expect(req.request.method).toBe('PATCH');
+      // Server-owned fields (status, dates) and the joined names/salary aren't part of an
+      // edit request.
+      const {
+        status,
+        createdAt,
+        lastInteractionAt,
+        officeName,
+        departmentName,
+        costCenterName,
+        currentGrossSalary,
+        ...editable
+      } = employee;
+      expect(req.request.body).toEqual(editable);
+
+      req.flush({
+        status: 200,
+        responseMessage: 'Employee updated successfully.',
+      });
+    });
+
+    it('updates the employee in the loaded list and notifies on success', () => {
+      seedEmployees([buildEmployee()]);
+      const updated = buildEmployee({ firstName: 'Updated' });
+
+      service.updateEmployee(updated).subscribe();
+      httpMock.expectOne(`${API_URL}/update`).flush({
+        status: 200,
+        responseMessage: 'Employee updated successfully.',
+      });
+
+      expect(service.employees()).toEqual([updated]);
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Employee updated successfully.',
+      );
+    });
+
+    it('does not touch the loaded list or notify when the request errors', () => {
+      const original = buildEmployee();
+      seedEmployees([original]);
+
+      service
+        .updateEmployee(buildEmployee({ firstName: 'Updated' }))
+        .subscribe({ error: () => {} });
+      httpMock
+        .expectOne(`${API_URL}/update`)
+        .flush({ message: 'boom' }, { status: 400, statusText: 'Bad Request' });
+
+      expect(service.employees()).toEqual([original]);
+      expect(notificationShow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteEmployee', () => {
+    it('DELETEs with the employeeId as a query param', () => {
+      service.deleteEmployee('employee-1').subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/delete`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.params.get('employeeId')).toBe('employee-1');
+
+      req.flush({
+        status: 200,
+        responseMessage: 'Employee deleted successfully.',
+      });
+    });
+
+    it('removes the employee from the loaded list and notifies on success', () => {
+      seedEmployees([buildEmployee()]);
+
+      service.deleteEmployee('employee-1').subscribe();
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/delete`)
+        .flush({
+          status: 200,
+          responseMessage: 'Employee deleted successfully.',
+        });
+
+      expect(service.employees()).toEqual([]);
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Employee deleted successfully.',
+      );
+    });
+
+    it('does not touch the loaded list or notify when the request errors', () => {
+      seedEmployees([buildEmployee()]);
+
+      service.deleteEmployee('employee-1').subscribe({ error: () => {} });
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/delete`)
+        .flush(
+          { message: 'Employee must be deactivated before it can be deleted.' },
+          { status: 409, statusText: 'Conflict' },
+        );
+
+      expect(service.employees()).toHaveLength(1);
+      expect(notificationShow).not.toHaveBeenCalled();
+    });
+
+    it('deleteEmployeeSilently removes the employee from the loaded list, but never notifies', () => {
+      seedEmployees([buildEmployee()]);
+
+      service.deleteEmployeeSilently('employee-1').subscribe();
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/delete`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.params.get('employeeId')).toBe('employee-1');
+      req.flush({
+        status: 200,
+        responseMessage: 'Employee deleted successfully.',
+      });
+
+      expect(service.employees()).toEqual([]);
+      expect(notificationShow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deactivateEmployee / reactivateEmployee', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    it('sets activationLoading true synchronously while deactivation is in flight', () => {
+      service.deactivateEmployee('employee-1');
+
+      expect(service.activationLoading()).toBe(true);
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush({ status: 200, responseMessage: 'ok' });
+    });
+
+    it('deactivateEmployee marks the loaded employee Deactivated and notifies on success', () => {
+      seedEmployees([buildEmployee()]);
+
+      service.deactivateEmployee('employee-1');
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/deactivate`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.params.get('employeeId')).toBe('employee-1');
+      req.flush({ status: 200, responseMessage: 'ok' });
+
+      expect(service.employees()[0].status).toBe(EmployeeStatus.Deactivated);
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Employee deactivated successfully.',
+      );
+      expect(service.activationLoading()).toBe(false);
+      expect(service.activationError()).toBeNull();
+    });
+
+    it('reactivateEmployee marks the loaded employee Active and hits the reactivate endpoint', () => {
+      seedEmployees([buildEmployee({ status: EmployeeStatus.Deactivated })]);
+
+      service.reactivateEmployee('employee-1');
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/reactivate`);
+      expect(req.request.method).toBe('PATCH');
+      req.flush({ status: 200, responseMessage: 'ok' });
+
+      expect(service.employees()[0].status).toBe(EmployeeStatus.Active);
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Employee reactivated successfully.',
+      );
+    });
+
+    it('sets an error and skips the local update/notification when the response status is not 200', () => {
+      seedEmployees([buildEmployee()]);
+
+      service.deactivateEmployee('employee-1');
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush({
+          status: 409,
+          responseMessage: 'Employee is already deactivated.',
+        });
+
+      expect(service.employees()[0].status).toBe(EmployeeStatus.Active);
+      expect(notificationShow).not.toHaveBeenCalled();
+      expect(service.activationLoading()).toBe(false);
+      expect(service.activationError()).toBe('Deactivation failed');
+    });
+
+    it('sets a not-found error and skips notification when the employee is not in the loaded list', () => {
+      service.deactivateEmployee('missing-employeeId');
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush({ status: 200, responseMessage: 'ok' });
+
+      expect(notificationShow).not.toHaveBeenCalled();
+      expect(service.activationError()).toContain('not found locally');
+    });
+
+    it('does not retry a definitive 4xx error and surfaces the server message', () => {
+      service.deactivateEmployee('employee-1');
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush(
+          { message: 'Employee is already deactivated.' },
+          { status: 409, statusText: 'Conflict' },
+        );
+
+      expect(service.activationLoading()).toBe(false);
+      expect(service.activationError()).toBe(
+        'Employee is already deactivated.',
+      );
+      // httpMock.verify() in afterEach confirms no retry request was made.
+    });
+
+    it('retries once on a transient (5xx) failure and then succeeds', () => {
+      seedEmployees([buildEmployee()]);
+      vi.useFakeTimers();
+
+      service.deactivateEmployee('employee-1');
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      vi.advanceTimersByTime(500);
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush({ status: 200, responseMessage: 'ok' });
+
+      expect(service.employees()[0].status).toBe(EmployeeStatus.Deactivated);
+      expect(service.activationLoading()).toBe(false);
+      expect(service.activationError()).toBeNull();
+    });
+  });
+
+  describe('exportEmployees', () => {
+    let triggerDownloadSpy: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      // triggerDownload drives browser-only APIs (URL.createObjectURL, an <a>
+      // click) that jsdom doesn't implement — stub it (via an `any` cast, since
+      // it's private) so tests can assert the HTTP/signal behavior without
+      // exercising that DOM plumbing.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      triggerDownloadSpy = vi
+        .spyOn(service as any, 'triggerDownload')
+        .mockImplementation(() => {});
+    });
+
+    it('sends sortColumn and sortDirection as query params, defaulting when not provided', () => {
+      service.exportEmployees({});
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/export`);
+      expect(req.request.params.get('sortColumn')).toBe('name');
+      expect(req.request.params.get('sortDirection')).toBe('asc');
+      expect(req.request.params.has('searchTerm')).toBe(false);
+      expect(req.request.responseType).toBe('blob');
+
+      req.flush(new Blob(['csv content']));
+    });
+
+    it('includes searchTerm only when a non-empty one is provided', () => {
+      service.exportEmployees({
+        searchTerm: 'dan',
+        sortColumn: 'email',
+        sortDirection: 'desc',
+      });
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/export`);
+      expect(req.request.params.get('searchTerm')).toBe('dan');
+      expect(req.request.params.get('sortColumn')).toBe('email');
+      expect(req.request.params.get('sortDirection')).toBe('desc');
+
+      req.flush(new Blob(['csv content']));
+    });
+
+    it('sets exportLoading true synchronously while the request is in flight, then false on success', () => {
+      service.exportEmployees({});
+
+      expect(service.exportLoading()).toBe(true);
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/export`)
+        .flush(new Blob(['csv content']));
+
+      expect(service.exportLoading()).toBe(false);
+      expect(service.exportError()).toBeNull();
+    });
+
+    it('triggers a download with the received blob on success', () => {
+      service.exportEmployees({});
+
+      const blob = new Blob(['csv content']);
+      httpMock.expectOne((r) => r.url === `${API_URL}/export`).flush(blob);
+
+      expect(triggerDownloadSpy).toHaveBeenCalledWith(
+        blob,
+        expect.stringMatching(/^employees_.*\.csv$/),
+      );
+    });
+
+    it('sets a friendly message and clears exportLoading on a network error (status 0)', () => {
+      service.exportEmployees({});
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/export`)
+        .error(new ProgressEvent('error'), { status: 0 });
+
+      expect(service.exportLoading()).toBe(false);
+      expect(service.exportError()).toBe(
+        'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+      );
+    });
+
+    it('names the failed export on a server error (status 500)', () => {
+      service.exportEmployees({});
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/export`)
+        .flush(new Blob(['error']), {
+          status: 500,
+          statusText: 'Server Error',
+        });
+
+      expect(service.exportLoading()).toBe(false);
+      expect(service.exportError()).toBe(
+        'Failed to export employees (500). Please try again.',
+      );
+    });
+  });
+});

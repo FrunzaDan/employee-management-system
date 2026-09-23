@@ -45,7 +45,7 @@ export const routes: Routes = [
     title: 'Register employee',
   },
   {
-    path: 'update-employee',
+    path: 'employees/update/:employeeId',
     loadComponent: () =>
       import('./components/update-employee/update-employee.component').then(
         (m) => m.UpdateEmployeeComponent,
@@ -64,7 +64,7 @@ export const routes: Routes = [
     title: 'About',
   },
   {
-    path: 'employee-details',
+    path: 'employees/:employeeId',
     loadComponent: () =>
       import('./components/employee-details/employee-details.component').then(
         (m) => m.EmployeeDetailsComponent,
@@ -91,7 +91,7 @@ export const routes: Routes = [
     title: 'Offices',
   },
   {
-    path: 'office-details',
+    path: 'offices/:officeId',
     loadComponent: () =>
       import('./components/organization/office-details/office-details.component').then(
         (m) => m.OfficeDetailsComponent,
@@ -109,7 +109,7 @@ export const routes: Routes = [
     title: 'Departments',
   },
   {
-    path: 'department-details',
+    path: 'departments/:departmentId',
     loadComponent: () =>
       import('./components/organization/department-details/department-details.component').then(
         (m) => m.DepartmentDetailsComponent,
@@ -127,7 +127,7 @@ export const routes: Routes = [
     title: 'Cost centers',
   },
   {
-    path: 'cost-center-details',
+    path: 'cost-centers/:costCenterId',
     loadComponent: () =>
       import('./components/organization/cost-center-details/cost-center-details.component').then(
         (m) => m.CostCenterDetailsComponent,

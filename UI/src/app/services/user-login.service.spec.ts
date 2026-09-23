@@ -6,7 +6,8 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { LoginDataResponse } from '../interfaces/user-login-response';
+import { GenericResponse } from '../interfaces/generic-response';
+import { LoginData } from '../interfaces/user-login-response';
 import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 import { SessionStorageService } from './session-storage.service';
@@ -22,8 +23,8 @@ describe('UserLoginService', () => {
   const API_URL = `${environment.apiUrl}/api/authentication/access-token`;
 
   const buildResponse = (
-    overrides: Partial<LoginDataResponse> = {},
-  ): LoginDataResponse => ({
+    overrides: Partial<GenericResponse<LoginData>> = {},
+  ): GenericResponse<LoginData> => ({
     status: 200,
     responseMessage: 'Success!',
     data: { accessToken: 'jwt-123', expiresAt: '2026-01-01T00:15:00' },
@@ -42,7 +43,10 @@ describe('UserLoginService', () => {
         { provide: Router, useValue: { navigateByUrl } },
         {
           provide: SessionStorageService,
-          useValue: { setSessionAccessToken, getSessionAccessToken: () => null },
+          useValue: {
+            setSessionAccessToken,
+            getSessionAccessToken: () => null,
+          },
         },
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],

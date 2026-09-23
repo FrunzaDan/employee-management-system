@@ -10,4 +10,7 @@ export interface SalaryHistoryEntry {
 }
 
 // POST /api/employee/salary-history. No employeeSalaryId or createdAt: the DB sets both.
-export type CreateSalaryRequest = Pick<SalaryHistoryEntry, 'employeeId' | 'grossSalary' | 'effectiveDate'>;
+export type CreateSalaryRequest = Pick<
+  SalaryHistoryEntry,
+  'employeeId' | 'grossSalary' | 'effectiveDate'
+>;

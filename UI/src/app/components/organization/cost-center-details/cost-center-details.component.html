@@ -1,7 +1,9 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <a routerLink="/cost-centers" class="back-link"><span aria-hidden="true">←</span> Back to cost centers</a>
+      <a routerLink="/cost-centers" class="back-link"
+        ><span aria-hidden="true">←</span> Back to cost centers</a
+      >
       <h1 class="page-title">{{ costCenter()?.code || 'Cost center' }}</h1>
       <p class="page-subtitle">Cost center details and assigned employees.</p>
     </div>
@@ -9,7 +11,11 @@
 
   @if (loading()) {
     <div class="app-card loading-state" role="status">
-      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading cost center…
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading cost center…
     </div>
   } @else if (error(); as err) {
     <div class="alert alert-danger" role="alert">{{ err }}</div>
@@ -45,16 +51,29 @@
 
       @if (employeesLoading()) {
         <div class="loading-state" role="status">
-          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
+          <span
+            class="spinner-border spinner-border-sm me-2"
+            aria-hidden="true"
+          ></span
+          >Loading employees…
         </div>
       } @else if (employeesError(); as err) {
         <div class="alert alert-danger" role="alert">{{ err }}</div>
       } @else if (employees().length === 0) {
-        <div class="empty-state">No employees assigned to this cost center.</div>
+        <div class="empty-state">
+          No employees assigned to this cost center.
+        </div>
       } @else {
-        <div class="table-responsive" role="region" aria-label="Employees in this cost center" tabindex="0">
+        <div
+          class="table-responsive"
+          role="region"
+          aria-label="Employees in this cost center"
+          tabindex="0"
+        >
           <table class="table table-themed table-striped table-hover">
-            <caption class="visually-hidden">Employees assigned to this cost center</caption>
+            <caption class="visually-hidden">
+              Employees assigned to this cost center
+            </caption>
             <thead>
               <tr>
                 <th scope="col" class="text-center">Name</th>
@@ -66,12 +85,17 @@
               @for (employee of employees(); track employee.employeeId) {
                 <tr>
                   <td class="align-middle text-center">
-                    <a class="plain-Links hoverItem" routerLink="/employee-details" [queryParams]="{ id: employee.employeeId }">
+                    <a
+                      class="plain-Links hoverItem"
+                      [routerLink]="['/employees', employee.employeeId]"
+                    >
                       {{ employee.firstName }} {{ employee.lastName }}
                     </a>
                   </td>
                   <td class="align-middle text-center">{{ employee.email }}</td>
-                  <td class="align-middle text-center">{{ employeeStatusLabel(employee.status) }}</td>
+                  <td class="align-middle text-center">
+                    {{ employeeStatusLabel(employee.status) }}
+                  </td>
                 </tr>
               }
             </tbody>

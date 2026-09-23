@@ -11,11 +11,9 @@ import {
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { GetEmployeeService } from '../../services/get-employee.service';
-import { ActivateEmployeeService } from '../../services/activate-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
-import { DeleteEmployeeService } from '../../services/delete-employee.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
 import {
   Employee,
@@ -33,16 +31,14 @@ import { auditActionLabel } from '../../utils/audit-action-label';
   imports: [DatePipe, RouterLink],
 })
 export class EmployeeDetailsComponent {
-  private readonly getEmployeeService = inject(GetEmployeeService);
-  private readonly activateEmployeeService = inject(ActivateEmployeeService);
+  private readonly employeeService = inject(EmployeeService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  private readonly deleteEmployeeService = inject(DeleteEmployeeService);
   private readonly auditLogService = inject(AuditLogService);
   private readonly salaryHistoryService = inject(SalaryHistoryService);
   private readonly router = inject(Router);
 
-  // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
-  readonly id = input<string>();
+  // Bound from the `:employeeId` route param by withComponentInputBinding() in app.config.ts.
+  readonly employeeId = input<string>();
 
   genderMap = new Map<Gender, string>([
     [Gender.NotDeclared, 'not declared'],
@@ -56,19 +52,19 @@ export class EmployeeDetailsComponent {
     [EmployeeStatus.Test, 'Test'],
   ]);
 
-  readonly employee = this.getEmployeeService.selectedEmployee;
-  readonly isLoading = this.getEmployeeService.loading;
-  readonly errorMessage = this.getEmployeeService.error;
+  readonly employee = this.employeeService.selectedEmployee;
+  readonly isLoading = this.employeeService.loading;
+  readonly errorMessage = this.employeeService.error;
 
   readonly EmployeeStatus = EmployeeStatus;
   readonly auditActionLabel = auditActionLabel;
   readonly Gender = Gender;
 
-  // Deactivate/reactivate share ActivateEmployeeService's loading/error state (it's
+  // Deactivate/reactivate share EmployeeService's loading/error state (it's
   // providedIn: 'root', same instance the employee list uses); delete gets its own,
   // same split as employee-list.component.ts.
-  readonly activationLoading = this.activateEmployeeService.loading;
-  readonly activationError = this.activateEmployeeService.error;
+  readonly activationLoading = this.employeeService.activationLoading;
+  readonly activationError = this.employeeService.activationError;
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
@@ -109,18 +105,17 @@ export class EmployeeDetailsComponent {
   canDelete: Signal<boolean> = computed(() => {
     const status = this.employee()?.status;
     return (
-      status === EmployeeStatus.Deactivated ||
-      status === EmployeeStatus.Test
+      status === EmployeeStatus.Deactivated || status === EmployeeStatus.Test
     );
   });
 
   constructor() {
     // (Re)load whenever the id in the URL changes; no id means nothing to show.
     effect(() => {
-      const id = this.id();
+      const id = this.employeeId();
       untracked(() => {
         if (id) {
-          this.getEmployeeService.getEmployee(id);
+          this.employeeService.getEmployee(id);
           this.auditLogService.loadAuditLog(id);
           this.salaryHistoryService.loadHistory(id);
         } else {
@@ -151,13 +146,13 @@ export class EmployeeDetailsComponent {
       { title: 'Deactivate employee?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.activateEmployeeService.deactivateEmployee(employeeId);
+    this.employeeService.deactivateEmployee(employeeId);
   }
 
   reactivateEmployee(): void {
     const employeeId = this.employee()?.employeeId;
     if (!employeeId) return;
-    this.activateEmployeeService.reactivateEmployee(employeeId);
+    this.employeeService.reactivateEmployee(employeeId);
   }
 
   async createSalary(): Promise<void> {
@@ -165,7 +160,11 @@ export class EmployeeDetailsComponent {
     if (!employeeId) return;
 
     const grossSalary = Number(this.newSalaryAmount());
-    if (!this.newSalaryAmount() || Number.isNaN(grossSalary) || grossSalary <= 0) {
+    if (
+      !this.newSalaryAmount() ||
+      Number.isNaN(grossSalary) ||
+      grossSalary <= 0
+    ) {
       this.createSalaryError.set('Enter a valid, positive gross salary.');
       return;
     }
@@ -189,7 +188,10 @@ export class EmployeeDetailsComponent {
       this.newSalaryEffectiveDate.set('');
     } catch (error) {
       this.createSalaryError.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to add salary entry'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to add salary entry',
+        ),
       );
     } finally {
       this.addingSalary.set(false);
@@ -208,7 +210,7 @@ export class EmployeeDetailsComponent {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.deleteEmployeeService.deleteEmployee(employeeId).subscribe({
+    this.employeeService.deleteEmployee(employeeId).subscribe({
       next: () => this.router.navigate(['/employees']),
       error: (error: HttpErrorResponse) => {
         this.deleting.set(false);

@@ -1,8 +1,8 @@
 // employeeCount/totalGrossSalary are aggregates only the list endpoint computes; the
-// single-department endpoint omits them.
+// single-department endpoint returns them as null.
 export interface Department {
   departmentId: string;
   name: string;
-  employeeCount?: number;
-  totalGrossSalary?: number;
+  employeeCount: number | null;
+  totalGrossSalary: number | null;
 }

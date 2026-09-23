@@ -87,15 +87,27 @@ export class OfficesComponent implements OnInit {
     this.saveError.set(null);
 
     try {
-      const payload = { name: draft.name, city: draft.city, country: draft.country };
+      const payload = {
+        name: draft.name,
+        city: draft.city,
+        country: draft.country,
+      };
       await firstValueFrom(
         draft.officeId
-          ? this.officeService.updateOffice({ officeId: draft.officeId, ...payload })
+          ? this.officeService.updateOffice({
+              officeId: draft.officeId,
+              ...payload,
+            })
           : this.officeService.createOffice(payload),
       );
       this.draft.set(null);
     } catch (error) {
-      this.saveError.set(extractErrorMessage(error as HttpErrorResponse, 'Failed to save office'));
+      this.saveError.set(
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to save office',
+        ),
+      );
     } finally {
       this.saving.set(false);
     }
@@ -113,7 +125,12 @@ export class OfficesComponent implements OnInit {
       await firstValueFrom(this.officeService.deleteOffice(office.officeId));
     } catch (error) {
       // e.g. 409 when the office is still assigned to an employee.
-      this.deleteError.set(extractErrorMessage(error as HttpErrorResponse, 'Failed to delete office'));
+      this.deleteError.set(
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to delete office',
+        ),
+      );
     }
   }
 

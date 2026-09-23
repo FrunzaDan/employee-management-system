@@ -24,8 +24,7 @@ export interface Address {
 }
 
 // An employee as the API returns it. Optionality mirrors the DB's nullability: birth date and
-// the job-info fields are the only NULLable columns, and the API omits null properties
-// entirely, so an unset one arrives as a missing key.
+// the job-info fields are the only NULLable columns, and an unset one arrives as null.
 export interface Employee {
   employeeId: string;
   firstName: string;
@@ -36,16 +35,16 @@ export interface Employee {
   status: EmployeeStatus;
   createdAt: IsoDateTime;
   lastInteractionAt: IsoDateTime;
-  birthDate?: IsoDate;
+  birthDate: IsoDate | null;
   address: Address;
-  hireDate?: IsoDate;
-  officeId?: string;
-  officeName?: string;
-  departmentId?: string;
-  departmentName?: string;
-  costCenterId?: string;
-  costCenterName?: string;
-  currentGrossSalary?: number;
+  hireDate: IsoDate | null;
+  officeId: string | null;
+  officeName: string | null;
+  departmentId: string | null;
+  departmentName: string | null;
+  costCenterId: string | null;
+  costCenterName: string | null;
+  currentGrossSalary: number | null;
 }
 
 // POST /api/employee/create. No employeeId: the DB generates it and the response returns it.
@@ -67,6 +66,8 @@ export interface CreateEmployeeRequest {
 
 // PATCH /api/employee/update — a partial update: an omitted field is left unchanged. There's no
 // status: status only changes through deactivate/reactivate/delete.
-export interface UpdateEmployeeRequest extends Partial<Omit<CreateEmployeeRequest, 'status'>> {
+export interface UpdateEmployeeRequest extends Partial<
+  Omit<CreateEmployeeRequest, 'status'>
+> {
   employeeId: string;
 }

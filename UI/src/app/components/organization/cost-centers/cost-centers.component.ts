@@ -64,7 +64,10 @@ export class CostCentersComponent implements OnInit {
     this.saveError.set(null);
   }
 
-  updateDraft(field: keyof Omit<CostCenterDraft, 'costCenterId'>, value: string): void {
+  updateDraft(
+    field: keyof Omit<CostCenterDraft, 'costCenterId'>,
+    value: string,
+  ): void {
     this.draft.update((d) => (d ? { ...d, [field]: value } : d));
   }
 
@@ -85,13 +88,19 @@ export class CostCentersComponent implements OnInit {
       };
       await firstValueFrom(
         draft.costCenterId
-          ? this.costCenterService.updateCostCenter({ costCenterId: draft.costCenterId, ...payload })
+          ? this.costCenterService.updateCostCenter({
+              costCenterId: draft.costCenterId,
+              ...payload,
+            })
           : this.costCenterService.createCostCenter(payload),
       );
       this.draft.set(null);
     } catch (error) {
       this.saveError.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to save cost center'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to save cost center',
+        ),
       );
     } finally {
       this.saving.set(false);
@@ -101,16 +110,25 @@ export class CostCentersComponent implements OnInit {
   async deleteCostCenter(costCenter: CostCenter): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       `Delete cost center "${costCenter.code}"? This cannot be undone.`,
-      { title: 'Delete cost center?', confirmLabel: 'Delete', variant: 'danger' },
+      {
+        title: 'Delete cost center?',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+      },
     );
     if (!confirmed) return;
 
     this.deleteError.set(null);
     try {
-      await firstValueFrom(this.costCenterService.deleteCostCenter(costCenter.costCenterId));
+      await firstValueFrom(
+        this.costCenterService.deleteCostCenter(costCenter.costCenterId),
+      );
     } catch (error) {
       this.deleteError.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to delete cost center'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to delete cost center',
+        ),
       );
     }
   }

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
-import { CreateEmployeeService } from '../../services/create-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
 import { OfficeService } from '../../services/office.service';
@@ -20,23 +20,38 @@ describe('AboutComponent', () => {
   let fetchCostCentersOnce: ReturnType<typeof vi.fn>;
   let createSalarySilently: ReturnType<typeof vi.fn>;
 
-  const office = { officeId: 'office-1', name: 'HQ', city: 'Cluj', country: 'Romania' };
+  const office = {
+    officeId: 'office-1',
+    name: 'HQ',
+    city: 'Cluj',
+    country: 'Romania',
+  };
   const department = { departmentId: 'department-1', name: 'Engineering' };
-  const costCenter = { costCenterId: 'cost-center-1', code: 'CC-1', name: 'Eng' };
+  const costCenter = {
+    costCenterId: 'cost-center-1',
+    code: 'CC-1',
+    name: 'Eng',
+  };
 
   const createComponent = () => {
-    createEmployeeSilently = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok', data: 'employee-1' }));
+    createEmployeeSilently = vi
+      .fn()
+      .mockReturnValue(
+        of({ status: 200, responseMessage: 'ok', data: 'employee-1' }),
+      );
     toggle = vi.fn();
     enabled = signal(true);
     show = vi.fn();
     fetchOfficesOnce = vi.fn().mockReturnValue(of([office]));
     fetchDepartmentsOnce = vi.fn().mockReturnValue(of([department]));
     fetchCostCentersOnce = vi.fn().mockReturnValue(of([costCenter]));
-    createSalarySilently = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    createSalarySilently = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: CreateEmployeeService, useValue: { createEmployeeSilently } },
+        { provide: EmployeeService, useValue: { createEmployeeSilently } },
         { provide: ApiLoggerService, useValue: { enabled, toggle } },
         { provide: NotificationService, useValue: { show } },
         { provide: OfficeService, useValue: { fetchOfficesOnce } },
@@ -99,7 +114,10 @@ describe('AboutComponent', () => {
 
       await component.createTestEmployees();
 
-      expect(show).toHaveBeenCalledWith('Added 49 test employees (1 failed).', 'error');
+      expect(show).toHaveBeenCalledWith(
+        'Added 49 test employees (1 failed).',
+        'error',
+      );
     });
 
     it('ignores a second click while a run is in progress', async () => {
@@ -125,7 +143,9 @@ describe('AboutComponent', () => {
 
       await component.createTestEmployees();
 
-      const hireDates = createEmployeeSilently.mock.calls.map((c) => c[0].hireDate as string);
+      const hireDates = createEmployeeSilently.mock.calls.map(
+        (c) => c[0].hireDate as string,
+      );
       expect(hireDates).toHaveLength(50);
       for (const hireDate of hireDates) {
         expect(hireDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);

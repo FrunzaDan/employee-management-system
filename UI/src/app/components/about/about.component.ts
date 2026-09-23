@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
-import { CreateEmployeeService } from '../../services/create-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
@@ -199,12 +199,18 @@ function randomHireDate(): string {
 }
 
 function randomGrossSalary(): number {
-  return Math.floor(Math.random() * (MAX_GROSS_SALARY - MIN_GROSS_SALARY + 1)) + MIN_GROSS_SALARY;
+  return (
+    Math.floor(Math.random() * (MAX_GROSS_SALARY - MIN_GROSS_SALARY + 1)) +
+    MIN_GROSS_SALARY
+  );
 }
 
 // undefined (not '') when the list hasn't loaded/is empty, so the field is
 // simply omitted from the create request rather than sent as a bad ID.
-function pickId<T>(values: readonly T[], idOf: (value: T) => string): string | undefined {
+function pickId<T>(
+  values: readonly T[],
+  idOf: (value: T) => string,
+): string | undefined {
   return values.length > 0 ? idOf(pick(values)) : undefined;
 }
 
@@ -217,7 +223,7 @@ function pickId<T>(values: readonly T[], idOf: (value: T) => string): string | u
 export class AboutComponent {
   private readonly apiLoggerService = inject(ApiLoggerService);
   private readonly notificationService = inject(NotificationService);
-  private readonly createEmployeeService = inject(CreateEmployeeService);
+  private readonly employeeService = inject(EmployeeService);
   private readonly officeService = inject(OfficeService);
   private readonly departmentService = inject(DepartmentService);
   private readonly costCenterService = inject(CostCenterService);
@@ -253,17 +259,19 @@ export class AboutComponent {
       // An index-based suffix (rather than pure randomness) guarantees no
       // email/phoneNumber collisions within the batch itself, since both columns
       // carry a unique constraint at the database level.
-      const employees = Array.from({ length: TEST_EMPLOYEE_COUNT }, (_, index) =>
-        this.buildRandomEmployee(index, offices, departments, costCenters),
+      const employees = Array.from(
+        { length: TEST_EMPLOYEE_COUNT },
+        (_, index) =>
+          this.buildRandomEmployee(index, offices, departments, costCenters),
       );
 
       let added = 0;
       let failed = 0;
       for (const employee of employees) {
-        let employeeId: string | undefined;
+        let employeeId: string | null;
         try {
           const response = await firstValueFrom(
-            this.createEmployeeService.createEmployeeSilently(employee),
+            this.employeeService.createEmployeeSilently(employee),
           );
           employeeId = response.data;
         } catch {
@@ -271,7 +279,8 @@ export class AboutComponent {
           continue;
         }
         added++;
-        if (employeeId) await this.createRandomInitialSalary(employeeId, employee);
+        if (employeeId)
+          await this.createRandomInitialSalary(employeeId, employee);
       }
 
       const problems = failed > 0 ? [`${failed} failed`] : [];
@@ -335,8 +344,14 @@ export class AboutComponent {
       },
       hireDate: randomHireDate(),
       officeId: pickId(offices, (office) => office.officeId),
-      departmentId: pickId(departments, (department) => department.departmentId),
-      costCenterId: pickId(costCenters, (costCenter) => costCenter.costCenterId),
+      departmentId: pickId(
+        departments,
+        (department) => department.departmentId,
+      ),
+      costCenterId: pickId(
+        costCenters,
+        (costCenter) => costCenter.costCenterId,
+      ),
     };
   }
 }

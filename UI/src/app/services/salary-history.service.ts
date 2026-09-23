@@ -1,4 +1,8 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -33,10 +37,17 @@ export class SalaryHistoryService {
     const params = new HttpParams().set('employeeId', employeeId);
 
     this.http
-      .get<GenericResponse<SalaryHistoryEntry[]>>(this.API_URL, { headers, params })
+      .get<GenericResponse<SalaryHistoryEntry[]>>(this.API_URL, {
+        headers,
+        params,
+      })
       .subscribe({
         next: (response) =>
-          this.state.set({ entries: response.data ?? [], loading: false, error: null }),
+          this.state.set({
+            entries: response.data ?? [],
+            loading: false,
+            error: null,
+          }),
         error: (error: HttpErrorResponse) =>
           this.state.set({
             entries: [],
@@ -47,7 +58,10 @@ export class SalaryHistoryService {
   }
 
   createSalary(
-    entry: Pick<SalaryHistoryEntry, 'employeeId' | 'grossSalary' | 'effectiveDate'>,
+    entry: Pick<
+      SalaryHistoryEntry,
+      'employeeId' | 'grossSalary' | 'effectiveDate'
+    >,
   ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
@@ -66,9 +80,14 @@ export class SalaryHistoryService {
    * entries for employees whose history page isn't even open.
    */
   createSalarySilently(
-    entry: Pick<SalaryHistoryEntry, 'employeeId' | 'grossSalary' | 'effectiveDate'>,
+    entry: Pick<
+      SalaryHistoryEntry,
+      'employeeId' | 'grossSalary' | 'effectiveDate'
+    >,
   ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    return this.http.post<GenericResponse<object>>(this.API_URL, entry, { headers });
+    return this.http.post<GenericResponse<object>>(this.API_URL, entry, {
+      headers,
+    });
   }
 }

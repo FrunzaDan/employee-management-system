@@ -4,7 +4,11 @@
       <h1 class="page-title">Cost centers</h1>
       <p class="page-subtitle">Manage the company's cost centers.</p>
     </div>
-    <button type="button" class="btn btn-primary shadow-none" (click)="startAdd()">
+    <button
+      type="button"
+      class="btn btn-primary shadow-none"
+      (click)="startAdd()"
+    >
       Add cost center
     </button>
   </div>
@@ -14,9 +18,15 @@
   }
 
   @if (draft(); as d) {
-    <div class="card app-card mb-4" animate.enter="reveal-enter" animate.leave="reveal-leave">
+    <div
+      class="card app-card mb-4"
+      animate.enter="reveal-enter"
+      animate.leave="reveal-leave"
+    >
       <div class="card-body">
-        <h2 class="card-title">{{ d.costCenterId ? 'Edit cost center' : 'New cost center' }}</h2>
+        <h2 class="card-title">
+          {{ d.costCenterId ? 'Edit cost center' : 'New cost center' }}
+        </h2>
 
         @if (saveError(); as error) {
           <div class="alert alert-danger" role="alert">{{ error }}</div>
@@ -54,7 +64,9 @@
           >
             Save
           </button>
-          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -62,7 +74,11 @@
 
   @if (loading()) {
     <div class="app-card loading-state" role="status">
-      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading cost centers…
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading cost centers…
     </div>
   } @else if (error()) {
     <div class="alert alert-danger" role="alert">{{ error() }}</div>
@@ -70,9 +86,16 @@
     <div class="app-card empty-state">No cost centers yet.</div>
   } @else {
     <div class="app-card table-card">
-      <div class="table-responsive" role="region" aria-label="Cost centers table" tabindex="0">
+      <div
+        class="table-responsive"
+        role="region"
+        aria-label="Cost centers table"
+        tabindex="0"
+      >
         <table class="table table-themed table-striped table-hover">
-          <caption class="visually-hidden">List of cost centers</caption>
+          <caption class="visually-hidden">
+            List of cost centers
+          </caption>
           <thead>
             <tr>
               <th scope="col" class="text-center">Code</th>
@@ -86,22 +109,41 @@
             @for (costCenter of costCenters(); track costCenter.costCenterId) {
               <tr>
                 <td class="align-middle text-center">
-                  <a class="plain-Links hoverItem" routerLink="/cost-center-details" [queryParams]="{ id: costCenter.costCenterId }">
+                  <a
+                    class="plain-Links hoverItem"
+                    [routerLink]="['/cost-centers', costCenter.costCenterId]"
+                  >
                     {{ costCenter.code }}
                   </a>
                 </td>
-                <td class="align-middle text-center">{{ costCenter.name || '—' }}</td>
-                <td class="align-middle text-center">{{ costCenter.employeeCount }}</td>
-                <td class="align-middle text-center">{{ costCenter.totalGrossSalary }}</td>
                 <td class="align-middle text-center">
-                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + costCenter.code">
+                  {{ costCenter.name || '—' }}
+                </td>
+                <td class="align-middle text-center">
+                  {{ costCenter.employeeCount }}
+                </td>
+                <td class="align-middle text-center">
+                  {{ costCenter.totalGrossSalary }}
+                </td>
+                <td class="align-middle text-center">
+                  <div
+                    class="btn-group"
+                    role="group"
+                    [attr.aria-label]="'Actions for ' + costCenter.code"
+                  >
                     <button
                       type="button"
                       class="btn btn-secondary btn-sm shadow-none"
-                      [attr.aria-expanded]="expandedCostCenterId() === costCenter.costCenterId"
+                      [attr.aria-expanded]="
+                        expandedCostCenterId() === costCenter.costCenterId
+                      "
                       (click)="toggleEmployees(costCenter)"
                     >
-                      {{ expandedCostCenterId() === costCenter.costCenterId ? 'Hide employees' : 'Quickly view employees' }}
+                      {{
+                        expandedCostCenterId() === costCenter.costCenterId
+                          ? 'Hide employees'
+                          : 'Quickly view employees'
+                      }}
                     </button>
                     <button
                       type="button"
@@ -124,19 +166,35 @@
                 <tr animate.enter="reveal-enter" animate.leave="reveal-leave">
                   <td colspan="5" class="bg-body-tertiary">
                     @if (expandedEmployeesLoading()) {
-                      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
+                      <span
+                        class="spinner-border spinner-border-sm me-2"
+                        aria-hidden="true"
+                      ></span
+                      >Loading employees…
                     } @else if (expandedEmployeesError(); as error) {
                       <span class="text-danger">{{ error }}</span>
                     } @else if (expandedEmployees().length === 0) {
-                      <span class="text-muted">No employees assigned to this cost center.</span>
+                      <span class="text-muted"
+                        >No employees assigned to this cost center.</span
+                      >
                     } @else {
                       <ul class="list-unstyled mb-0">
-                        @for (employee of expandedEmployees(); track employee.employeeId) {
+                        @for (
+                          employee of expandedEmployees();
+                          track employee.employeeId
+                        ) {
                           <li>
-                            <a class="plain-Links hoverItem" routerLink="/employee-details" [queryParams]="{ id: employee.employeeId }">
+                            <a
+                              class="plain-Links hoverItem"
+                              [routerLink]="['/employees', employee.employeeId]"
+                            >
                               {{ employee.firstName }} {{ employee.lastName }}
                             </a>
-                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.status) }})</span>
+                            <span class="text-muted">
+                              — {{ employee.email }} ({{
+                                employeeStatusLabel(employee.status)
+                              }})</span
+                            >
                           </li>
                         }
                       </ul>

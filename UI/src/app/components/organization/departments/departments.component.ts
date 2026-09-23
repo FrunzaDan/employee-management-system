@@ -51,7 +51,10 @@ export class DepartmentsComponent implements OnInit {
 
   startEdit(department: Department): void {
     this.saveError.set(null);
-    this.draft.set({ departmentId: department.departmentId, name: department.name });
+    this.draft.set({
+      departmentId: department.departmentId,
+      name: department.name,
+    });
   }
 
   cancel(): void {
@@ -85,7 +88,10 @@ export class DepartmentsComponent implements OnInit {
       this.draft.set(null);
     } catch (error) {
       this.saveError.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to save department'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to save department',
+        ),
       );
     } finally {
       this.saving.set(false);
@@ -95,16 +101,25 @@ export class DepartmentsComponent implements OnInit {
   async deleteDepartment(department: Department): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       `Delete department "${department.name}"? This cannot be undone.`,
-      { title: 'Delete department?', confirmLabel: 'Delete', variant: 'danger' },
+      {
+        title: 'Delete department?',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+      },
     );
     if (!confirmed) return;
 
     this.deleteError.set(null);
     try {
-      await firstValueFrom(this.departmentService.deleteDepartment(department.departmentId));
+      await firstValueFrom(
+        this.departmentService.deleteDepartment(department.departmentId),
+      );
     } catch (error) {
       this.deleteError.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to delete department'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to delete department',
+        ),
       );
     }
   }

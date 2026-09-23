@@ -4,12 +4,12 @@ import { IsoDateTime } from './iso-date';
 export interface GlobalAuditLogEntry {
   employeeAuditLogId: number;
   employeeId: string;
-  // Absent when the employee no longer exists (the API LEFT JOINs Employee, since audit
-  // history outlives a deleted employee, and omits null properties).
-  employeeFirstName?: string;
-  employeeLastName?: string;
+  // null when the employee no longer exists (the API LEFT JOINs Employee, since audit
+  // history outlives a deleted employee).
+  employeeFirstName: string | null;
+  employeeLastName: string | null;
   performedBy: string;
   actionType: AuditAction;
-  details?: string;
+  details: string | null;
   occurredAt: IsoDateTime;
 }

@@ -3,15 +3,10 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import {
-  Employee,
-  EmployeeStatus,
-} from '../../interfaces/employee-response';
-import { ActivateEmployeeService } from '../../services/activate-employee.service';
+import { Employee, EmployeeStatus } from '../../interfaces/employee-response';
+import { EmployeeService } from '../../services/employee.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
-import { DeleteEmployeeService } from '../../services/delete-employee.service';
-import { GetEmployeeService } from '../../services/get-employee.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
 import { EmployeeDetailsComponent } from './employee-details.component';
 
@@ -47,11 +42,18 @@ describe('EmployeeDetailsComponent', () => {
       streetNumber: '1',
     },
     hireDate: '2020-01-01',
+    officeId: null,
+    officeName: null,
+    departmentId: null,
+    departmentName: null,
+    costCenterId: null,
+    costCenterName: null,
+    currentGrossSalary: null,
     ...overrides,
   });
 
-  // routeParamId is what withComponentInputBinding() would bind to the `id`
-  // input from `?id=`; set it to null before createComponent() for the "no id" case.
+  // routeParamId is what withComponentInputBinding() would bind to the `employeeId`
+  // input from the `:employeeId` route param; set it to null before createComponent() for the "no id" case.
   let routeParamId: string | null = 'employeeId-1';
 
   const createComponent = (): EmployeeDetailsComponent => {
@@ -59,7 +61,9 @@ describe('EmployeeDetailsComponent', () => {
     loadAuditLog = vi.fn();
     deactivateEmployee = vi.fn();
     reactivateEmployee = vi.fn();
-    deleteEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    deleteEmployee = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     confirm = vi.fn().mockResolvedValue(true);
     navigate = vi.fn().mockResolvedValue(true);
     selectedEmployee = signal<Employee | null>(null);
@@ -73,25 +77,20 @@ describe('EmployeeDetailsComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         {
-          provide: GetEmployeeService,
+          provide: EmployeeService,
           useValue: {
             selectedEmployee: selectedEmployee,
             loading: signal(false),
             error: signal<string | null>(null),
             getEmployee,
-          },
-        },
-        {
-          provide: ActivateEmployeeService,
-          useValue: {
-            loading: activationLoading,
-            error: signal<string | null>(null),
+            activationLoading,
+            activationError: signal<string | null>(null),
             deactivateEmployee,
             reactivateEmployee,
+            deleteEmployee,
           },
         },
         { provide: ConfirmDialogService, useValue: { confirm } },
-        { provide: DeleteEmployeeService, useValue: { deleteEmployee } },
         {
           provide: AuditLogService,
           useValue: {
@@ -119,7 +118,7 @@ describe('EmployeeDetailsComponent', () => {
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
 
     const fixture = TestBed.createComponent(EmployeeDetailsComponent);
-    if (routeParamId) fixture.componentRef.setInput('id', routeParamId);
+    if (routeParamId) fixture.componentRef.setInput('employeeId', routeParamId);
     fixture.detectChanges();
     return fixture.componentInstance;
   };
@@ -178,9 +177,7 @@ describe('EmployeeDetailsComponent', () => {
   describe('canDelete', () => {
     it('is false for an Active employee', () => {
       const component = createComponent();
-      selectedEmployee.set(
-        buildEmployee({ status: EmployeeStatus.Active }),
-      );
+      selectedEmployee.set(buildEmployee({ status: EmployeeStatus.Active }));
 
       expect(component.canDelete()).toBe(false);
     });
@@ -196,9 +193,7 @@ describe('EmployeeDetailsComponent', () => {
 
     it('is true for a Test employee (exempt from the deactivate-first rule)', () => {
       const component = createComponent();
-      selectedEmployee.set(
-        buildEmployee({ status: EmployeeStatus.Test }),
-      );
+      selectedEmployee.set(buildEmployee({ status: EmployeeStatus.Test }));
 
       expect(component.canDelete()).toBe(true);
     });
@@ -273,7 +268,9 @@ describe('EmployeeDetailsComponent', () => {
       await component.deleteEmployee();
 
       expect(component.deleting()).toBe(false);
-      expect(component.deleteError()).toBe('Employee must be deactivated first.');
+      expect(component.deleteError()).toBe(
+        'Employee must be deactivated first.',
+      );
     });
   });
 

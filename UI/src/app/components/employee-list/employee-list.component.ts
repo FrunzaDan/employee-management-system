@@ -1,18 +1,20 @@
 // employee-list.component.ts
-import { Component, OnInit, computed, effect, signal, Signal, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  effect,
+  signal,
+  Signal,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
-import { GetEmployeeService } from '../../services/get-employee.service';
-import { ActivateEmployeeService } from '../../services/activate-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
-import { DeleteEmployeeService } from '../../services/delete-employee.service';
-import { ExportEmployeeService } from '../../services/export-employee.service';
 import { NotificationService } from '../../services/notification.service';
-import {
-  Employee,
-  EmployeeStatus,
-} from '../../interfaces/employee-response';
+import { Employee, EmployeeStatus } from '../../interfaces/employee-response';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
@@ -23,19 +25,16 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
 })
 export class EmployeeListComponent implements OnInit {
   // Use dependency injection with inject()
-  private readonly getEmployeeService = inject(GetEmployeeService);
-  private readonly activateEmployeeService = inject(ActivateEmployeeService);
+  private readonly employeeService = inject(EmployeeService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  private readonly deleteEmployeeService = inject(DeleteEmployeeService);
-  private readonly exportEmployeeService = inject(ExportEmployeeService);
   private readonly notificationService = inject(NotificationService);
 
   // Public signals for template
-  readonly employees = this.getEmployeeService.employees;
-  readonly isLoading = this.getEmployeeService.loading;
-  readonly errorMessage = this.getEmployeeService.error;
-  readonly activationLoading = this.activateEmployeeService.loading;
-  readonly activationError = this.activateEmployeeService.error;
+  readonly employees = this.employeeService.employees;
+  readonly isLoading = this.employeeService.loading;
+  readonly errorMessage = this.employeeService.error;
+  readonly activationLoading = this.employeeService.activationLoading;
+  readonly activationError = this.employeeService.activationError;
 
   // Delete is a separate action from deactivate/reactivate, so it gets its own
   // in-flight/error state rather than being folded into activationLoading/Error.
@@ -52,13 +51,15 @@ export class EmployeeListComponent implements OnInit {
   readonly allOnPageSelected = computed(
     () =>
       this.employees().length > 0 &&
-      this.employees().every((c) => this.selectedEmployeeIds().has(c.employeeId)),
+      this.employees().every((c) =>
+        this.selectedEmployeeIds().has(c.employeeId),
+      ),
   );
 
   // CSV export exports whatever the list is currently searching/sorted by,
-  // not just the current page — see ExportEmployeeService.
-  readonly exportLoading = this.exportEmployeeService.loading;
-  readonly exportError = this.exportEmployeeService.error;
+  // not just the current page — see EmployeeService.
+  readonly exportLoading = this.employeeService.exportLoading;
+  readonly exportError = this.employeeService.exportError;
 
   // Add EmployeeStatus enum for better type checking
   readonly EmployeeStatus = EmployeeStatus;
@@ -72,7 +73,7 @@ export class EmployeeListComponent implements OnInit {
   // Search, sorting, and pagination are all server-side now: every change to
   // any of these re-fetches just the relevant page from the API rather than
   // filtering/sorting an already-loaded full list in memory (see
-  // GetEmployeeService.loadEmployees and Employee_List).
+  // EmployeeService.loadEmployees and Employee_List).
   readonly searchTerm = signal('');
   readonly sortColumn = signal<'name' | 'email' | 'phoneNumber'>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
@@ -80,7 +81,7 @@ export class EmployeeListComponent implements OnInit {
   readonly pageSize = 50;
   readonly currentPage = signal(1);
 
-  readonly totalItems = this.getEmployeeService.totalItems;
+  readonly totalItems = this.employeeService.totalItems;
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );
@@ -128,7 +129,6 @@ export class EmployeeListComponent implements OnInit {
         console.warn('Duplicate GUIDs found:', duplicates);
       }
     });
-
   }
 
   onSearchInput(value: string): void {
@@ -152,7 +152,9 @@ export class EmployeeListComponent implements OnInit {
   }
 
   // Exposed on the <th> so assistive tech announces the current sort.
-  ariaSort(column: 'name' | 'email' | 'phoneNumber'): 'ascending' | 'descending' | 'none' {
+  ariaSort(
+    column: 'name' | 'email' | 'phoneNumber',
+  ): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
   }
@@ -173,7 +175,7 @@ export class EmployeeListComponent implements OnInit {
   }
 
   exportCsv(): void {
-    this.exportEmployeeService.exportEmployees({
+    this.employeeService.exportEmployees({
       searchTerm: this.searchTerm().trim() || undefined,
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
@@ -182,7 +184,7 @@ export class EmployeeListComponent implements OnInit {
 
   private fetchEmployees(): void {
     this.selectedEmployeeIds.set(new Set());
-    this.getEmployeeService.loadEmployees({
+    this.employeeService.loadEmployees({
       pageNumber: this.currentPage(),
       pageSize: this.pageSize,
       searchTerm: this.searchTerm().trim() || undefined,
@@ -198,11 +200,11 @@ export class EmployeeListComponent implements OnInit {
       { title: 'Deactivate employee?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.activateEmployeeService.deactivateEmployee(employeeId);
+    this.employeeService.deactivateEmployee(employeeId);
   }
 
   reactivateEmployee(employeeId: string): void {
-    this.activateEmployeeService.reactivateEmployee(employeeId);
+    this.employeeService.reactivateEmployee(employeeId);
   }
 
   async deleteEmployee(employeeId: string): Promise<void> {
@@ -215,10 +217,10 @@ export class EmployeeListComponent implements OnInit {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.deleteEmployeeService.deleteEmployee(employeeId).subscribe({
+    this.employeeService.deleteEmployee(employeeId).subscribe({
       next: () => {
         this.deleting.set(false);
-        // removeEmployeeLocally() (called by DeleteEmployeeService) only
+        // removeEmployeeLocally() (called by EmployeeService) only
         // drops the row from the in-memory page — totalItems/page count
         // would go stale without a real re-fetch of the current page.
         this.fetchEmployees();
@@ -262,15 +264,15 @@ export class EmployeeListComponent implements OnInit {
   // buttons would require.
   async bulkDeleteSelected(): Promise<void> {
     const employeeIds = this.selectedEmployeeIds();
-    const selected = this.employees().filter((c) => employeeIds.has(c.employeeId));
+    const selected = this.employees().filter((c) =>
+      employeeIds.has(c.employeeId),
+    );
     if (selected.length === 0) return;
 
     const toDeactivate = selected.filter(
       (c) => c.status === EmployeeStatus.Active,
     );
-    const toDelete = selected.filter(
-      (c) => c.status !== EmployeeStatus.Active,
-    );
+    const toDelete = selected.filter((c) => c.status !== EmployeeStatus.Active);
 
     const lines = [`Of the ${selected.length} selected employees:`];
     if (toDeactivate.length > 0) {
@@ -285,24 +287,27 @@ export class EmployeeListComponent implements OnInit {
     }
     lines.push('Continue?');
 
-    const confirmed = await this.confirmDialogService.confirm(lines.join('\n'), {
-      title: 'Apply bulk action?',
-      confirmLabel: 'Apply',
-      variant: toDelete.length > 0 ? 'danger' : 'default',
-    });
+    const confirmed = await this.confirmDialogService.confirm(
+      lines.join('\n'),
+      {
+        title: 'Apply bulk action?',
+        confirmLabel: 'Apply',
+        variant: toDelete.length > 0 ? 'danger' : 'default',
+      },
+    );
     if (!confirmed) return;
 
     this.bulkActionInProgress.set(true);
 
     const operations = [
       ...toDeactivate.map((c) =>
-        this.activateEmployeeService.deactivateEmployeeSilently(c.employeeId).pipe(
+        this.employeeService.deactivateEmployeeSilently(c.employeeId).pipe(
           map(() => true),
           catchError(() => of(false)),
         ),
       ),
       ...toDelete.map((c) =>
-        this.deleteEmployeeService.deleteEmployeeSilently(c.employeeId).pipe(
+        this.employeeService.deleteEmployeeSilently(c.employeeId).pipe(
           map(() => true),
           catchError(() => of(false)),
         ),

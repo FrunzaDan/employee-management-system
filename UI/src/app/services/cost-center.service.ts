@@ -1,4 +1,8 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -36,7 +40,11 @@ export class CostCenterService {
       .get<GenericResponse<CostCenter[]>>(`${this.API_URL}/all`, { headers })
       .subscribe({
         next: (response) =>
-          this.state.set({ costCenters: response.data ?? [], loading: false, error: null }),
+          this.state.set({
+            costCenters: response.data ?? [],
+            loading: false,
+            error: null,
+          }),
         error: (error: HttpErrorResponse) =>
           this.state.set({
             costCenters: [],
@@ -59,7 +67,10 @@ export class CostCenterService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .get<GenericResponse<CostCenter>>(`${this.API_URL}/get`, { headers, params })
+      .get<GenericResponse<CostCenter>>(`${this.API_URL}/get`, {
+        headers,
+        params,
+      })
       .pipe(
         map((response) => {
           if (!response.data) throw new Error('Cost center not found.');
@@ -73,14 +84,21 @@ export class CostCenterService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, { headers, params })
+      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, {
+        headers,
+        params,
+      })
       .pipe(map((response) => response.data ?? []));
   }
 
-  createCostCenter(costCenter: Partial<CostCenter>): Observable<GenericResponse<object>> {
+  createCostCenter(
+    costCenter: Partial<CostCenter>,
+  ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/create`, costCenter, { headers })
+      .post<GenericResponse<object>>(`${this.API_URL}/create`, costCenter, {
+        headers,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center created successfully.');
@@ -89,10 +107,14 @@ export class CostCenterService {
       );
   }
 
-  updateCostCenter(costCenter: Partial<CostCenter>): Observable<GenericResponse<object>> {
+  updateCostCenter(
+    costCenter: Partial<CostCenter>,
+  ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/update`, costCenter, { headers })
+      .patch<GenericResponse<object>>(`${this.API_URL}/update`, costCenter, {
+        headers,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center updated successfully.');
@@ -105,7 +127,10 @@ export class CostCenterService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { headers, params })
+      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, {
+        headers,
+        params,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center deleted successfully.');

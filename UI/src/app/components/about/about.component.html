@@ -112,23 +112,24 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <p class="card-text">The schema has three tables:</p>
           <ul>
             <li>
-              <code>Employee</code> — one row per employee: name, email,
-              phone number, gender, birth date, a numeric
+              <code>Employee</code> — one row per employee: name, email, phone
+              number, gender, birth date, a numeric
               <code>StatusCode</code> (active / deactivated), and
-              creation/last-interaction timestamps, keyed by an <code>EmployeeId</code> (GUID) primary key.
-              Email and phone number each carry a unique constraint, so duplicates are
-              rejected by the database itself, not just application logic.
+              creation/last-interaction timestamps, keyed by an
+              <code>EmployeeId</code> (GUID) primary key. Email and phone number
+              each carry a unique constraint, so duplicates are rejected by the
+              database itself, not just application logic.
             </li>
             <li>
               <code>EmployeeAddress</code> — one row per employee's address,
-              linked back to <code>Employee</code> by a foreign key on that
-              same <code>EmployeeId</code>.
+              linked back to <code>Employee</code> by a foreign key on that same
+              <code>EmployeeId</code>.
             </li>
             <li>
               <code>Employer</code> — login accounts for the API, keyed by
-              <code>Username</code> (primary key): a PBKDF2 password hash and its salt
-              (never the plaintext password), a role, and a last-interaction
-              timestamp.
+              <code>Username</code> (primary key): a PBKDF2 password hash and
+              its salt (never the plaintext password), a role, and a
+              last-interaction timestamp.
             </li>
           </ul>
           <p class="card-text">
@@ -138,16 +139,17 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <ul>
             <li>
               <code>Employee_Create</code> — inserts the employee and address
-              rows in one transaction, rejecting duplicate email/phone number first.
+              rows in one transaction, rejecting duplicate email/phone number
+              first.
             </li>
             <li>
               <code>Employee_Get</code> — looks up a single employee by ID,
               phone number, or email.
             </li>
             <li>
-              <code>Employee_List</code> — returns one page of employees
-              joined with their addresses, filtered by an optional search term
-              and sorted by name/email/phone number, plus a total count for
+              <code>Employee_List</code> — returns one page of employees joined
+              with their addresses, filtered by an optional search term and
+              sorted by name/email/phone number, plus a total count for
               pagination.
             </li>
             <li>
@@ -156,17 +158,16 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               <code>Employee_Deactivate</code> /
-              <code>Employee_Reactivate</code> — flip
-              <code>StatusCode</code>, refusing to "change" it to the state
-              it's already in.
+              <code>Employee_Reactivate</code> — flip <code>StatusCode</code>,
+              refusing to "change" it to the state it's already in.
             </li>
             <li>
               <code>Employee_Delete</code> — hard-deletes a employee and its
               address, but only once it's already deactivated.
             </li>
             <li>
-              <code>Employer_GetAuthData</code> — returns a employer's
-              password hash, salt, and role for the login flow, and stamps their
+              <code>Employer_GetAuthData</code> — returns a employer's password
+              hash, salt, and role for the login flow, and stamps their
               last-interaction time.
             </li>
           </ul>

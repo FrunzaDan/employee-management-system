@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { CreateEmployeeService } from '../../services/create-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { EmployeeFormModel } from '../employee-form-fields/employee-form';
 import { CreateEmployeeComponent } from './create-employee.component';
 
@@ -32,7 +32,9 @@ describe('CreateEmployeeComponent', () => {
   };
 
   beforeEach(() => {
-    createEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    createEmployee = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
 
     // The component resolves its dependencies (and builds its signal form) in
@@ -40,11 +42,13 @@ describe('CreateEmployeeComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { navigate } },
-        { provide: CreateEmployeeService, useValue: { createEmployee } },
+        { provide: EmployeeService, useValue: { createEmployee } },
       ],
     });
 
-    component = TestBed.runInInjectionContext(() => new CreateEmployeeComponent());
+    component = TestBed.runInInjectionContext(
+      () => new CreateEmployeeComponent(),
+    );
   });
 
   it('does not call the service and reports the errors when the form is invalid', async () => {
@@ -57,7 +61,11 @@ describe('CreateEmployeeComponent', () => {
   });
 
   it('validates the email and phone formats', () => {
-    component.model.set({ ...validModel, email: 'not-an-email', phoneNumber: '12' });
+    component.model.set({
+      ...validModel,
+      email: 'not-an-email',
+      phoneNumber: '12',
+    });
 
     expect(component.employeeForm.email().errors()[0].message).toBe(
       'The Email should be a valid one',
@@ -156,7 +164,9 @@ describe('CreateEmployeeComponent', () => {
     });
 
     it('keeps them when the save fails, so the user is still warned', async () => {
-      createEmployee.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      createEmployee.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 })),
+      );
       component.model.set(validModel);
 
       await submit(component.employeeForm);
@@ -178,12 +188,16 @@ describe('CreateEmployeeComponent', () => {
     });
 
     it('asks the browser to confirm closing/reloading the tab only when dirty', () => {
-      const clean = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      const clean = new Event('beforeunload', {
+        cancelable: true,
+      }) as BeforeUnloadEvent;
       component.onBeforeUnload(clean);
       expect(clean.defaultPrevented).toBe(false);
 
       component.model.update((m) => ({ ...m, firstName: 'Dan' }));
-      const dirty = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      const dirty = new Event('beforeunload', {
+        cancelable: true,
+      }) as BeforeUnloadEvent;
       component.onBeforeUnload(dirty);
       expect(dirty.defaultPrevented).toBe(true);
     });

@@ -1,11 +1,14 @@
 @if (errorMessage(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-} @if (activationError(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-} @if (deleteError(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-} @if (exportError(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+}
+@if (activationError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+}
+@if (deleteError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+}
+@if (exportError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
 }
 
 <!-- Announced politely to screen readers whenever the result set changes. -->
@@ -39,174 +42,264 @@
     <button
       type="button"
       class="btn btn-danger"
-      [disabled]="selectedEmployeeIds().size === 0 || bulkActionInProgress() || activationLoading() || deleting()"
+      [disabled]="
+        selectedEmployeeIds().size === 0 ||
+        bulkActionInProgress() ||
+        activationLoading() ||
+        deleting()
+      "
       (click)="bulkDeleteSelected()"
     >
-      {{ bulkActionInProgress() ? 'Processing…' : 'Bulk delete selected (' + selectedEmployeeIds().size + ')' }}
+      {{
+        bulkActionInProgress()
+          ? 'Processing…'
+          : 'Bulk delete selected (' + selectedEmployeeIds().size + ')'
+      }}
     </button>
   </div>
 </div>
 @if (isLoading() && employees().length === 0) {
-<div class="app-card loading-state">
-  <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
-</div>
-} @else if (employees().length === 0) {
-<!-- A failed load already shows its alert above; "no employees" would be misleading. -->
-@if (!errorMessage()) {
-<div class="app-card empty-state">
-  @if (searchTerm()) { No employees match "{{ searchTerm() }}". } @else { No
-  employees yet. }
-</div>
-}
-} @else {
-<div class="app-card table-card" [class.is-refreshing]="isLoading()" [attr.aria-busy]="isLoading()">
-  <div class="table-responsive" role="region" aria-label="Employees table" tabindex="0">
-    <table class="table table-themed table-striped table-hover">
-      <caption class="visually-hidden">
-        {{ tableCaption() }}
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col" class="text-center">
-            <input
-              #selectAll
-              type="checkbox"
-              aria-label="Select all employees on this page"
-              [checked]="allOnPageSelected()"
-              (change)="toggleSelectAllOnPage(selectAll.checked)"
-            />
-          </th>
-          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('name')">
-            <button type="button" class="sort-button" (click)="setSort('name')">
-              Name
-              @if (sortColumn() === 'name') {
-              <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-              }
-            </button>
-          </th>
-          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('email')">
-            <button type="button" class="sort-button" (click)="setSort('email')">
-              Email
-              @if (sortColumn() === 'email') {
-              <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-              }
-            </button>
-          </th>
-          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('phoneNumber')">
-            <button type="button" class="sort-button" (click)="setSort('phoneNumber')">
-              phone number
-              @if (sortColumn() === 'phoneNumber') {
-              <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-              }
-            </button>
-          </th>
-          <th scope="col" class="text-center">Status</th>
-          <th scope="col" class="w-25 text-center">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (employee of employees(); track employee.employeeId) {
-        @let fullName = employee.firstName + ' ' + employee.lastName;
-        <tr>
-          <td class="align-middle text-center">
-            <input
-              #rowCheckbox
-              type="checkbox"
-              [attr.aria-label]="'Select ' + fullName"
-              [checked]="isSelected(employee.employeeId)"
-              (change)="toggleSelection(employee.employeeId, rowCheckbox.checked)"
-            />
-          </td>
-          <td class="align-middle text-center">
-            <a
-              class="plain-Links hoverItem"
-              routerLink="/employee-details"
-              [queryParams]="{ id: employee.employeeId }"
-            >
-              {{ fullName }}
-            </a>
-          </td>
-          <td class="align-middle text-center">{{ employee.email }}</td>
-          <td class="align-middle text-center">{{ employee.phoneNumber }}</td>
-          <td class="align-middle text-center">
-            <span
-              class="badge rounded-pill"
-              [class.bg-success]="employee.status === EmployeeStatus.Active"
-              [class.bg-secondary]="employee.status === EmployeeStatus.Deactivated"
-              [class.bg-warning]="employee.status === EmployeeStatus.Test"
-              [class.text-dark]="employee.status === EmployeeStatus.Test"
-            >
-              {{ statusLabels.get(employee.status) }}
-            </span>
-          </td>
-          <td class="align-middle text-center">
-            <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + fullName">
-              <a
-                class="btn btn-primary btn-sm shadow-none"
-                routerLink="/update-employee"
-                [queryParams]="{ id: employee.employeeId }"
-                [attr.aria-label]="'Edit ' + fullName"
-                >Edit</a
-              >
-
-              @if (employee.status === EmployeeStatus.Active || employee.status === EmployeeStatus.Test) {
-              <button
-                (click)="deactivateEmployee(employee.employeeId)"
-                type="button"
-                class="btn btn-danger btn-sm"
-                [attr.aria-label]="'Deactivate ' + fullName"
-                [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
-              >
-                Deactivate
-              </button>
-              } @if (employee.status === EmployeeStatus.Deactivated) {
-              <button
-                (click)="reactivateEmployee(employee.employeeId)"
-                type="button"
-                class="btn btn-primary btn-sm shadow-none"
-                [attr.aria-label]="'Reactivate ' + fullName"
-                [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
-              >
-                Reactivate
-              </button>
-              } @if (employee.status === EmployeeStatus.Deactivated || employee.status === EmployeeStatus.Test) {
-              <button
-                (click)="deleteEmployee(employee.employeeId)"
-                type="button"
-                class="btn btn-danger btn-sm shadow-none"
-                [attr.aria-label]="'Delete ' + fullName"
-                [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
-              >
-                Delete
-              </button>
-              }
-            </div>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
+  <div class="app-card loading-state">
+    <span
+      class="spinner-border spinner-border-sm me-2"
+      aria-hidden="true"
+    ></span
+    >Loading employees…
   </div>
-</div>
-@if (totalPages() > 1) {
-<nav class="d-flex justify-content-center align-items-center gap-2 mt-4" aria-label="Employee list pages">
-  <button
-    type="button"
-    class="btn btn-primary btn-sm shadow-none"
-    [disabled]="currentPage() === 1"
-    (click)="goToPage(currentPage() - 1)"
+} @else if (employees().length === 0) {
+  <!-- A failed load already shows its alert above; "no employees" would be misleading. -->
+  @if (!errorMessage()) {
+    <div class="app-card empty-state">
+      @if (searchTerm()) {
+        No employees match "{{ searchTerm() }}".
+      } @else {
+        No employees yet.
+      }
+    </div>
+  }
+} @else {
+  <div
+    class="app-card table-card"
+    [class.is-refreshing]="isLoading()"
+    [attr.aria-busy]="isLoading()"
   >
-    Previous
-  </button>
-  <span aria-live="polite">Page {{ currentPage() }} of {{ totalPages() }}</span>
-  <button
-    type="button"
-    class="btn btn-primary btn-sm shadow-none"
-    [disabled]="currentPage() === totalPages()"
-    (click)="goToPage(currentPage() + 1)"
-  >
-    Next
-  </button>
-</nav>
-}
+    <div
+      class="table-responsive"
+      role="region"
+      aria-label="Employees table"
+      tabindex="0"
+    >
+      <table class="table table-themed table-striped table-hover">
+        <caption class="visually-hidden">
+          {{
+            tableCaption()
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="text-center">
+              <input
+                #selectAll
+                type="checkbox"
+                aria-label="Select all employees on this page"
+                [checked]="allOnPageSelected()"
+                (change)="toggleSelectAllOnPage(selectAll.checked)"
+              />
+            </th>
+            <th
+              scope="col"
+              class="text-center"
+              [attr.aria-sort]="ariaSort('name')"
+            >
+              <button
+                type="button"
+                class="sort-button"
+                (click)="setSort('name')"
+              >
+                Name
+                @if (sortColumn() === 'name') {
+                  <span aria-hidden="true">{{
+                    sortDirection() === 'asc' ? '▲' : '▼'
+                  }}</span>
+                }
+              </button>
+            </th>
+            <th
+              scope="col"
+              class="text-center"
+              [attr.aria-sort]="ariaSort('email')"
+            >
+              <button
+                type="button"
+                class="sort-button"
+                (click)="setSort('email')"
+              >
+                Email
+                @if (sortColumn() === 'email') {
+                  <span aria-hidden="true">{{
+                    sortDirection() === 'asc' ? '▲' : '▼'
+                  }}</span>
+                }
+              </button>
+            </th>
+            <th
+              scope="col"
+              class="text-center"
+              [attr.aria-sort]="ariaSort('phoneNumber')"
+            >
+              <button
+                type="button"
+                class="sort-button"
+                (click)="setSort('phoneNumber')"
+              >
+                phone number
+                @if (sortColumn() === 'phoneNumber') {
+                  <span aria-hidden="true">{{
+                    sortDirection() === 'asc' ? '▲' : '▼'
+                  }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" class="text-center">Status</th>
+            <th scope="col" class="w-25 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (employee of employees(); track employee.employeeId) {
+            @let fullName = employee.firstName + ' ' + employee.lastName;
+            <tr>
+              <td class="align-middle text-center">
+                <input
+                  #rowCheckbox
+                  type="checkbox"
+                  [attr.aria-label]="'Select ' + fullName"
+                  [checked]="isSelected(employee.employeeId)"
+                  (change)="
+                    toggleSelection(employee.employeeId, rowCheckbox.checked)
+                  "
+                />
+              </td>
+              <td class="align-middle text-center">
+                <a
+                  class="plain-Links hoverItem"
+                  [routerLink]="['/employees', employee.employeeId]"
+                >
+                  {{ fullName }}
+                </a>
+              </td>
+              <td class="align-middle text-center">{{ employee.email }}</td>
+              <td class="align-middle text-center">
+                {{ employee.phoneNumber }}
+              </td>
+              <td class="align-middle text-center">
+                <span
+                  class="badge rounded-pill"
+                  [class.bg-success]="employee.status === EmployeeStatus.Active"
+                  [class.bg-secondary]="
+                    employee.status === EmployeeStatus.Deactivated
+                  "
+                  [class.bg-warning]="employee.status === EmployeeStatus.Test"
+                  [class.text-dark]="employee.status === EmployeeStatus.Test"
+                >
+                  {{ statusLabels.get(employee.status) }}
+                </span>
+              </td>
+              <td class="align-middle text-center">
+                <div
+                  class="btn-group"
+                  role="group"
+                  [attr.aria-label]="'Actions for ' + fullName"
+                >
+                  <a
+                    class="btn btn-primary btn-sm shadow-none"
+                    [routerLink]="['/employees/update', employee.employeeId]"
+                    [attr.aria-label]="'Edit ' + fullName"
+                    >Edit</a
+                  >
+
+                  @if (
+                    employee.status === EmployeeStatus.Active ||
+                    employee.status === EmployeeStatus.Test
+                  ) {
+                    <button
+                      (click)="deactivateEmployee(employee.employeeId)"
+                      type="button"
+                      class="btn btn-danger btn-sm"
+                      [attr.aria-label]="'Deactivate ' + fullName"
+                      [disabled]="
+                        activationLoading() ||
+                        deleting() ||
+                        bulkActionInProgress()
+                      "
+                    >
+                      Deactivate
+                    </button>
+                  }
+                  @if (employee.status === EmployeeStatus.Deactivated) {
+                    <button
+                      (click)="reactivateEmployee(employee.employeeId)"
+                      type="button"
+                      class="btn btn-primary btn-sm shadow-none"
+                      [attr.aria-label]="'Reactivate ' + fullName"
+                      [disabled]="
+                        activationLoading() ||
+                        deleting() ||
+                        bulkActionInProgress()
+                      "
+                    >
+                      Reactivate
+                    </button>
+                  }
+                  @if (
+                    employee.status === EmployeeStatus.Deactivated ||
+                    employee.status === EmployeeStatus.Test
+                  ) {
+                    <button
+                      (click)="deleteEmployee(employee.employeeId)"
+                      type="button"
+                      class="btn btn-danger btn-sm shadow-none"
+                      [attr.aria-label]="'Delete ' + fullName"
+                      [disabled]="
+                        activationLoading() ||
+                        deleting() ||
+                        bulkActionInProgress()
+                      "
+                    >
+                      Delete
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  @if (totalPages() > 1) {
+    <nav
+      class="d-flex justify-content-center align-items-center gap-2 mt-4"
+      aria-label="Employee list pages"
+    >
+      <button
+        type="button"
+        class="btn btn-primary btn-sm shadow-none"
+        [disabled]="currentPage() === 1"
+        (click)="goToPage(currentPage() - 1)"
+      >
+        Previous
+      </button>
+      <span aria-live="polite"
+        >Page {{ currentPage() }} of {{ totalPages() }}</span
+      >
+      <button
+        type="button"
+        class="btn btn-primary btn-sm shadow-none"
+        [disabled]="currentPage() === totalPages()"
+        (click)="goToPage(currentPage() + 1)"
+      >
+        Next
+      </button>
+    </nav>
+  }
 }

@@ -1,4 +1,8 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -9,7 +13,7 @@ import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 // Reference data (offices), not a growing operational table — a flat, unpaginated
-// list, unlike GetEmployeeService's paged state. Mutations reload the list rather
+// list, unlike EmployeeService's paged state. Mutations reload the list rather
 // than patching it locally, since the whole list is always small.
 @Injectable({
   providedIn: 'root',
@@ -39,7 +43,11 @@ export class OfficeService {
       .get<GenericResponse<Office[]>>(`${this.API_URL}/all`, { headers })
       .subscribe({
         next: (response) =>
-          this.state.set({ offices: response.data ?? [], loading: false, error: null }),
+          this.state.set({
+            offices: response.data ?? [],
+            loading: false,
+            error: null,
+          }),
         error: (error: HttpErrorResponse) =>
           this.state.set({
             offices: [],
@@ -81,14 +89,19 @@ export class OfficeService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('officeId', officeId);
     return this.http
-      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, { headers, params })
+      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, {
+        headers,
+        params,
+      })
       .pipe(map((response) => response.data ?? []));
   }
 
   createOffice(office: Partial<Office>): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/create`, office, { headers })
+      .post<GenericResponse<object>>(`${this.API_URL}/create`, office, {
+        headers,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Office created successfully.');
@@ -100,7 +113,9 @@ export class OfficeService {
   updateOffice(office: Partial<Office>): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/update`, office, { headers })
+      .patch<GenericResponse<object>>(`${this.API_URL}/update`, office, {
+        headers,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Office updated successfully.');
@@ -113,7 +128,10 @@ export class OfficeService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('officeId', officeId);
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { headers, params })
+      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, {
+        headers,
+        params,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Office deleted successfully.');

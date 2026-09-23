@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CreateEmployeeService } from '../../services/create-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
   EmployeeFormModel,
@@ -24,14 +24,15 @@ import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-fo
 })
 export class CreateEmployeeComponent {
   private readonly router = inject(Router);
-  private readonly createEmployeeService = inject(CreateEmployeeService);
+  private readonly employeeService = inject(EmployeeService);
 
   readonly model = signal<EmployeeFormModel>(emptyEmployeeForm());
   private readonly saved = signal(false);
 
   // Read by unsavedChangesGuard: anything typed, and not yet saved.
   readonly hasUnsavedChanges = computed(
-    () => !this.saved() && isEmployeeFormDirty(this.model(), emptyEmployeeForm()),
+    () =>
+      !this.saved() && isEmployeeFormDirty(this.model(), emptyEmployeeForm()),
   );
   readonly errorMessage = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
@@ -58,7 +59,9 @@ export class CreateEmployeeComponent {
 
     try {
       await firstValueFrom(
-        this.createEmployeeService.createEmployee(toCreateEmployeeRequest(this.model())),
+        this.employeeService.createEmployee(
+          toCreateEmployeeRequest(this.model()),
+        ),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
@@ -66,7 +69,10 @@ export class CreateEmployeeComponent {
     } catch (error) {
       // A 401 (session expired mid-form) is handled globally by authErrorInterceptor.
       this.errorMessage.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to add employee'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to add employee',
+        ),
       );
     }
   }

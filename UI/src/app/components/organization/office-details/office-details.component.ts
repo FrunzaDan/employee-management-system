@@ -1,4 +1,11 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { OfficeService } from '../../../services/office.service';
@@ -19,9 +26,9 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 export class OfficeDetailsComponent {
   private readonly officeService = inject(OfficeService);
 
-  // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts,
-  // same as EmployeeDetailsComponent.id.
-  readonly id = input<string>();
+  // Bound from the `:officeId` route param by withComponentInputBinding() in
+  // app.config.ts, same as EmployeeDetailsComponent.employeeId.
+  readonly officeId = input<string>();
 
   readonly office = signal<Office | null>(null);
   readonly loading = signal(true);
@@ -35,7 +42,7 @@ export class OfficeDetailsComponent {
 
   constructor() {
     effect(() => {
-      const id = this.id();
+      const id = this.officeId();
       untracked(() => {
         if (!id) {
           this.error.set('No office specified.');
@@ -61,7 +68,9 @@ export class OfficeDetailsComponent {
             this.employeesLoading.set(false);
           },
           error: (error: HttpErrorResponse) => {
-            this.employeesError.set(extractErrorMessage(error, 'Failed to load employees'));
+            this.employeesError.set(
+              extractErrorMessage(error, 'Failed to load employees'),
+            );
             this.employeesLoading.set(false);
           },
         });

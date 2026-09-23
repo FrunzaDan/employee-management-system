@@ -1,4 +1,8 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -36,7 +40,11 @@ export class DepartmentService {
       .get<GenericResponse<Department[]>>(`${this.API_URL}/all`, { headers })
       .subscribe({
         next: (response) =>
-          this.state.set({ departments: response.data ?? [], loading: false, error: null }),
+          this.state.set({
+            departments: response.data ?? [],
+            loading: false,
+            error: null,
+          }),
         error: (error: HttpErrorResponse) =>
           this.state.set({
             departments: [],
@@ -59,7 +67,10 @@ export class DepartmentService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http
-      .get<GenericResponse<Department>>(`${this.API_URL}/get`, { headers, params })
+      .get<GenericResponse<Department>>(`${this.API_URL}/get`, {
+        headers,
+        params,
+      })
       .pipe(
         map((response) => {
           if (!response.data) throw new Error('Department not found.');
@@ -73,14 +84,21 @@ export class DepartmentService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http
-      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, { headers, params })
+      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, {
+        headers,
+        params,
+      })
       .pipe(map((response) => response.data ?? []));
   }
 
-  createDepartment(department: Partial<Department>): Observable<GenericResponse<object>> {
+  createDepartment(
+    department: Partial<Department>,
+  ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/create`, department, { headers })
+      .post<GenericResponse<object>>(`${this.API_URL}/create`, department, {
+        headers,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Department created successfully.');
@@ -89,10 +107,14 @@ export class DepartmentService {
       );
   }
 
-  updateDepartment(department: Partial<Department>): Observable<GenericResponse<object>> {
+  updateDepartment(
+    department: Partial<Department>,
+  ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/update`, department, { headers })
+      .patch<GenericResponse<object>>(`${this.API_URL}/update`, department, {
+        headers,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Department updated successfully.');
@@ -105,7 +127,10 @@ export class DepartmentService {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { headers, params })
+      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, {
+        headers,
+        params,
+      })
       .pipe(
         tap(() => {
           this.notificationService.show('Department deleted successfully.');

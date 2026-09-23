@@ -12,8 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { UpdateEmployeeService } from '../../services/update-employee.service';
-import { GetEmployeeService } from '../../services/get-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
   employeeFormSchema,
@@ -34,15 +33,14 @@ import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-fo
 })
 export class UpdateEmployeeComponent {
   private readonly router = inject(Router);
-  private readonly getEmployeeService = inject(GetEmployeeService);
-  private readonly updateEmployeeService = inject(UpdateEmployeeService);
+  private readonly employeeService = inject(EmployeeService);
 
-  // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
-  readonly id = input<string>();
+  // Bound from the `:employeeId` route param by withComponentInputBinding() in app.config.ts.
+  readonly employeeId = input<string>();
 
-  readonly employee = this.getEmployeeService.selectedEmployee;
-  readonly isLoading = this.getEmployeeService.loading;
-  readonly errorMessage = this.getEmployeeService.error;
+  readonly employee = this.employeeService.selectedEmployee;
+  readonly isLoading = this.employeeService.loading;
+  readonly errorMessage = this.employeeService.error;
 
   // The form model *is* the loaded employee, mapped: it re-derives whenever
   // employee() changes and stays writable for the user's edits — no effect +
@@ -81,8 +79,8 @@ export class UpdateEmployeeComponent {
 
   constructor() {
     effect(() => {
-      const id = this.id();
-      if (id) untracked(() => this.getEmployeeService.getEmployee(id));
+      const id = this.employeeId();
+      if (id) untracked(() => this.employeeService.getEmployee(id));
     });
   }
 
@@ -95,14 +93,19 @@ export class UpdateEmployeeComponent {
 
     try {
       await firstValueFrom(
-        this.updateEmployeeService.updateEmployee(applyFormModel(this.model(), current)),
+        this.employeeService.updateEmployee(
+          applyFormModel(this.model(), current),
+        ),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
       await this.router.navigate(['/employees']);
     } catch (error) {
       this.saveError.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to save changes'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to save changes',
+        ),
       );
     }
   }

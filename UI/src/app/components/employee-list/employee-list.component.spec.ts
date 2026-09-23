@@ -3,16 +3,10 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { ActivateEmployeeService } from '../../services/activate-employee.service';
+import { EmployeeService } from '../../services/employee.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
-import { DeleteEmployeeService } from '../../services/delete-employee.service';
-import { ExportEmployeeService } from '../../services/export-employee.service';
-import { GetEmployeeService } from '../../services/get-employee.service';
 import { NotificationService } from '../../services/notification.service';
-import {
-  Employee,
-  EmployeeStatus,
-} from '../../interfaces/employee-response';
+import { Employee, EmployeeStatus } from '../../interfaces/employee-response';
 import { EmployeeListComponent } from './employee-list.component';
 
 describe('EmployeeListComponent', () => {
@@ -46,6 +40,14 @@ describe('EmployeeListComponent', () => {
       street: 'Main',
       streetNumber: '1',
     },
+    hireDate: null,
+    officeId: null,
+    officeName: null,
+    departmentId: null,
+    departmentName: null,
+    costCenterId: null,
+    costCenterName: null,
+    currentGrossSalary: null,
     ...overrides,
   });
 
@@ -54,7 +56,9 @@ describe('EmployeeListComponent', () => {
     exportEmployees = vi.fn();
     totalItems = signal(0);
     employees = signal<Employee[]>([]);
-    deleteEmployee = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    deleteEmployee = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     deleteEmployeeSilently = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
@@ -64,7 +68,7 @@ describe('EmployeeListComponent', () => {
     confirm = vi.fn().mockResolvedValue(true);
     notificationShow = vi.fn();
 
-    const getEmployeeServiceStub = {
+    const employeeServiceStub = {
       employees,
       loading: signal(false),
       error: signal<string | null>(null),
@@ -72,41 +76,28 @@ describe('EmployeeListComponent', () => {
       pageNumber: signal(1),
       pageSize: signal(10),
       loadEmployees,
+      activationLoading: signal(false),
+      activationError: signal<string | null>(null),
+      deactivateEmployeeSilently,
+      deleteEmployee,
+      deleteEmployeeSilently,
+      exportLoading: signal(false),
+      exportError: signal<string | null>(null),
+      exportEmployees,
     };
 
     TestBed.configureTestingModule({
       providers: [
-        {
-          provide: GetEmployeeService,
-          useValue: getEmployeeServiceStub,
-        },
-        {
-          provide: ActivateEmployeeService,
-          useValue: {
-            loading: signal(false),
-            error: signal<string | null>(null),
-            deactivateEmployeeSilently,
-          },
-        },
-        {
-          provide: DeleteEmployeeService,
-          useValue: { deleteEmployee, deleteEmployeeSilently },
-        },
-        {
-          provide: ExportEmployeeService,
-          useValue: {
-            loading: signal(false),
-            error: signal<string | null>(null),
-            exportEmployees,
-          },
-        },
+        { provide: EmployeeService, useValue: employeeServiceStub },
         { provide: ConfirmDialogService, useValue: { confirm } },
         { provide: NotificationService, useValue: { show: notificationShow } },
         { provide: Router, useValue: { navigate: vi.fn() } },
       ],
     });
 
-    component = TestBed.runInInjectionContext(() => new EmployeeListComponent());
+    component = TestBed.runInInjectionContext(
+      () => new EmployeeListComponent(),
+    );
   });
 
   afterEach(() => {
@@ -263,7 +254,10 @@ describe('EmployeeListComponent', () => {
     });
 
     it('toggleSelectAllOnPage(true) selects every employee on the current page', () => {
-      employees.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
+      employees.set([
+        buildEmployee({ employeeId: 'g1' }),
+        buildEmployee({ employeeId: 'g2' }),
+      ]);
 
       component.toggleSelectAllOnPage(true);
 
@@ -273,7 +267,10 @@ describe('EmployeeListComponent', () => {
     });
 
     it('toggleSelectAllOnPage(false) clears the selection for every employee on the current page', () => {
-      employees.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
+      employees.set([
+        buildEmployee({ employeeId: 'g1' }),
+        buildEmployee({ employeeId: 'g2' }),
+      ]);
       component.toggleSelectAllOnPage(true);
 
       component.toggleSelectAllOnPage(false);
@@ -301,7 +298,10 @@ describe('EmployeeListComponent', () => {
     it('does not warn when every GUID on the page is unique', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      employees.set([buildEmployee({ employeeId: 'g1' }), buildEmployee({ employeeId: 'g2' })]);
+      employees.set([
+        buildEmployee({ employeeId: 'g1' }),
+        buildEmployee({ employeeId: 'g2' }),
+      ]);
       TestBed.flushEffects();
 
       expect(warnSpy).not.toHaveBeenCalled();
@@ -345,7 +345,9 @@ describe('EmployeeListComponent', () => {
       await component.deleteEmployee('employeeId-1');
 
       expect(component.deleting()).toBe(false);
-      expect(component.deleteError()).toBe('Employee must be deactivated first.');
+      expect(component.deleteError()).toBe(
+        'Employee must be deactivated first.',
+      );
     });
   });
 
@@ -369,8 +371,14 @@ describe('EmployeeListComponent', () => {
 
     it('deactivates Active employees and deletes non-Active ones, then shows a success summary and refetches', async () => {
       employees.set([
-        buildEmployee({ employeeId: 'active-1', status: EmployeeStatus.Active }),
-        buildEmployee({ employeeId: 'deactivated-1', status: EmployeeStatus.Deactivated }),
+        buildEmployee({
+          employeeId: 'active-1',
+          status: EmployeeStatus.Active,
+        }),
+        buildEmployee({
+          employeeId: 'deactivated-1',
+          status: EmployeeStatus.Deactivated,
+        }),
         buildEmployee({ employeeId: 'test-1', status: EmployeeStatus.Test }),
       ]);
       component.toggleSelectAllOnPage(true);
@@ -395,11 +403,19 @@ describe('EmployeeListComponent', () => {
 
     it('reports a failure count and does not stop the batch when one operation fails', async () => {
       employees.set([
-        buildEmployee({ employeeId: 'active-1', status: EmployeeStatus.Active }),
-        buildEmployee({ employeeId: 'deactivated-1', status: EmployeeStatus.Deactivated }),
+        buildEmployee({
+          employeeId: 'active-1',
+          status: EmployeeStatus.Active,
+        }),
+        buildEmployee({
+          employeeId: 'deactivated-1',
+          status: EmployeeStatus.Deactivated,
+        }),
       ]);
       component.toggleSelectAllOnPage(true);
-      deactivateEmployeeSilently.mockReturnValue(throwError(() => new Error('boom')));
+      deactivateEmployeeSilently.mockReturnValue(
+        throwError(() => new Error('boom')),
+      );
 
       await component.bulkDeleteSelected();
 

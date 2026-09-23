@@ -1,4 +1,11 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { CostCenterService } from '../../../services/cost-center.service';
@@ -18,7 +25,7 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 export class CostCenterDetailsComponent {
   private readonly costCenterService = inject(CostCenterService);
 
-  readonly id = input<string>();
+  readonly costCenterId = input<string>();
 
   readonly costCenter = signal<CostCenter | null>(null);
   readonly loading = signal(true);
@@ -32,7 +39,7 @@ export class CostCenterDetailsComponent {
 
   constructor() {
     effect(() => {
-      const id = this.id();
+      const id = this.costCenterId();
       untracked(() => {
         if (!id) {
           this.error.set('No cost center specified.');
@@ -47,7 +54,9 @@ export class CostCenterDetailsComponent {
             this.loading.set(false);
           },
           error: (error: HttpErrorResponse) => {
-            this.error.set(extractErrorMessage(error, 'Failed to load cost center'));
+            this.error.set(
+              extractErrorMessage(error, 'Failed to load cost center'),
+            );
             this.loading.set(false);
           },
         });
@@ -58,7 +67,9 @@ export class CostCenterDetailsComponent {
             this.employeesLoading.set(false);
           },
           error: (error: HttpErrorResponse) => {
-            this.employeesError.set(extractErrorMessage(error, 'Failed to load employees'));
+            this.employeesError.set(
+              extractErrorMessage(error, 'Failed to load employees'),
+            );
             this.employeesLoading.set(false);
           },
         });

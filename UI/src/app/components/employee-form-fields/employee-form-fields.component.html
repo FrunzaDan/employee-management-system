@@ -7,23 +7,27 @@
         <legend class="card-title">Basic information</legend>
 
         @for (field of basicFields; track field.key) {
-        @let state = form()[field.key]();
-        @let showError = state.touched() && state.invalid();
-        <div class="mb-3">
-          <label class="form-label" [for]="field.key">{{ field.label }}</label>
-          <input
-            type="text"
-            class="form-control"
-            [id]="field.key"
-            [formField]="form()[field.key]"
-            [class.is-invalid]="showError"
-            [attr.aria-invalid]="showError"
-            [attr.aria-describedby]="showError ? field.key + '-error' : null"
-          />
-          @if (showError) {
-          <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
-          }
-        </div>
+          @let state = form()[field.key]();
+          @let showError = state.touched() && state.invalid();
+          <div class="mb-3">
+            <label class="form-label" [for]="field.key">{{
+              field.label
+            }}</label>
+            <input
+              type="text"
+              class="form-control"
+              [id]="field.key"
+              [formField]="form()[field.key]"
+              [class.is-invalid]="showError"
+              [attr.aria-invalid]="showError"
+              [attr.aria-describedby]="showError ? field.key + '-error' : null"
+            />
+            @if (showError) {
+              <div class="invalid-feedback" [id]="field.key + '-error'">
+                {{ state.errors()[0].message }}
+              </div>
+            }
+          </div>
         }
 
         @let gender = form().gender();
@@ -44,7 +48,9 @@
             <option value="2">Female</option>
           </select>
           @if (genderError) {
-          <div class="invalid-feedback" id="gender-error">{{ gender.errors()[0].message }}</div>
+            <div class="invalid-feedback" id="gender-error">
+              {{ gender.errors()[0].message }}
+            </div>
           }
         </div>
 
@@ -62,7 +68,9 @@
             [attr.aria-describedby]="birthDateError ? 'birthDate-error' : null"
           />
           @if (birthDateError) {
-          <div class="invalid-feedback" id="birthDate-error">{{ birthDate.errors()[0].message }}</div>
+            <div class="invalid-feedback" id="birthDate-error">
+              {{ birthDate.errors()[0].message }}
+            </div>
           }
         </div>
       </fieldset>
@@ -75,23 +83,27 @@
         <legend class="card-title">Address</legend>
 
         @for (field of addressFields; track field.key) {
-        @let state = form()[field.key]();
-        @let showError = state.touched() && state.invalid();
-        <div class="mb-3">
-          <label class="form-label" [for]="field.key">{{ field.label }}</label>
-          <input
-            type="text"
-            class="form-control"
-            [id]="field.key"
-            [formField]="form()[field.key]"
-            [class.is-invalid]="showError"
-            [attr.aria-invalid]="showError"
-            [attr.aria-describedby]="showError ? field.key + '-error' : null"
-          />
-          @if (showError) {
-          <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
-          }
-        </div>
+          @let state = form()[field.key]();
+          @let showError = state.touched() && state.invalid();
+          <div class="mb-3">
+            <label class="form-label" [for]="field.key">{{
+              field.label
+            }}</label>
+            <input
+              type="text"
+              class="form-control"
+              [id]="field.key"
+              [formField]="form()[field.key]"
+              [class.is-invalid]="showError"
+              [attr.aria-invalid]="showError"
+              [attr.aria-describedby]="showError ? field.key + '-error' : null"
+            />
+            @if (showError) {
+              <div class="invalid-feedback" [id]="field.key + '-error'">
+                {{ state.errors()[0].message }}
+              </div>
+            }
+          </div>
         }
       </fieldset>
     </div>
@@ -115,10 +127,14 @@
                 [formField]="form().hireDate"
                 [class.is-invalid]="hireDateError"
                 [attr.aria-invalid]="hireDateError"
-                [attr.aria-describedby]="hireDateError ? 'hireDate-error' : null"
+                [attr.aria-describedby]="
+                  hireDateError ? 'hireDate-error' : null
+                "
               />
               @if (hireDateError) {
-              <div class="invalid-feedback" id="hireDate-error">{{ hireDate.errors()[0].message }}</div>
+                <div class="invalid-feedback" id="hireDate-error">
+                  {{ hireDate.errors()[0].message }}
+                </div>
               }
             </div>
           </div>
@@ -138,11 +154,13 @@
               >
                 <option value="">Select an office</option>
                 @for (o of offices(); track o.officeId) {
-                <option [value]="o.officeId">{{ o.name }}</option>
+                  <option [value]="o.officeId">{{ o.name }}</option>
                 }
               </select>
               @if (officeError) {
-              <div class="invalid-feedback" id="officeId-error">{{ office.errors()[0].message }}</div>
+                <div class="invalid-feedback" id="officeId-error">
+                  {{ office.errors()[0].message }}
+                </div>
               }
             </div>
           </div>
@@ -158,15 +176,19 @@
                 [formField]="form().departmentId"
                 [class.is-invalid]="departmentError"
                 [attr.aria-invalid]="departmentError"
-                [attr.aria-describedby]="departmentError ? 'departmentId-error' : null"
+                [attr.aria-describedby]="
+                  departmentError ? 'departmentId-error' : null
+                "
               >
                 <option value="">Select a department</option>
                 @for (d of departments(); track d.departmentId) {
-                <option [value]="d.departmentId">{{ d.name }}</option>
+                  <option [value]="d.departmentId">{{ d.name }}</option>
                 }
               </select>
               @if (departmentError) {
-              <div class="invalid-feedback" id="departmentId-error">{{ department.errors()[0].message }}</div>
+                <div class="invalid-feedback" id="departmentId-error">
+                  {{ department.errors()[0].message }}
+                </div>
               }
             </div>
           </div>
@@ -182,15 +204,21 @@
                 [formField]="form().costCenterId"
                 [class.is-invalid]="costCenterError"
                 [attr.aria-invalid]="costCenterError"
-                [attr.aria-describedby]="costCenterError ? 'costCenterId-error' : null"
+                [attr.aria-describedby]="
+                  costCenterError ? 'costCenterId-error' : null
+                "
               >
                 <option value="">Select a cost center</option>
                 @for (cc of costCenters(); track cc.costCenterId) {
-                <option [value]="cc.costCenterId">{{ cc.code }} — {{ cc.name }}</option>
+                  <option [value]="cc.costCenterId">
+                    {{ cc.code }} — {{ cc.name }}
+                  </option>
                 }
               </select>
               @if (costCenterError) {
-              <div class="invalid-feedback" id="costCenterId-error">{{ costCenter.errors()[0].message }}</div>
+                <div class="invalid-feedback" id="costCenterId-error">
+                  {{ costCenter.errors()[0].message }}
+                </div>
               }
             </div>
           </div>

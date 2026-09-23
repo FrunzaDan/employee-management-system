@@ -4,7 +4,11 @@
       <h1 class="page-title">Offices</h1>
       <p class="page-subtitle">Manage the company's local offices.</p>
     </div>
-    <button type="button" class="btn btn-primary shadow-none" (click)="startAdd()">
+    <button
+      type="button"
+      class="btn btn-primary shadow-none"
+      (click)="startAdd()"
+    >
       Add office
     </button>
   </div>
@@ -14,9 +18,15 @@
   }
 
   @if (draft(); as d) {
-    <div class="card app-card mb-4" animate.enter="reveal-enter" animate.leave="reveal-leave">
+    <div
+      class="card app-card mb-4"
+      animate.enter="reveal-enter"
+      animate.leave="reveal-leave"
+    >
       <div class="card-body">
-        <h2 class="card-title">{{ d.officeId ? 'Edit office' : 'New office' }}</h2>
+        <h2 class="card-title">
+          {{ d.officeId ? 'Edit office' : 'New office' }}
+        </h2>
 
         @if (saveError(); as error) {
           <div class="alert alert-danger" role="alert">{{ error }}</div>
@@ -64,7 +74,9 @@
           >
             Save
           </button>
-          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -72,7 +84,11 @@
 
   @if (loading()) {
     <div class="app-card loading-state" role="status">
-      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading offices…
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading offices…
     </div>
   } @else if (error()) {
     <div class="alert alert-danger" role="alert">{{ error() }}</div>
@@ -80,9 +96,16 @@
     <div class="app-card empty-state">No offices yet.</div>
   } @else {
     <div class="app-card table-card">
-      <div class="table-responsive" role="region" aria-label="Offices table" tabindex="0">
+      <div
+        class="table-responsive"
+        role="region"
+        aria-label="Offices table"
+        tabindex="0"
+      >
         <table class="table table-themed table-striped table-hover">
-          <caption class="visually-hidden">List of offices</caption>
+          <caption class="visually-hidden">
+            List of offices
+          </caption>
           <thead>
             <tr>
               <th scope="col" class="text-center">Name</th>
@@ -97,23 +120,44 @@
             @for (office of offices(); track office.officeId) {
               <tr>
                 <td class="align-middle text-center">
-                  <a class="plain-Links hoverItem" routerLink="/office-details" [queryParams]="{ id: office.officeId }">
+                  <a
+                    class="plain-Links hoverItem"
+                    [routerLink]="['/offices', office.officeId]"
+                  >
                     {{ office.name }}
                   </a>
                 </td>
-                <td class="align-middle text-center">{{ office.city || '—' }}</td>
-                <td class="align-middle text-center">{{ office.country || '—' }}</td>
-                <td class="align-middle text-center">{{ office.employeeCount }}</td>
-                <td class="align-middle text-center">{{ office.totalGrossSalary }}</td>
                 <td class="align-middle text-center">
-                  <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + office.name">
+                  {{ office.city || '—' }}
+                </td>
+                <td class="align-middle text-center">
+                  {{ office.country || '—' }}
+                </td>
+                <td class="align-middle text-center">
+                  {{ office.employeeCount }}
+                </td>
+                <td class="align-middle text-center">
+                  {{ office.totalGrossSalary }}
+                </td>
+                <td class="align-middle text-center">
+                  <div
+                    class="btn-group"
+                    role="group"
+                    [attr.aria-label]="'Actions for ' + office.name"
+                  >
                     <button
                       type="button"
                       class="btn btn-secondary btn-sm shadow-none"
-                      [attr.aria-expanded]="expandedOfficeId() === office.officeId"
+                      [attr.aria-expanded]="
+                        expandedOfficeId() === office.officeId
+                      "
                       (click)="toggleEmployees(office)"
                     >
-                      {{ expandedOfficeId() === office.officeId ? 'Hide employees' : 'Quickly view employees' }}
+                      {{
+                        expandedOfficeId() === office.officeId
+                          ? 'Hide employees'
+                          : 'Quickly view employees'
+                      }}
                     </button>
                     <button
                       type="button"
@@ -136,19 +180,35 @@
                 <tr animate.enter="reveal-enter" animate.leave="reveal-leave">
                   <td colspan="6" class="bg-body-tertiary">
                     @if (expandedEmployeesLoading()) {
-                      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
+                      <span
+                        class="spinner-border spinner-border-sm me-2"
+                        aria-hidden="true"
+                      ></span
+                      >Loading employees…
                     } @else if (expandedEmployeesError(); as error) {
                       <span class="text-danger">{{ error }}</span>
                     } @else if (expandedEmployees().length === 0) {
-                      <span class="text-muted">No employees assigned to this office.</span>
+                      <span class="text-muted"
+                        >No employees assigned to this office.</span
+                      >
                     } @else {
                       <ul class="list-unstyled mb-0">
-                        @for (employee of expandedEmployees(); track employee.employeeId) {
+                        @for (
+                          employee of expandedEmployees();
+                          track employee.employeeId
+                        ) {
                           <li>
-                            <a class="plain-Links hoverItem" routerLink="/employee-details" [queryParams]="{ id: employee.employeeId }">
+                            <a
+                              class="plain-Links hoverItem"
+                              [routerLink]="['/employees', employee.employeeId]"
+                            >
                               {{ employee.firstName }} {{ employee.lastName }}
                             </a>
-                            <span class="text-muted"> — {{ employee.email }} ({{ employeeStatusLabel(employee.status) }})</span>
+                            <span class="text-muted">
+                              — {{ employee.email }} ({{
+                                employeeStatusLabel(employee.status)
+                              }})</span
+                            >
                           </li>
                         }
                       </ul>
