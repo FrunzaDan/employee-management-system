@@ -72,7 +72,7 @@ export class EmployeeListComponent implements OnInit {
   // Search, sorting, and pagination are all server-side now: every change to
   // any of these re-fetches just the relevant page from the API rather than
   // filtering/sorting an already-loaded full list in memory (see
-  // GetEmployeeService.loadEmployees and usp_getEmployees).
+  // GetEmployeeService.loadEmployees and Employee_List).
   readonly searchTerm = signal('');
   readonly sortColumn = signal<'name' | 'email' | 'msisdn'>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
@@ -255,7 +255,7 @@ export class EmployeeListComponent implements OnInit {
   }
 
   // A employee must be Deactivated (or Test, which is exempt from that rule —
-  // see usp_deleteEmployee) to be deleted directly; an Active one is only
+  // see Employee_Delete) to be deleted directly; an Active one is only
   // deactivated as part of this action, not deleted, same as the single-row
   // buttons would require.
   async bulkDeleteSelected(): Promise<void> {

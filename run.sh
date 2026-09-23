@@ -8,9 +8,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_PROJ_DIR="$ROOT_DIR/API/EmployeeManagementSystemApi/EmployeeManagementSystem.WebAPI"
 API_PROJ="$API_PROJ_DIR/EmployeeManagementSystem.WebAPI.csproj"
 API_LAUNCH_SETTINGS="$API_PROJ_DIR/Properties/launchSettings.json"
-DB_DIR="$ROOT_DIR/DB/Employee_Management_System_DB"
-DB_PROJ="Employee_Management_System_DB.sqlproj"
-DB_DACPAC="$DB_DIR/bin/Debug/Employee_Management_System_DB.dacpac"
+DB_DIR="$ROOT_DIR/DB/EmployeeManagement"
+DB_PROJ="EmployeeManagement.sqlproj"
+DB_DACPAC="$DB_DIR/bin/Debug/EmployeeManagement.dacpac"
 UI_DIR="$ROOT_DIR/UI"
 RUN_DIR="$ROOT_DIR/.run"
 
@@ -26,7 +26,7 @@ if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
 else
   SQL_PLATFORM="${SQL_PLATFORM:-linux/amd64}"
 fi
-SQL_DATABASE="${SQL_DATABASE:-Employee_Management_System_DB}"
+SQL_DATABASE="${SQL_DATABASE:-EmployeeManagement}"
 
 # Default falls back to the "https" launch profile's applicationUrl (stripped of the
 # trailing ";" ASP.NET appends when multiple URLs are configured) so the script doesn't

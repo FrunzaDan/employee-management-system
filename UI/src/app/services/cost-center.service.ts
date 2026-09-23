@@ -68,7 +68,7 @@ export class CostCenterService {
       );
   }
 
-  /** The employees currently assigned to this cost center (see usp_getEmployeesByCostCenter). */
+  /** The employees currently assigned to this cost center (see Employee_ListByCostCenter). */
   getEmployees(costCenterGuid: string): Observable<EmployeeSummary[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('guid', costCenterGuid);

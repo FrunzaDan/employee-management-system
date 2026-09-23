@@ -57,7 +57,7 @@ public class EmployeeEditing(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
         return response;
     }
 
-    // usp_editEmployee is a partial update (ISNULL(@param, column)) — only the fields
+    // Employee_Update is a partial update (ISNULL(@param, column)) — only the fields
     // actually present in the request were touched, so list just those.
     private static string DescribeChangedFields(EmployeeModel request)
     {

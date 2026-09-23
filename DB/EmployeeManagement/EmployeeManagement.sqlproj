@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build">
+  <Sdk Name="Microsoft.Build.Sql" Version="0.1.9-preview" />
+  <PropertyGroup>
+    <Name>EmployeeManagement</Name>
+    <ProjectGuid>{C94F9DB8-ED06-4874-AB6B-F90EEE1D75CB}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
+    <ModelCollation>1033, CI</ModelCollation>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Scripts" />
+    <Folder Include="Scripts\PostDeployment" />
+    <Folder Include="StoredProcedures" />
+    <Folder Include="Tables" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Scripts\PostDeployment\PostDeployment.sql" />
+    <!-- Pulled into PostDeployment.sql via :r; must not also be compiled as schema objects. -->
+    <None Include="Scripts\PostDeployment\Seed_Employer.sql" />
+    <None Include="Scripts\PostDeployment\Seed_Office.sql" />
+    <None Include="Scripts\PostDeployment\Seed_Department.sql" />
+    <None Include="Scripts\PostDeployment\Seed_CostCenter.sql" />
+    <Build Remove="Scripts\PostDeployment\Seed_Employer.sql" />
+    <Build Remove="Scripts\PostDeployment\Seed_Office.sql" />
+    <Build Remove="Scripts\PostDeployment\Seed_Department.sql" />
+    <Build Remove="Scripts\PostDeployment\Seed_CostCenter.sql" />
+  </ItemGroup>
+  <Target Name="BeforeBuild">
+    <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />
+  </Target>
+</Project>

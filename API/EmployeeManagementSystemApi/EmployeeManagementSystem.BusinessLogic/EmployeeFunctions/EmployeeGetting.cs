@@ -56,7 +56,7 @@ public class EmployeeGetting
     }
 
     // Exports the full search/sort result (capped at MaxExportRows), not just one
-    // page — it reuses usp_getEmployees via the same _dbUtils.GetEmployees call the
+    // page — it reuses Employee_List via the same _dbUtils.GetEmployees call the
     // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
     // filtering/sorting SQL stays in exactly one place.
     public async Task<ResponseModel<object>> GetEmployeesForExportFunction(ExportEmployeesRequest request,

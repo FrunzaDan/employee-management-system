@@ -76,7 +76,7 @@ export class OfficeService {
       );
   }
 
-  /** The employees currently assigned to this office (see usp_getEmployeesByOffice). */
+  /** The employees currently assigned to this office (see Employee_ListByOffice). */
   getEmployees(officeGuid: string): Observable<EmployeeSummary[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('guid', officeGuid);

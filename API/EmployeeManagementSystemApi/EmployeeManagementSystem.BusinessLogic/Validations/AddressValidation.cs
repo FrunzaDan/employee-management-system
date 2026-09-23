@@ -14,7 +14,7 @@ public static partial class AddressValidation
         if (address.County?.Length > FieldLengthConstants.County) return "County is too long.";
         if (address.Town?.Length > FieldLengthConstants.Town) return "Town is too long.";
         if (address.Zip?.Length > FieldLengthConstants.Zip) return "Zip is too long.";
-        // tbl_addresses.zip_code is VARCHAR, not NVARCHAR — a non-ASCII character would be
+        // EmployeeAddress.PostalCode is VARCHAR, not NVARCHAR — a non-ASCII character would be
         // silently stored as '?', so reject it instead. Real postal codes never need one.
         if (!string.IsNullOrEmpty(address.Zip) && !ZipRegex().IsMatch(address.Zip))
             return "Zip may only contain letters, digits, spaces and hyphens.";

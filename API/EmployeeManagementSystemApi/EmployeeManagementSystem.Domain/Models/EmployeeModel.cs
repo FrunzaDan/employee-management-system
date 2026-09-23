@@ -40,13 +40,13 @@ public class EmployeeModel
 
     public string? CostCenterName { get; set; }
 
-    // Read-only: the most recent tbl_employee_salary_history entry for this employee
-    // (see usp_getEmployee/usp_getEmployees). Never set on create/edit — salary is
+    // Read-only: the most recent EmployeeSalary entry for this employee
+    // (see Employee_Get/Employee_List). Never set on create/edit — salary is
     // append-only history, changed only via EmployeeController's salaryHistory endpoint.
     public decimal? CurrentBruttoSalary { get; set; }
 }
 
-// Which usp_getEmployee parameter a free-text lookup maps to — detected from the
+// Which Employee_Get parameter a free-text lookup maps to — detected from the
 // search term's shape by EmployeeGetting, never supplied by the caller.
 public enum EmployeeSearchOption
 {

@@ -1,0 +1,8 @@
+CREATE TABLE [dbo].[Office]
+(
+    [OfficeId] UNIQUEIDENTIFIER NOT NULL,
+    [Name] NVARCHAR (100) NOT NULL,
+    [City] NVARCHAR (100) NULL,
+    [Country] NVARCHAR (100) NULL,
+    CONSTRAINT [PK_Office] PRIMARY KEY CLUSTERED ([OfficeId])
+);

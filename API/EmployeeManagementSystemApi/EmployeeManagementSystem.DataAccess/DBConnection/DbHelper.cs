@@ -9,13 +9,13 @@ public sealed record EmployerAuthData(byte[] PasswordHash, byte[] PasswordSalt, 
 
 public static class DbHelper
 {
-    // usp_createEmployee takes @var_EmployeeStatus; usp_editEmployee does not (status is
+    // Employee_Create takes @StatusCode; Employee_Update does not (status is
     // only ever changed via deactivate/reactivate) — so create and edit need separate
     // parameter sets, not one shared method that adds a parameter edit's proc doesn't declare.
     public static void AddEmployeeParametersForCreate(SqlCommand command, EmployeeModel employee)
     {
         AddEmployeeCoreParameters(command, employee);
-        AddParameter(command, "@var_EmployeeStatus", SqlDbType.SmallInt,
+        AddParameter(command, "@StatusCode", SqlDbType.SmallInt,
             (short)(employee.EmployeeStatus ?? EmployeeStatus.Active));
         AddAddressParameters(command, employee.Address);
         AddJobInfoParameters(command, employee);
@@ -28,59 +28,59 @@ public static class DbHelper
         AddJobInfoParameters(command, employee);
     }
 
-    // Shared by create and edit — usp_createEmployee/usp_editEmployee declare the same
+    // Shared by create and edit — Employee_Create/Employee_Update declare the same
     // four optional job-info parameters (see database.md).
     private static void AddJobInfoParameters(SqlCommand command, EmployeeModel employee)
     {
-        AddParameter(command, "@var_HireDate", SqlDbType.Date, employee.HireDate);
-        AddParameter(command, "@var_OfficeGuid", SqlDbType.UniqueIdentifier, employee.OfficeGuid);
-        AddParameter(command, "@var_DepartmentGuid", SqlDbType.UniqueIdentifier, employee.DepartmentGuid);
-        AddParameter(command, "@var_CostCenterGuid", SqlDbType.UniqueIdentifier, employee.CostCenterGuid);
+        AddParameter(command, "@HireDate", SqlDbType.Date, employee.HireDate);
+        AddParameter(command, "@OfficeId", SqlDbType.UniqueIdentifier, employee.OfficeGuid);
+        AddParameter(command, "@DepartmentId", SqlDbType.UniqueIdentifier, employee.DepartmentGuid);
+        AddParameter(command, "@CostCenterId", SqlDbType.UniqueIdentifier, employee.CostCenterGuid);
     }
 
     public static void AddSalaryParameters(SqlCommand command, SalaryHistoryEntry entry)
     {
-        AddParameter(command, "@var_SalaryGuid", SqlDbType.UniqueIdentifier, entry.SalaryGuid);
-        AddParameter(command, "@var_EmployeeGuid", SqlDbType.UniqueIdentifier, entry.EmployeeGuid);
-        var salary = AddParameter(command, "@var_BruttoSalary", SqlDbType.Decimal, entry.BruttoSalary);
+        AddParameter(command, "@EmployeeSalaryId", SqlDbType.UniqueIdentifier, entry.SalaryGuid);
+        AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, entry.EmployeeGuid);
+        var salary = AddParameter(command, "@GrossSalary", SqlDbType.Decimal, entry.BruttoSalary);
         salary.Precision = 12;
         salary.Scale = 2;
-        AddParameter(command, "@var_EffectiveDate", SqlDbType.Date, entry.EffectiveDate);
+        AddParameter(command, "@EffectiveDate", SqlDbType.Date, entry.EffectiveDate);
     }
 
     public static void AddOfficeParameters(SqlCommand command, OfficeModel office)
     {
-        AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, office.Guid);
-        AddParameter(command, "@var_OfficeName", SqlDbType.NVarChar, office.OfficeName, FieldLengthConstants.OfficeName);
-        AddParameter(command, "@var_City", SqlDbType.NVarChar, office.City, FieldLengthConstants.City);
-        AddParameter(command, "@var_Country", SqlDbType.NVarChar, office.Country, FieldLengthConstants.Country);
+        AddParameter(command, "@OfficeId", SqlDbType.UniqueIdentifier, office.Guid);
+        AddParameter(command, "@Name", SqlDbType.NVarChar, office.OfficeName, FieldLengthConstants.OfficeName);
+        AddParameter(command, "@City", SqlDbType.NVarChar, office.City, FieldLengthConstants.City);
+        AddParameter(command, "@Country", SqlDbType.NVarChar, office.Country, FieldLengthConstants.Country);
     }
 
     public static void AddDepartmentParameters(SqlCommand command, DepartmentModel department)
     {
-        AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, department.Guid);
-        AddParameter(command, "@var_DepartmentName", SqlDbType.NVarChar, department.DepartmentName,
+        AddParameter(command, "@DepartmentId", SqlDbType.UniqueIdentifier, department.Guid);
+        AddParameter(command, "@Name", SqlDbType.NVarChar, department.DepartmentName,
             FieldLengthConstants.DepartmentName);
     }
 
     public static void AddCostCenterParameters(SqlCommand command, CostCenterModel costCenter)
     {
-        AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, costCenter.Guid);
-        AddParameter(command, "@var_CostCenterCode", SqlDbType.NVarChar, costCenter.CostCenterCode,
+        AddParameter(command, "@CostCenterId", SqlDbType.UniqueIdentifier, costCenter.Guid);
+        AddParameter(command, "@Code", SqlDbType.NVarChar, costCenter.CostCenterCode,
             FieldLengthConstants.CostCenterCode);
-        AddParameter(command, "@var_CostCenterName", SqlDbType.NVarChar, costCenter.CostCenterName,
+        AddParameter(command, "@Name", SqlDbType.NVarChar, costCenter.CostCenterName,
             FieldLengthConstants.CostCenterName);
     }
 
     private static void AddEmployeeCoreParameters(SqlCommand command, EmployeeModel employee)
     {
-        AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, employee.Guid);
-        AddParameter(command, "@var_FirstName", SqlDbType.NVarChar, employee.FirstName, FieldLengthConstants.FirstName);
-        AddParameter(command, "@var_LastName", SqlDbType.NVarChar, employee.LastName, FieldLengthConstants.LastName);
-        AddParameter(command, "@var_Email", SqlDbType.NVarChar, employee.Email, FieldLengthConstants.Email);
-        AddParameter(command, "@var_MSISDN", SqlDbType.VarChar, employee.Msisdn, FieldLengthConstants.Msisdn);
-        AddParameter(command, "@var_Gender", SqlDbType.TinyInt, (byte?)employee.Gender);
-        AddParameter(command, "@var_Birthdate", SqlDbType.Date, employee.Birthdate);
+        AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, employee.Guid);
+        AddParameter(command, "@FirstName", SqlDbType.NVarChar, employee.FirstName, FieldLengthConstants.FirstName);
+        AddParameter(command, "@LastName", SqlDbType.NVarChar, employee.LastName, FieldLengthConstants.LastName);
+        AddParameter(command, "@Email", SqlDbType.NVarChar, employee.Email, FieldLengthConstants.Email);
+        AddParameter(command, "@PhoneNumber", SqlDbType.VarChar, employee.Msisdn, FieldLengthConstants.Msisdn);
+        AddParameter(command, "@Gender", SqlDbType.TinyInt, (byte?)employee.Gender);
+        AddParameter(command, "@BirthDate", SqlDbType.Date, employee.Birthdate);
     }
 
     // Every parameter is declared with its column's exact SQL type (and size), rather than
@@ -125,7 +125,7 @@ public static class DbHelper
         while (await reader.ReadAsync().ConfigureAwait(false))
         {
             if (items.Count == 0)
-                totalItems = reader.GetInt32(reader.GetOrdinal("total_count"));
+                totalItems = reader.GetInt32(reader.GetOrdinal("TotalCount"));
 
             items.Add(MapEmployeeFromReader(reader));
         }
@@ -140,10 +140,10 @@ public static class DbHelper
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<object>(500, "No data returned or operation failed.");
 
-        var message = reader["message"] as string;
-        return reader["result"] is 0
+        var message = reader["Message"] as string;
+        return reader["Result"] is 0
             ? new ResponseModel<object>(200, message ?? "Operation successful!")
-            : new ResponseModel<object>(Convert.ToInt32(reader["result"]), message ?? "Operation failed.");
+            : new ResponseModel<object>(Convert.ToInt32(reader["Result"]), message ?? "Operation failed.");
     }
 
     public static async Task<ResponseModel<object>> HandleResponseWithAuditLogList(SqlDataReader reader)
@@ -165,7 +165,7 @@ public static class DbHelper
         while (await reader.ReadAsync().ConfigureAwait(false))
         {
             if (items.Count == 0)
-                totalItems = reader.GetInt32(reader.GetOrdinal("total_count"));
+                totalItems = reader.GetInt32(reader.GetOrdinal("TotalCount"));
 
             items.Add(MapGlobalAuditLogEntryFromReader(reader));
         }
@@ -254,9 +254,9 @@ public static class DbHelper
         if (!await reader.ReadAsync().ConfigureAwait(false)) return null;
 
         return new EmployerAuthData(
-            reader.GetFieldValue<byte[]>(reader.GetOrdinal("password_hash")),
-            reader.GetFieldValue<byte[]>(reader.GetOrdinal("password_salt")),
-            reader.GetInt16(reader.GetOrdinal("employer_role"))
+            reader.GetFieldValue<byte[]>(reader.GetOrdinal("PasswordHash")),
+            reader.GetFieldValue<byte[]>(reader.GetOrdinal("PasswordSalt")),
+            reader.GetInt16(reader.GetOrdinal("RoleCode"))
         );
     }
 
@@ -283,33 +283,33 @@ public static class DbHelper
     {
         var employee = new EmployeeModel
         {
-            Guid = Get<Guid>(reader, "PK_employee_guid"),
-            FirstName = GetNullableString(reader, "first_name"),
-            LastName = GetNullableString(reader, "last_name"),
-            Email = GetNullableString(reader, "email"),
-            Msisdn = GetNullableString(reader, "msisdn"),
-            CreationDate = AsUtc(Get<DateTime>(reader, "creation_Date")),
-            InteractionDate = AsUtc(Get<DateTime>(reader, "interaction_Date")),
-            Birthdate = GetNullable<DateOnly>(reader, "birthdate"),
+            Guid = Get<Guid>(reader, "EmployeeId"),
+            FirstName = GetNullableString(reader, "FirstName"),
+            LastName = GetNullableString(reader, "LastName"),
+            Email = GetNullableString(reader, "Email"),
+            Msisdn = GetNullableString(reader, "PhoneNumber"),
+            CreationDate = AsUtc(Get<DateTime>(reader, "CreatedAt")),
+            InteractionDate = AsUtc(Get<DateTime>(reader, "LastInteractionAt")),
+            Birthdate = GetNullable<DateOnly>(reader, "BirthDate"),
             Address = new AddressModel
             {
-                Country = GetNullableString(reader, "country"),
-                County = GetNullableString(reader, "county"),
-                Town = GetNullableString(reader, "town"),
-                Zip = GetNullableString(reader, "zip_code"),
-                Street = GetNullableString(reader, "street"),
-                Number = GetNullableString(reader, "number")
+                Country = GetNullableString(reader, "Country"),
+                County = GetNullableString(reader, "County"),
+                Town = GetNullableString(reader, "City"),
+                Zip = GetNullableString(reader, "PostalCode"),
+                Street = GetNullableString(reader, "Street"),
+                Number = GetNullableString(reader, "StreetNumber")
             },
-            Gender = (Gender?)GetNullable<byte>(reader, "gender"),
-            EmployeeStatus = (EmployeeStatus)Get<short>(reader, "employee_Status"),
-            HireDate = GetNullable<DateOnly>(reader, "hire_Date"),
-            OfficeGuid = GetNullable<Guid>(reader, "PK_office_guid"),
-            OfficeName = GetNullableString(reader, "office_name"),
-            DepartmentGuid = GetNullable<Guid>(reader, "PK_department_guid"),
-            DepartmentName = GetNullableString(reader, "department_name"),
-            CostCenterGuid = GetNullable<Guid>(reader, "PK_cost_center_guid"),
-            CostCenterName = GetNullableString(reader, "cost_center_name"),
-            CurrentBruttoSalary = GetNullable<decimal>(reader, "current_brutto_salary")
+            Gender = (Gender?)GetNullable<byte>(reader, "Gender"),
+            EmployeeStatus = (EmployeeStatus)Get<short>(reader, "StatusCode"),
+            HireDate = GetNullable<DateOnly>(reader, "HireDate"),
+            OfficeGuid = GetNullable<Guid>(reader, "OfficeId"),
+            OfficeName = GetNullableString(reader, "OfficeName"),
+            DepartmentGuid = GetNullable<Guid>(reader, "DepartmentId"),
+            DepartmentName = GetNullableString(reader, "DepartmentName"),
+            CostCenterGuid = GetNullable<Guid>(reader, "CostCenterId"),
+            CostCenterName = GetNullableString(reader, "CostCenterName"),
+            CurrentBruttoSalary = GetNullable<decimal>(reader, "CurrentGrossSalary")
         };
 
         return employee;
@@ -319,11 +319,11 @@ public static class DbHelper
     {
         return new SalaryHistoryEntry
         {
-            SalaryGuid = Get<Guid>(reader, "PK_salary_guid"),
-            EmployeeGuid = Get<Guid>(reader, "FK_employee_guid"),
-            BruttoSalary = Get<decimal>(reader, "brutto_salary"),
-            EffectiveDate = Get<DateOnly>(reader, "effective_Date"),
-            CreatedDate = AsUtc(Get<DateTime>(reader, "created_Date"))
+            SalaryGuid = Get<Guid>(reader, "EmployeeSalaryId"),
+            EmployeeGuid = Get<Guid>(reader, "EmployeeId"),
+            BruttoSalary = Get<decimal>(reader, "GrossSalary"),
+            EffectiveDate = Get<DateOnly>(reader, "EffectiveDate"),
+            CreatedDate = AsUtc(Get<DateTime>(reader, "CreatedAt"))
         };
     }
 
@@ -331,21 +331,21 @@ public static class DbHelper
     {
         return new OfficeModel
         {
-            Guid = Get<Guid>(reader, "PK_office_guid"),
-            OfficeName = GetNullableString(reader, "office_name"),
-            City = GetNullableString(reader, "city"),
-            Country = GetNullableString(reader, "country")
+            Guid = Get<Guid>(reader, "OfficeId"),
+            OfficeName = GetNullableString(reader, "Name"),
+            City = GetNullableString(reader, "City"),
+            Country = GetNullableString(reader, "Country")
         };
     }
 
-    // usp_getOffices (list) additionally aggregates employee_count/total_brutto_salary,
-    // which the single-entity usp_getOffice doesn't compute — kept as a separate mapper
+    // Office_List additionally aggregates EmployeeCount/TotalGrossSalary,
+    // which the single-entity Office_Get doesn't compute — kept as a separate mapper
     // rather than making those columns optional on the shared one.
     private static OfficeModel MapOfficeListItemFromReader(SqlDataReader reader)
     {
         var office = MapOfficeFromReader(reader);
-        office.EmployeeCount = Get<int>(reader, "employee_count");
-        office.TotalBruttoSalary = Get<decimal>(reader, "total_brutto_salary");
+        office.EmployeeCount = Get<int>(reader, "EmployeeCount");
+        office.TotalBruttoSalary = Get<decimal>(reader, "TotalGrossSalary");
         return office;
     }
 
@@ -353,16 +353,16 @@ public static class DbHelper
     {
         return new DepartmentModel
         {
-            Guid = Get<Guid>(reader, "PK_department_guid"),
-            DepartmentName = GetNullableString(reader, "department_name")
+            Guid = Get<Guid>(reader, "DepartmentId"),
+            DepartmentName = GetNullableString(reader, "Name")
         };
     }
 
     private static DepartmentModel MapDepartmentListItemFromReader(SqlDataReader reader)
     {
         var department = MapDepartmentFromReader(reader);
-        department.EmployeeCount = Get<int>(reader, "employee_count");
-        department.TotalBruttoSalary = Get<decimal>(reader, "total_brutto_salary");
+        department.EmployeeCount = Get<int>(reader, "EmployeeCount");
+        department.TotalBruttoSalary = Get<decimal>(reader, "TotalGrossSalary");
         return department;
     }
 
@@ -370,17 +370,17 @@ public static class DbHelper
     {
         return new CostCenterModel
         {
-            Guid = Get<Guid>(reader, "PK_cost_center_guid"),
-            CostCenterCode = GetNullableString(reader, "cost_center_code"),
-            CostCenterName = GetNullableString(reader, "cost_center_name")
+            Guid = Get<Guid>(reader, "CostCenterId"),
+            CostCenterCode = GetNullableString(reader, "Code"),
+            CostCenterName = GetNullableString(reader, "Name")
         };
     }
 
     private static CostCenterModel MapCostCenterListItemFromReader(SqlDataReader reader)
     {
         var costCenter = MapCostCenterFromReader(reader);
-        costCenter.EmployeeCount = Get<int>(reader, "employee_count");
-        costCenter.TotalBruttoSalary = Get<decimal>(reader, "total_brutto_salary");
+        costCenter.EmployeeCount = Get<int>(reader, "EmployeeCount");
+        costCenter.TotalBruttoSalary = Get<decimal>(reader, "TotalGrossSalary");
         return costCenter;
     }
 
@@ -388,11 +388,11 @@ public static class DbHelper
     {
         return new EmployeeSummary
         {
-            Guid = Get<Guid>(reader, "PK_employee_guid"),
-            FirstName = GetNullableString(reader, "first_name"),
-            LastName = GetNullableString(reader, "last_name"),
-            Email = GetNullableString(reader, "email"),
-            EmployeeStatus = (EmployeeStatus)Get<short>(reader, "employee_Status")
+            Guid = Get<Guid>(reader, "EmployeeId"),
+            FirstName = GetNullableString(reader, "FirstName"),
+            LastName = GetNullableString(reader, "LastName"),
+            Email = GetNullableString(reader, "Email"),
+            EmployeeStatus = (EmployeeStatus)Get<short>(reader, "StatusCode")
         };
     }
 
@@ -400,12 +400,12 @@ public static class DbHelper
     {
         return new AuditLogEntry
         {
-            AuditId = Get<int>(reader, "audit_id"),
-            EmployeeGuid = Get<Guid>(reader, "employee_guid"),
-            EmployerId = GetNullableString(reader, "employer_id"),
-            Action = GetNullableString(reader, "action"),
-            Details = GetNullableString(reader, "details"),
-            ActionDate = AsUtc(Get<DateTime>(reader, "action_Date"))
+            AuditId = Get<int>(reader, "EmployeeAuditLogId"),
+            EmployeeGuid = Get<Guid>(reader, "EmployeeId"),
+            EmployerId = GetNullableString(reader, "PerformedBy"),
+            Action = GetNullableString(reader, "ActionType"),
+            Details = GetNullableString(reader, "Details"),
+            ActionDate = AsUtc(Get<DateTime>(reader, "OccurredAt"))
         };
     }
 
@@ -413,16 +413,16 @@ public static class DbHelper
     {
         return new GlobalAuditLogEntry
         {
-            AuditId = Get<int>(reader, "audit_id"),
-            EmployeeGuid = Get<Guid>(reader, "employee_guid"),
+            AuditId = Get<int>(reader, "EmployeeAuditLogId"),
+            EmployeeGuid = Get<Guid>(reader, "EmployeeId"),
             // A DBNull here (deleted employee, via the proc's LEFT JOIN) must come back
             // as a real null — see GetNullableString above.
-            EmployeeFirstName = GetNullableString(reader, "first_name"),
-            EmployeeLastName = GetNullableString(reader, "last_name"),
-            EmployerId = GetNullableString(reader, "employer_id"),
-            Action = GetNullableString(reader, "action"),
-            Details = GetNullableString(reader, "details"),
-            ActionDate = AsUtc(Get<DateTime>(reader, "action_Date"))
+            EmployeeFirstName = GetNullableString(reader, "FirstName"),
+            EmployeeLastName = GetNullableString(reader, "LastName"),
+            EmployerId = GetNullableString(reader, "PerformedBy"),
+            Action = GetNullableString(reader, "ActionType"),
+            Details = GetNullableString(reader, "Details"),
+            ActionDate = AsUtc(Get<DateTime>(reader, "OccurredAt"))
         };
     }
 
@@ -430,11 +430,11 @@ public static class DbHelper
     {
         if (address == null) return;
 
-        AddParameter(command, "@var_Country", SqlDbType.NVarChar, address.Country, FieldLengthConstants.Country);
-        AddParameter(command, "@var_County", SqlDbType.NVarChar, address.County, FieldLengthConstants.County);
-        AddParameter(command, "@var_Town", SqlDbType.NVarChar, address.Town, FieldLengthConstants.Town);
-        AddParameter(command, "@var_ZIP", SqlDbType.VarChar, address.Zip, FieldLengthConstants.Zip);
-        AddParameter(command, "@var_Street", SqlDbType.NVarChar, address.Street, FieldLengthConstants.Street);
-        AddParameter(command, "@var_Number", SqlDbType.NVarChar, address.Number, FieldLengthConstants.Number);
+        AddParameter(command, "@Country", SqlDbType.NVarChar, address.Country, FieldLengthConstants.Country);
+        AddParameter(command, "@County", SqlDbType.NVarChar, address.County, FieldLengthConstants.County);
+        AddParameter(command, "@City", SqlDbType.NVarChar, address.Town, FieldLengthConstants.Town);
+        AddParameter(command, "@PostalCode", SqlDbType.VarChar, address.Zip, FieldLengthConstants.Zip);
+        AddParameter(command, "@Street", SqlDbType.NVarChar, address.Street, FieldLengthConstants.Street);
+        AddParameter(command, "@StreetNumber", SqlDbType.NVarChar, address.Number, FieldLengthConstants.Number);
     }
 }

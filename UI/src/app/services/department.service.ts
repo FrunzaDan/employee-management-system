@@ -68,7 +68,7 @@ export class DepartmentService {
       );
   }
 
-  /** The employees currently assigned to this department (see usp_getEmployeesByDepartment). */
+  /** The employees currently assigned to this department (see Employee_ListByDepartment). */
   getEmployees(departmentGuid: string): Observable<EmployeeSummary[]> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('guid', departmentGuid);

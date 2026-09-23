@@ -41,7 +41,7 @@ export interface Address {
 
 export interface EmployeeResponse extends GenericResponse<EmployeeResponse> {}
 
-// tbl_employees.employee_Status codes (CHECK-constrained in the DB; the API's
+// Employee.StatusCode values (CHECK-constrained in the DB; the API's
 // EmployeeStatus enum).
 export enum EmployeeActivationStatus {
   Active = 1901,
@@ -49,7 +49,7 @@ export enum EmployeeActivationStatus {
   Test = 1904,
 }
 
-// tbl_employees.gender codes (CHECK-constrained in the DB; the API's Gender enum).
+// Employee.Gender codes (CHECK-constrained in the DB; the API's Gender enum).
 export enum Gender {
   NotDeclared = 0,
   Male = 1,

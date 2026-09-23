@@ -6,8 +6,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_SLN="$ROOT_DIR/API/EmployeeManagementSystemApi/EmployeeManagementSystem.slnx"
-DB_DIR="$ROOT_DIR/DB/Employee_Management_System_DB"
-DB_PROJ="Employee_Management_System_DB.sqlproj"
+DB_DIR="$ROOT_DIR/DB/EmployeeManagement"
+DB_PROJ="EmployeeManagement.sqlproj"
 UI_DIR="$ROOT_DIR/UI"
 
 SKIP_TESTS=0

@@ -18,7 +18,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_createEmployee",
+            "dbo.Employee_Create",
             command => DbHelper.AddEmployeeParametersForCreate(command, employee),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -29,23 +29,23 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployee",
-            // usp_getEmployee has one typed parameter per search kind; bind only the one that
+            "dbo.Employee_Get",
+            // Employee_Get has one typed parameter per search kind; bind only the one that
             // EmployeeGetting detected, so the proc runs that branch's index seek.
             command =>
             {
                 switch (request.SearchOption)
                 {
                     case EmployeeSearchOption.Guid:
-                        DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier,
+                        DbHelper.AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier,
                             Guid.Parse(request.SearchVariable!));
                         break;
                     case EmployeeSearchOption.Msisdn:
-                        DbHelper.AddParameter(command, "@var_MSISDN", SqlDbType.VarChar, request.SearchVariable,
+                        DbHelper.AddParameter(command, "@PhoneNumber", SqlDbType.VarChar, request.SearchVariable,
                             FieldLengthConstants.Msisdn);
                         break;
                     case EmployeeSearchOption.Email:
-                        DbHelper.AddParameter(command, "@var_Email", SqlDbType.NVarChar, request.SearchVariable,
+                        DbHelper.AddParameter(command, "@Email", SqlDbType.NVarChar, request.SearchVariable,
                             FieldLengthConstants.Email);
                         break;
                     default:
@@ -63,7 +63,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployees",
+            "dbo.Employee_List",
             command =>
             {
                 DbHelper.AddParameter(command, "@PageNumber", SqlDbType.Int, request.PageNumber);
@@ -82,7 +82,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_editEmployee",
+            "dbo.Employee_Update",
             command => DbHelper.AddEmployeeParametersForEdit(command, employee),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -93,8 +93,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_deactivateEmployee",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, employeeGuid),
+            "dbo.Employee_Deactivate",
+            command => DbHelper.AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, employeeGuid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
         );
@@ -104,8 +104,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_reactivateEmployee",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, employeeGuid),
+            "dbo.Employee_Reactivate",
+            command => DbHelper.AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, employeeGuid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
         );
@@ -115,8 +115,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_deleteEmployee",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, employeeGuid),
+            "dbo.Employee_Delete",
+            command => DbHelper.AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, employeeGuid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
         );
@@ -126,8 +126,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         var authData = await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployerAuthData",
-            command => DbHelper.AddParameter(command, "@var_EmployerID", SqlDbType.NVarChar,
+            "dbo.Employer_GetAuthData",
+            command => DbHelper.AddParameter(command, "@Username", SqlDbType.NVarChar,
                 employerCredentials.EmployerId, FieldLengthConstants.EmployerId),
             DbHelper.HandleEmployerAuthDataResponse,
             cancellationToken
@@ -148,15 +148,15 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         string? details, CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_insertEmployeeAuditLog",
+            "dbo.EmployeeAuditLog_Create",
             command =>
             {
-                DbHelper.AddParameter(command, "@var_EmployeeGuid", SqlDbType.UniqueIdentifier, employeeGuid);
-                DbHelper.AddParameter(command, "@var_EmployerID", SqlDbType.NVarChar, employerId,
+                DbHelper.AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, employeeGuid);
+                DbHelper.AddParameter(command, "@PerformedBy", SqlDbType.NVarChar, employerId,
                     FieldLengthConstants.EmployerId);
-                DbHelper.AddParameter(command, "@var_Action", SqlDbType.VarChar, action,
+                DbHelper.AddParameter(command, "@ActionType", SqlDbType.VarChar, action,
                     FieldLengthConstants.AuditAction);
-                DbHelper.AddParameter(command, "@var_Details", SqlDbType.NVarChar, details,
+                DbHelper.AddParameter(command, "@Details", SqlDbType.NVarChar, details,
                     FieldLengthConstants.AuditDetails);
             },
             DbHelper.HandleResponseWithMessage,
@@ -168,8 +168,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployeeAuditLog",
-            command => DbHelper.AddParameter(command, "@var_EmployeeGuid", SqlDbType.UniqueIdentifier, employeeGuid),
+            "dbo.EmployeeAuditLog_ListByEmployee",
+            command => DbHelper.AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, employeeGuid),
             DbHelper.HandleResponseWithAuditLogList,
             cancellationToken
         );
@@ -179,7 +179,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getAllEmployeeAuditLog",
+            "dbo.EmployeeAuditLog_List",
             command =>
             {
                 DbHelper.AddParameter(command, "@PageNumber", SqlDbType.Int, pageNumber);
@@ -193,7 +193,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> DeleteAllEmployeeAuditLog(CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_deleteAllEmployeeAuditLog",
+            "dbo.EmployeeAuditLog_DeleteAll",
             null,
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -204,7 +204,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_addEmployeeSalary",
+            "dbo.EmployeeSalary_Create",
             command => DbHelper.AddSalaryParameters(command, entry),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -215,8 +215,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployeeSalaryHistory",
-            command => DbHelper.AddParameter(command, "@var_EmployeeGuid", SqlDbType.UniqueIdentifier, employeeGuid),
+            "dbo.EmployeeSalary_ListByEmployee",
+            command => DbHelper.AddParameter(command, "@EmployeeId", SqlDbType.UniqueIdentifier, employeeGuid),
             DbHelper.HandleResponseWithSalaryHistoryList,
             cancellationToken
         );
@@ -226,7 +226,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_createOffice",
+            "dbo.Office_Create",
             command => DbHelper.AddOfficeParameters(command, office),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -236,8 +236,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> GetOffice(Guid guid, CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getOffice",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, guid),
+            "dbo.Office_Get",
+            command => DbHelper.AddParameter(command, "@OfficeId", SqlDbType.UniqueIdentifier, guid),
             DbHelper.HandleResponseWithOfficeMapping,
             cancellationToken
         );
@@ -246,7 +246,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> GetOffices(CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getOffices",
+            "dbo.Office_List",
             null,
             DbHelper.HandleResponseWithOfficeList,
             cancellationToken
@@ -257,7 +257,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_editOffice",
+            "dbo.Office_Update",
             command => DbHelper.AddOfficeParameters(command, office),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -267,8 +267,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> DeleteOffice(Guid guid, CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_deleteOffice",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, guid),
+            "dbo.Office_Delete",
+            command => DbHelper.AddParameter(command, "@OfficeId", SqlDbType.UniqueIdentifier, guid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
         );
@@ -278,8 +278,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployeesByOffice",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, officeGuid),
+            "dbo.Employee_ListByOffice",
+            command => DbHelper.AddParameter(command, "@OfficeId", SqlDbType.UniqueIdentifier, officeGuid),
             DbHelper.HandleResponseWithEmployeeSummaryList,
             cancellationToken
         );
@@ -289,7 +289,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_createDepartment",
+            "dbo.Department_Create",
             command => DbHelper.AddDepartmentParameters(command, department),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -299,8 +299,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> GetDepartment(Guid guid, CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getDepartment",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, guid),
+            "dbo.Department_Get",
+            command => DbHelper.AddParameter(command, "@DepartmentId", SqlDbType.UniqueIdentifier, guid),
             DbHelper.HandleResponseWithDepartmentMapping,
             cancellationToken
         );
@@ -309,7 +309,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> GetDepartments(CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getDepartments",
+            "dbo.Department_List",
             null,
             DbHelper.HandleResponseWithDepartmentList,
             cancellationToken
@@ -320,7 +320,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_editDepartment",
+            "dbo.Department_Update",
             command => DbHelper.AddDepartmentParameters(command, department),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -331,8 +331,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_deleteDepartment",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, guid),
+            "dbo.Department_Delete",
+            command => DbHelper.AddParameter(command, "@DepartmentId", SqlDbType.UniqueIdentifier, guid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
         );
@@ -342,8 +342,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployeesByDepartment",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, departmentGuid),
+            "dbo.Employee_ListByDepartment",
+            command => DbHelper.AddParameter(command, "@DepartmentId", SqlDbType.UniqueIdentifier, departmentGuid),
             DbHelper.HandleResponseWithEmployeeSummaryList,
             cancellationToken
         );
@@ -353,7 +353,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_createCostCenter",
+            "dbo.CostCenter_Create",
             command => DbHelper.AddCostCenterParameters(command, costCenter),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -363,8 +363,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> GetCostCenter(Guid guid, CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getCostCenter",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, guid),
+            "dbo.CostCenter_Get",
+            command => DbHelper.AddParameter(command, "@CostCenterId", SqlDbType.UniqueIdentifier, guid),
             DbHelper.HandleResponseWithCostCenterMapping,
             cancellationToken
         );
@@ -373,7 +373,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public async Task<ResponseModel<object>> GetCostCenters(CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getCostCenters",
+            "dbo.CostCenter_List",
             null,
             DbHelper.HandleResponseWithCostCenterList,
             cancellationToken
@@ -384,7 +384,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_editCostCenter",
+            "dbo.CostCenter_Update",
             command => DbHelper.AddCostCenterParameters(command, costCenter),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
@@ -395,8 +395,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_deleteCostCenter",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, guid),
+            "dbo.CostCenter_Delete",
+            command => DbHelper.AddParameter(command, "@CostCenterId", SqlDbType.UniqueIdentifier, guid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken
         );
@@ -406,8 +406,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         CancellationToken cancellationToken = default)
     {
         return await ExecuteStoredProcedureAsync(
-            "dbo.usp_getEmployeesByCostCenter",
-            command => DbHelper.AddParameter(command, "@var_Guid", SqlDbType.UniqueIdentifier, costCenterGuid),
+            "dbo.Employee_ListByCostCenter",
+            command => DbHelper.AddParameter(command, "@CostCenterId", SqlDbType.UniqueIdentifier, costCenterGuid),
             DbHelper.HandleResponseWithEmployeeSummaryList,
             cancellationToken
         );

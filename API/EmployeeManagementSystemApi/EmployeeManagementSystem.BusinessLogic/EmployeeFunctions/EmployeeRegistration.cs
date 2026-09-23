@@ -19,7 +19,7 @@ public class EmployeeRegistration
     public async Task<ResponseModel<object>> RegisterEmployeeFunction(EmployeeModel request, string employerId,
         CancellationToken cancellationToken = default)
     {
-        // first_name/last_name are nullable columns with no SQL-side requirement, so without
+        // FirstName/LastName are nullable columns with no SQL-side requirement, so without
         // this check a request that omits them would silently create a nameless employee.
         if (string.IsNullOrWhiteSpace(request.FirstName))
             return new ResponseModel<object>(400, "First name is required.");
@@ -45,7 +45,7 @@ public class EmployeeRegistration
         if (request.Gender is { } gender && !Enum.IsDefined(gender))
             return new ResponseModel<object>(400, "Invalid Gender value.");
 
-        // usp_createEmployee's address parameters have no SQL-side defaults, so a missing
+        // Employee_Create's address parameters have no SQL-side defaults, so a missing
         // Address would otherwise surface as an opaque 500 instead of a validation error.
         if (request.Address is null)
             return new ResponseModel<object>(400, "Address is required.");

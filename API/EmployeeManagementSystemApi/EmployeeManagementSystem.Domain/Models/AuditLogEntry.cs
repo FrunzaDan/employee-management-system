@@ -22,8 +22,8 @@ public class GlobalAuditLogEntry
 
     public Guid EmployeeGuid { get; set; }
 
-    // Null when the employee no longer exists (usp_getAllEmployeeAuditLog LEFT
-    // JOINs tbl_employees, since audit history outlives a deleted employee).
+    // Null when the employee no longer exists (EmployeeAuditLog_List LEFT
+    // JOINs Employee, since audit history outlives a deleted employee).
     public string? EmployeeFirstName { get; set; }
 
     public string? EmployeeLastName { get; set; }

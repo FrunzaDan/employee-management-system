@@ -71,7 +71,7 @@ public class EmployeeRegistrationTests
     [Fact]
     public async Task RegisterEmployeeFunction_RejectsAMissingAddress_WithoutTouchingTheDb()
     {
-        // usp_createEmployee's address parameters have no SQL-side defaults, so without this
+        // Employee_Create's address parameters have no SQL-side defaults, so without this
         // check a missing Address would otherwise surface as an opaque 500 instead of a 400.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();

@@ -103,7 +103,7 @@ export class EmployeeDetailsComponent {
 
   // Deactivated employees follow the normal deactivate-then-delete lifecycle;
   // Test employees are fictitious data and are exempt from that guardrail
-  // (see usp_deleteEmployee), so they can be deleted straight away too.
+  // (see Employee_Delete), so they can be deleted straight away too.
   canDelete: Signal<boolean> = computed(() => {
     const status = this.employee()?.employeeStatus;
     return (
