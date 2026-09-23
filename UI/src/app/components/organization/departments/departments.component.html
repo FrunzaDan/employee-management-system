@@ -66,6 +66,8 @@
           <thead>
             <tr>
               <th scope="col" class="text-center">Name</th>
+              <th scope="col" class="text-center">Employees</th>
+              <th scope="col" class="text-center">Total brutto salary</th>
               <th scope="col" class="w-25 text-center">Actions</th>
             </tr>
           </thead>
@@ -77,6 +79,8 @@
                     {{ department.departmentName }}
                   </a>
                 </td>
+                <td class="align-middle text-center">{{ department.employeeCount }}</td>
+                <td class="align-middle text-center">{{ department.totalBruttoSalary }}</td>
                 <td class="align-middle text-center">
                   <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + department.departmentName">
                     <button
@@ -106,7 +110,7 @@
               </tr>
               @if (expandedDepartmentGuid() === department.guid) {
                 <tr>
-                  <td colspan="2" class="bg-body-tertiary">
+                  <td colspan="4" class="bg-body-tertiary">
                     @if (expandedEmployeesLoading()) {
                       <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
                     } @else if (expandedEmployeesError(); as error) {

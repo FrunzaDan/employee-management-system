@@ -177,7 +177,7 @@ public static class DbHelper
         var items = new List<OfficeModel>();
 
         while (await reader.ReadAsync().ConfigureAwait(false))
-            items.Add(MapOfficeFromReader(reader));
+            items.Add(MapOfficeListItemFromReader(reader));
 
         return new ResponseModel<object>(200, $"{items.Count} offices found.", items);
     }
@@ -195,7 +195,7 @@ public static class DbHelper
         var items = new List<DepartmentModel>();
 
         while (await reader.ReadAsync().ConfigureAwait(false))
-            items.Add(MapDepartmentFromReader(reader));
+            items.Add(MapDepartmentListItemFromReader(reader));
 
         return new ResponseModel<object>(200, $"{items.Count} departments found.", items);
     }
@@ -213,7 +213,7 @@ public static class DbHelper
         var items = new List<CostCenterModel>();
 
         while (await reader.ReadAsync().ConfigureAwait(false))
-            items.Add(MapCostCenterFromReader(reader));
+            items.Add(MapCostCenterListItemFromReader(reader));
 
         return new ResponseModel<object>(200, $"{items.Count} cost centers found.", items);
     }
@@ -307,6 +307,17 @@ public static class DbHelper
         };
     }
 
+    // usp_getOffices (list) additionally aggregates employee_count/total_brutto_salary,
+    // which the single-entity usp_getOffice doesn't compute — kept as a separate mapper
+    // rather than making those columns optional on the shared one.
+    private static OfficeModel MapOfficeListItemFromReader(SqlDataReader reader)
+    {
+        var office = MapOfficeFromReader(reader);
+        office.EmployeeCount = Convert.ToInt32(reader["employee_count"]);
+        office.TotalBruttoSalary = Convert.ToDecimal(reader["total_brutto_salary"]);
+        return office;
+    }
+
     private static DepartmentModel MapDepartmentFromReader(SqlDataReader reader)
     {
         return new DepartmentModel
@@ -314,6 +325,14 @@ public static class DbHelper
             Guid = GetNullableString(reader, "PK_department_guid"),
             DepartmentName = GetNullableString(reader, "department_name")
         };
+    }
+
+    private static DepartmentModel MapDepartmentListItemFromReader(SqlDataReader reader)
+    {
+        var department = MapDepartmentFromReader(reader);
+        department.EmployeeCount = Convert.ToInt32(reader["employee_count"]);
+        department.TotalBruttoSalary = Convert.ToDecimal(reader["total_brutto_salary"]);
+        return department;
     }
 
     private static CostCenterModel MapCostCenterFromReader(SqlDataReader reader)
@@ -324,6 +343,14 @@ public static class DbHelper
             CostCenterCode = GetNullableString(reader, "cost_center_code"),
             CostCenterName = GetNullableString(reader, "cost_center_name")
         };
+    }
+
+    private static CostCenterModel MapCostCenterListItemFromReader(SqlDataReader reader)
+    {
+        var costCenter = MapCostCenterFromReader(reader);
+        costCenter.EmployeeCount = Convert.ToInt32(reader["employee_count"]);
+        costCenter.TotalBruttoSalary = Convert.ToDecimal(reader["total_brutto_salary"]);
+        return costCenter;
     }
 
     private static EmployeeSummary MapEmployeeSummaryFromReader(SqlDataReader reader)

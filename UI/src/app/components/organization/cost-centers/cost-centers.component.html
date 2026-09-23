@@ -77,6 +77,8 @@
             <tr>
               <th scope="col" class="text-center">Code</th>
               <th scope="col" class="text-center">Name</th>
+              <th scope="col" class="text-center">Employees</th>
+              <th scope="col" class="text-center">Total brutto salary</th>
               <th scope="col" class="w-25 text-center">Actions</th>
             </tr>
           </thead>
@@ -89,6 +91,8 @@
                   </a>
                 </td>
                 <td class="align-middle text-center">{{ costCenter.costCenterName || '—' }}</td>
+                <td class="align-middle text-center">{{ costCenter.employeeCount }}</td>
+                <td class="align-middle text-center">{{ costCenter.totalBruttoSalary }}</td>
                 <td class="align-middle text-center">
                   <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + costCenter.costCenterCode">
                     <button
@@ -118,7 +122,7 @@
               </tr>
               @if (expandedCostCenterGuid() === costCenter.guid) {
                 <tr>
-                  <td colspan="3" class="bg-body-tertiary">
+                  <td colspan="5" class="bg-body-tertiary">
                     @if (expandedEmployeesLoading()) {
                       <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
                     } @else if (expandedEmployeesError(); as error) {
