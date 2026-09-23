@@ -25,6 +25,7 @@
         <ProjectReference Include="..\EmployeeManagementSystem.BusinessLogic\EmployeeManagementSystem.BusinessLogic.csproj" />
         <ProjectReference Include="..\EmployeeManagementSystem.DataAccess\EmployeeManagementSystem.DataAccess.csproj" />
         <ProjectReference Include="..\EmployeeManagementSystem.Domain\EmployeeManagementSystem.Domain.csproj" />
+        <ProjectReference Include="..\EmployeeManagementSystem.WebAPI\EmployeeManagementSystem.WebAPI.csproj" />
     </ItemGroup>
 
 </Project>
