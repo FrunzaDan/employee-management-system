@@ -14,7 +14,7 @@
   }
 
   @if (draft(); as d) {
-    <div class="card app-card mb-4">
+    <div class="card app-card mb-4" animate.enter="reveal-enter" animate.leave="reveal-leave">
       <div class="card-body">
         <h2 class="card-title">{{ d.officeId ? 'Edit office' : 'New office' }}</h2>
 
@@ -133,7 +133,7 @@
                 </td>
               </tr>
               @if (expandedOfficeId() === office.officeId) {
-                <tr>
+                <tr animate.enter="reveal-enter" animate.leave="reveal-leave">
                   <td colspan="6" class="bg-body-tertiary">
                     @if (expandedEmployeesLoading()) {
                       <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading employees…
