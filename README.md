@@ -124,7 +124,7 @@ This is a learning project, so a few rough edges are intentional rather than unf
 
 ## More documentation
 
-The `ai_docs/` folder has denser, more technical write-ups of each layer — start at [`ai_docs/index.md`](ai_docs/index.md), or go straight to [`api.md`](ai_docs/api.md), [`database.md`](ai_docs/database.md), [`angular-frontend.md`](ai_docs/angular-frontend.md), [`build-and-run.md`](ai_docs/build-and-run.md), or [`job-info-and-org-structure.md`](ai_docs/job-info-and-org-structure.md).
+The `ai_docs/` folder has denser, more technical write-ups of each layer — start at [`ai_docs/index.md`](ai_docs/index.md), or go straight to [`api.md`](ai_docs/api.md), [`database.md`](ai_docs/database.md), [`angular-frontend.md`](ai_docs/angular-frontend.md), or [`build-and-run.md`](ai_docs/build-and-run.md).
 
 ## License
 

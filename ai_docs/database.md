@@ -2,125 +2,95 @@
 
 ## What it is
 
-The `Employee`/`EmployeeAddress`/`Employer` schema, the status codes that drive the deactivate/reactivate/delete lifecycle, the stored-procedure layer, and the audit log.
+The `EmployeeManagement` SQL Server database, as an SSDT project under `DB/EmployeeManagement/`. All access goes through stored procedures.
 
 ## Key files / paths
 
-- `DB/EmployeeManagement/Tables/Employee.sql`, `EmployeeAddress.sql`, `Employer.sql`, `EmployeeAuditLog.sql` (the org tables `Office.sql`, `Department.sql`, `CostCenter.sql`, `EmployeeSalary.sql`: see [job-info-and-org-structure](job-info-and-org-structure.md))
-- `DB/EmployeeManagement/StoredProcedures/Employee_Create.sql`, `Employee_Get.sql`, `Employee_List.sql`, `Employee_Update.sql`, `Employee_Deactivate.sql`, `Employee_Reactivate.sql`, `Employee_Delete.sql`, `EmployeeAuditLog_Create.sql`, `EmployeeAuditLog_ListByEmployee.sql`, `EmployeeAuditLog_List.sql`, `EmployeeAuditLog_DeleteAll.sql`, `Employer_GetAuthData.sql`
-- `API/.../EmployeeManagementSystem.BusinessLogic/EmployeeFunctions/*.cs` — `EmployeeCreation`, `EmployeeUpdating`, `EmployeeGetting`, `EmployeeActivation`, `EmployeeDeletion`, `EmployeeAuditLogger`
-- `API/.../EmployeeManagementSystem.DataAccess/DBConnection/DbUtils.cs`, `DbHelper.cs`
+- `Tables/`:
+  - `Employee`, `EmployeeAddress`, `Employer`;
+  - `EmployeeAuditLog`;
+  - `Office`, `Department`, `CostCenter`;
+  - `EmployeeSalary`.
+- `StoredProcedures/` — procs named `<Entity>_<Verb>`, for example `Employee_List`, `EmployeeSalary_Create` and `Office_Delete`.
+- `Scripts/PostDeployment/` — `PostDeployment.sql` `:r`-includes `Seed_Employer`, `Seed_Office`, `Seed_Department` and `Seed_CostCenter`.
+- `global.json` — pins the .NET 8 SDK for this project. Keep it.
 
 ## How it works
 
-**`Employee`**: `EmployeeId` (`UNIQUEIDENTIFIER`, clustered PK, DB-generated — see Keys below), `FirstName`/`LastName` (`NVARCHAR(100) NOT NULL`), `Email` (`NVARCHAR(254) NOT NULL`, unique — 254 is the SMTP maximum), `PhoneNumber` (the phone number: `VARCHAR(15) NOT NULL`, unique — E.164 max, digits only; `NOT NULL` on both matters because SQL Server's `UNIQUE` treats every `NULL` as distinct, so a nullable column would let the uniqueness check be silently bypassed by a `NULL`), `Gender` (`TINYINT NOT NULL DEFAULT 0`, `CHECK IN (0,1,2)` — 0 = Not declared, 1 = Male, 2 = Female; C# `Gender` enum, TS `Gender` enum), `BirthDate` (`DATE`), `StatusCode` (`SMALLINT NOT NULL DEFAULT 1901`, `CHECK IN (1901,1903,1904)`), `CreatedAt`/`LastInteractionAt` (`DATETIME2(3) NOT NULL`, **UTC** via `SYSUTCDATETIME()`). `IX_Employee_LastName_FirstName` (`LastName`, `FirstName`) backs the default unfiltered/sorted listing `Employee_List` does; `IX_Employee_OfficeId_LastName_FirstName`/`IX_Employee_DepartmentId_LastName_FirstName`/`IX_Employee_CostCenterId_LastName_FirstName` (`<FK>, LastName, FirstName` `INCLUDE (Email, StatusCode)`) index the FK columns — they fully cover `Employee_ListBy*` and back the per-entity aggregate joins and `<Entity>_Delete`'s "still assigned?" checks.
+### Tables
 
-**Type conventions (all tables)** — keep new columns consistent with these:
-- Entity keys are `UNIQUEIDENTIFIER` (16 bytes), never text; the salary history's `EmployeeSalaryId` is an `INT IDENTITY`. C# `Guid`/`int`; TS `string`/`number`. The full cross-project table is in "Data types" below.
-- Calendar dates (`BirthDate`, `HireDate`, `EffectiveDate`) are `DATE`. C# `DateOnly`, serialized `"YYYY-MM-DD"`; TS `IsoDate`.
-- Timestamps are `DATETIME2(3)` holding **UTC** (`SYSUTCDATETIME()`, never `GETDATE()`). `SqlExtensions.GetUtcDateTime` marks them `DateTimeKind.Utc` on read so JSON carries a trailing `Z`; the UI renders them with the `date` pipe (local time).
-- Code sets (`Gender`, `StatusCode`, `RoleCode`) are the smallest fitting integer (`TINYINT`/`SMALLINT`) with a `CHECK` constraint listing the valid values; C# and TS mirror them as enums serialized as numbers. The audit log's `ActionType` is a named code: `VARCHAR(20)` + `CHECK`, serialized by name.
-- Text that is always ASCII (`PhoneNumber`, `PostalCode`, audit `ActionType`) is `VARCHAR`; human text is `NVARCHAR`. A `VARCHAR` column must only receive validated ASCII (phone number regex, `AddressValidation`'s postal-code rule) — anything else is silently stored as `?`.
-- Money is `DECIMAL(12,2)` / C# `decimal` / TS `number`.
-- Every stored-proc parameter is declared with the same type as the column it's compared to, and `DbHelper` sends every `SqlParameter` with an explicit `SqlDbType` (+ size from `FieldLengthConstants`) through `SqlParameterExtensions` — no `AddWithValue`, which would send e.g. a VARCHAR comparison as `NVARCHAR` and force an implicit conversion.
+- **`Employee`:**
+  - `EmployeeId` (`NEWSEQUENTIALID()`);
+  - `FirstName`, `LastName`;
+  - `Email` (unique) and `PhoneNumber` (`VARCHAR(15)`, unique);
+  - `Gender` (`TINYINT`, 0/1/2);
+  - `BirthDate` and `HireDate` (`DATE`);
+  - `StatusCode` (`SMALLINT`, default 1901);
+  - nullable FKs `OfficeId`, `DepartmentId`, `CostCenterId`, each indexed;
+  - `CreatedAt`, `LastInteractionAt`.
+- **`EmployeeAddress`:** one row per employee. `EmployeeId` is both the primary key and the foreign key. Every column is `NOT NULL`.
+- **`Employer`:**
+  - `Username` is the primary key;
+  - `PasswordHash` `BINARY(32)` and `PasswordSalt` `BINARY(16)`;
+  - `RoleCode`.
+- **`Office`, `Department`, `CostCenter`:** small lookup tables with GUID keys. `CostCenter.Code` is unique.
+- **`EmployeeSalary`:**
+  - `EmployeeSalaryId` is an `INT IDENTITY`;
+  - `EmployeeId`, `GrossSalary` `DECIMAL(12,2)`, `EffectiveDate`, `CreatedAt`;
+  - it is **append-only**: no edit or delete.
+- **`EmployeeAuditLog`:**
+  - `EmployeeAuditLogId` is an `INT IDENTITY`;
+  - `ActionType` is `Created`, `Edited`, `Deactivated`, `Reactivated`, `Deleted` or `SalaryChanged`;
+  - it has **no FK** to `Employee`, so history survives a delete.
 
-**`EmployeeAddress`**: 1:1 with a employee — `EmployeeId` is both the FK and the table's clustered **primary key** (`PK_EmployeeAddress`), which enforces the 1:1 cardinality and makes every join a seek. `Country`/`County`/`City` (`NVARCHAR(100)`), `PostalCode` (`VARCHAR(20)`, ASCII-only — see `AddressValidation`), `Street` (`NVARCHAR(100)`), `StreetNumber` (`NVARCHAR(50)`), all `NOT NULL` (the API and UI require every one). `Employee_Create` inserts both rows, and `Employee_Update` updates both, in **one transaction** each — `Employee_Get`/`Employee_List` `INNER JOIN` the two tables, so a employee row without a matching address row would silently disappear from every read despite existing in `Employee`.
+### Procedures
 
-**`Employer`**: `Username` (the login name) is `NOT NULL` with `PRIMARY KEY (Username)`. Stores `PasswordHash`/`PasswordSalt` (see [api](api.md) for the hashing scheme) and `RoleCode`.
+- **`Employee_List`:** paged with `OFFSET`/`FETCH`. It searches with `LIKE` (wildcards escaped) and sorts through a `CASE` `ORDER BY` (no dynamic SQL). The total comes from `COUNT(*) OVER()`. `/export` reuses it with page size 5000.
+- **Current salary:** `Employee_Get` and `Employee_List` add `CurrentGrossSalary` via `OUTER APPLY (TOP 1 … ORDER BY EffectiveDate DESC, CreatedAt DESC)`.
+- **`Employee_Get`:** one `IF` branch each for id, phone number and email, so each gets an index seek.
+- **`Employee_Update`:** a partial update (`ISNULL(@x, column)`) that updates the employee and address rows in one transaction.
+- **Employee create/update:** check that the office, department and cost center exist first, and return `400` if one doesn't.
+- **`{Office,Department,CostCenter}_List`:** unpaginated. They add `EmployeeCount` and `TotalGrossSalary`.
+- **`<Org>_Delete`:** returns `409` while any employee still references the row.
+- **`Employee_ListByOffice`/`ByDepartment`/`ByCostCenter`:** the employees assigned to one office, department or cost center.
+- **`EmployeeAuditLog_List`:** paged. The total is a separate first result set, so an empty page still reports the right total.
 
-**`Employee_List` is paginated**, not a full-table dump: it takes `@PageNumber`, `@PageSize`, an optional `@SearchTerm` (`LIKE '%...%'` against first/last name, email, phone number — with `%`/`_` escaped via `@EscapedSearchTerm` + `ESCAPE '\'`, so a literal search for those characters doesn't match everything), and `@SortColumn`/`@SortDirection` (`name`/`email`/`phoneNumber`, `asc`/`desc`). Sorting is done via a parameterized `CASE`-based `ORDER BY` (no dynamic SQL — exactly one `CASE` pair is non-NULL per call) over `OFFSET`/`FETCH`, and each returned row carries a `TotalCount` column from `COUNT(*) OVER()` so the API can report `TotalItems` without a second query. `EmployeeGetting.GetEmployeesFunction` validates `PageNumber >= 1`, `1 <= PageSize <= 100`, and that `SortColumn`/`SortDirection` are in their allow-lists — `400` otherwise. The API wraps the page in `PagedResponse<EmployeeModel>` (`Domain/Models/PagedResponse.cs`): `PageNumber`, `PageSize`, `TotalItems`, `Items`.
+### Employee lifecycle (enforced in the procs)
 
-**Status codes** (`Employee.StatusCode`, the `EmployeeStatus` enum in `Domain/Models`, `EmployeeStatus` in the UI):
-- `1901` = active
-- `1903` = deactivated
-- `1904` = test — assigned only at creation time, by the About page's "add 50 test employees" bulk generator (see [angular-frontend](angular-frontend.md)); marks a employee as fictitious/demo data everywhere the status is shown (UI status labels, CSV export). Unlike an active employee, a test employee is exempt from the deactivate-before-delete rule (see below) since it isn't real data.
+- New employees are active (`1901`). The generator creates test employees (`1904`).
+- `Deactivate` needs an employee that isn't already deactivated. `Reactivate` needs one that isn't already active. Otherwise the result is `409`.
+- `Delete` needs status `1903` or `1904`. It deletes the address, then the salary rows, then the employee, in one transaction.
+- Email and phone number duplicates are checked first (`409`). The unique constraints catch the race window, and the `CATCH` maps errors 2601/2627 to the same `409`.
+- Creating an employee sets no salary. The first salary is added through `EmployeeSalary_Create`, like any later raise.
 
-**Lifecycle rules, enforced in the stored procedures themselves** (not just the API layer):
-- New employees are created **active** by default (`Employee_Create`'s `@StatusCode` parameter defaults to `1901`); `EmployeeCreation.CreateEmployeeFunction` additionally accepts an explicit `1904` (test) in the request body, but rejects any other value with `400` — a client can never register a employee as already deactivated.
-- `Employee_Deactivate` only updates rows where status `<> 1903` → `409` if already deactivated. A test employee (`1904`) can be deactivated the same as an active one; doing so moves it to the normal `1903` deactivated state, losing the test marker.
-- `Employee_Reactivate` only updates rows where status `<> 1901` → `409` if already active. Reactivating a former test employee sets it to `1901` (active), not back to `1904` — the test marker doesn't survive a deactivate/reactivate round trip. This is a deliberate simplification, not a bug to fix.
-- **`Employee_Delete` requires status `IN (1903, 1904)`** — deactivated or test. An active employee must be deactivated first; deleting one directly returns `409` with `'Employee must be deactivated before it can be deleted.'`. A test employee is the one exception to that guardrail and can be deleted straight from `1904`, since it's fictitious data with no lifecycle to protect. For a real (non-test) employee, only `deactivate → delete` or `deactivate → reactivate` are valid paths; `deactivate → delete → reactivate` is not (the employee no longer exists after delete).
-- **Bulk delete** (employee-list page, see [angular-frontend](angular-frontend.md)): the UI lets any selection of employees be bulk-actioned. Active employees in the selection are only deactivated (not deleted, since they're not delete-eligible yet); deactivated/test employees in the selection are deleted outright. It's a client-side loop over the existing single-employee deactivate/delete endpoints (one HTTP call per employee, sequential), not a dedicated bulk endpoint or stored proc — so it's subject to the exact same per-employee rules as the single-row buttons, just batched with one confirmation prompt.
-- `Employee_Create` also rejects duplicate `Email` or `PhoneNumber` up front with a friendly `409`, before attempting the insert. `UQ_Employee_Email`/`UQ_Employee_PhoneNumber` unique constraints on the table back this up for the race window between that check and the insert (two concurrent registrations with the same email/phone number); the proc's `CATCH` maps that violation to the same `409` (see \"Error handling\").
-- `Employee_Update` uses `ISNULL(@param, column)` for every field, so **omitting a field in the edit request leaves it unchanged** rather than nulling it out — this is a partial-update endpoint, not a full replace. Like `Employee_Create`, it pre-checks email/phoneNumber for collisions with *another* employee (`400` if found, excluding the row being edited itself) and wraps both the `Employee` and `EmployeeAddress` updates in one transaction with `TRY/CATCH` (`500` + rollback on failure) — the two tables can't be left out of sync by a partial failure. It also rejects any `EmployeeStatus` other than Active/Test in the request (see [api](api.md) — edit is not a lifecycle-transition endpoint).
+### Error handling (all procs)
 
-**CSV export** (`GET /api/employee/export`): `EmployeeGetting.GetEmployeesForExportFunction` reuses the exact same `_dbUtils.GetEmployees` call (and therefore `Employee_List`) as the paginated `/all` endpoint — it validates/normalizes `SearchTerm`/`SortColumn`/`SortDirection` the same way, but fixes `PageNumber = 1` and `PageSize = MaxExportRows` (5000) internally instead of taking paging from the caller, so export honors the current search/sort but isn't limited to one page. The filtering/sorting SQL lives in exactly one place (`Employee_List`); no separate export stored proc exists. `EmployeeCsvExporter.ToCsv` turns the resulting `List<EmployeeModel>` into RFC 4180 CSV (with a leading UTF-8 BOM for Excel, and a leading `'` on any field starting with `=`/`+`/`-`/`@` to defang spreadsheet formula injection), and the controller returns it as a `text/csv` `File` result rather than the usual JSON envelope.
+- Every proc starts with `SET NOCOUNT ON; SET XACT_ABORT ON`.
+- Expected outcomes come back as `(Result, Message)` rows:
+  - `400`: a referenced row is missing;
+  - `404`: not found;
+  - `409`: a duplicate or a state conflict.
+- Multi-statement writes use `TRY` / `BEGIN TRANSACTION` / `CATCH` → `ROLLBACK` + `THROW`. Nothing returns `ERROR_MESSAGE()`.
 
-**Lookup**: `EmployeeGetting.GetEmployeeFunction` doesn't take an explicit search type from the caller — `DetermineLookup` tries (in order) `Guid.TryParse` → phone number format → email format and fills exactly one member of an `EmployeeLookup`, which becomes exactly one of `Employee_Get`'s typed parameters — `@EmployeeId UNIQUEIDENTIFIER`, `@PhoneNumber VARCHAR(15)` or `@Email NVARCHAR(254)` — each typed like its column so the comparison needs no implicit conversion. An unrecognized `searchTerm` shape returns `404` without ever hitting the DB. `Employee_Get` is split into three standalone `IF @… IS NOT NULL` branches (one full `SELECT` each) rather than one query with a 3-way `OR`, so each search type gets a proper index seek instead of a scan.
+### Naming and data types (shared by all three apps)
 
-**Keys are generated by the database**: `Employee`, `Office`, `Department` and `CostCenter` default their key to `NEWSEQUENTIALID()`; the `<Entity>_Create` procs capture it with `OUTPUT inserted.<Entity>Id` and return it on their `(Result, Message, <Entity>Id)` row, and the API hands it back as the create response's `Data`. A client can never choose its own ID (the create requests have no ID member). Sequential rather than `NEWID()`: every table's clustered PK is this GUID, and a random one inserts at a random page (splits/fragmentation). `EmployeeSalary` is append-only history that's never addressed on its own, so its key is an `INT IDENTITY`. (The API used to generate these GUIDs itself with a `SequentialGuid` helper; that was removed in the 2026-09-23 consistency pass so all three apps generate keys the same way.)
-
-**Audit trail** (`EmployeeAuditLog`): every successful mutation (`Created`/`Edited`/`Deactivated`/`Reactivated`/`Deleted`/`SalaryChanged`) writes a row via `EmployeeAuditLogger.Log`, called from `EmployeeCreation`/`EmployeeUpdating`/`EmployeeActivation`/`EmployeeDeletion`/`EmployeeSalary` only after the underlying DB call returns `Status == 200`. The employer's username (`PerformedBy`) comes from `EmployeeController.Username` (`User.Identity.Name`, set from the JWT's `ClaimTypes.Name` claim — see [api](api.md)), not from the request body. **Deliberately no FK** from `EmployeeAuditLog.EmployeeId` to `Employee` — a deleted employee's audit history must survive `Employee_Delete`, which is the one place this table outlives the row it's about. Logging is **best-effort**: `EmployeeAuditLogger.Log` swallows and logs (via `ILogger`) any exception rather than letting it bubble, because it always runs after the employee mutation it's recording has already succeeded — a logging failure must never turn that into a `500`. Read via `GET /api/employee/audit-log?employeeId=...` → `EmployeeAuditLog_ListByEmployee`, newest first; `EmployeeGetting.GetEmployeeAuditLogFunction` validates the GUID format (`400` if not GUID-shaped) before hitting the DB.
-
-**Global audit log** (`GET /api/employee/audit-log/all`): a separate, paginated view across every employee, for the `/audit-log` admin page — not the same stored proc as the per-employee trail (that one returns every row for one GUID, unpaginated, which is fine at that scope; a global scan needs real paging). `EmployeeAuditLog_List` follows `Employee_List`'s pagination convention (`@PageNumber`/`@PageSize`, `OFFSET`/`FETCH`) but has no search/sort — just newest-first — and returns the total as its own first result set (`SELECT COUNT(*) AS TotalCount`) rather than a `COUNT(*) OVER()` column, so `TotalItems` is still right when the requested page is empty (past the last page, or the log was just cleared). Imalo's global audit log counts the same way. It `LEFT JOIN`s `Employee` to show an employee name; since the audit table has no FK (see above), a deleted employee's rows come back with `FirstName`/`LastName` `NULL` rather than disappearing, and `GlobalAuditLogEntry.EmployeeFirstName`/`EmployeeLastName` are mapped via `as string` (not `.ToString()`) specifically so that `NULL` surfaces as a real `null`, not `DBNull.Value.ToString()`'s empty string. A dedicated index, `IX_EmployeeAuditLog_OccurredAt_EmployeeAuditLogId`, backs this proc's unfiltered `ORDER BY OccurredAt DESC` scan — the per-employee index, `IX_EmployeeAuditLog_EmployeeId_OccurredAt_EmployeeAuditLogId` on `(EmployeeId, OccurredAt DESC, EmployeeAuditLogId DESC)`, only helps once a GUID is already known (it's keyed in `EmployeeAuditLog_ListByEmployee`'s `ORDER BY` order, so that listing needs no sort). `EmployeeGetting.GetAllAuditLogFunction` validates paging the same way `GetEmployeesFunction` does (reusing `MaxPageSize`). Per-employee audit log pagination was considered and deliberately skipped for now (small per-employee row counts don't currently justify it).
-
-**Deletion**: `Employee_Delete` deletes the address, then the employee (all one transaction); it and `Employee_Create` access `Employee`/`EmployeeAddress` in opposite orders (create: employee then address; delete: address then employee) — this is **not** reorderable. `EmployeeAddress.EmployeeId` has a `FOREIGN KEY` to `Employee` with no `ON DELETE CASCADE`, so referential integrity mandates address-row deletion before its parent employee row. The `PK_EmployeeAddress` key (above) is the actual lock-footprint mitigation here, not reordering.
-
-## Error handling
-
-The same rules in all three apps' SQL (customer and employee in their stored procedures, Imalo in `ScholarDataAccess`'s inline batches):
-
-- **`SET XACT_ABORT ON`** at the top of every proc (after `SET NOCOUNT ON`): any runtime error — or a client timeout/cancel — rolls the whole transaction back instead of leaving it open or half-applied.
-- **Expected outcomes are data, not errors.** Pre-checks (not found, duplicate, wrong state) return the `(Result, Message)` row — `Result = 0` success, otherwise the HTTP status: `400` a referenced row that doesn't exist, `404` not found, `409` a duplicate or a state conflict. The API turns a non-zero result into Problem Details (see [api](api.md), "Error handling").
-- **Unexpected errors are re-thrown, never swallowed.** A multi-statement write is `BEGIN TRY / BEGIN TRANSACTION … COMMIT TRANSACTION / END TRY / BEGIN CATCH / IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION; THROW; / END CATCH`; a single-statement write needs no `TRY/CATCH` (it's atomic on its own). No proc returns `ERROR_MESSAGE()` to the caller — the error reaches the API's `GlobalExceptionHandler`, which logs it once and answers `500` (with the message only in Development).
-- **Constraints are the source of truth; pre-checks only give the friendly message.** Where a pre-check is backed by a unique constraint (`UQ_Employee_Email`/`UQ_Employee_PhoneNumber`, `UQ_CostCenter_Code`), the `CATCH` maps error `2601`/`2627` — a concurrent request that got in between the check and the write — to the same `409` as the pre-check, and re-throws anything else.
-
-## Naming conventions
-
-Applied on 2026-09-23 to all three sibling projects (customer-management-system, employee-management-system, imalo-education-webapp) so their schemas read the same way. Follow these for any new object:
-
-- **PascalCase everywhere**: tables, columns, procs, parameters, result-set aliases, constraints. Acronyms are written as words (`Id`, `Json`, never `ID`).
-- **No type or object-kind prefixes/suffixes**: no `tbl_`, no `usp_` (and never `sp_`, which SQL Server looks up in `master` first), no `_guid`.
-- **Tables are singular nouns** (`Employee`, `Office`). A table owned by another starts with its owner's name: `EmployeeAddress`, `EmployeeSalary`, `EmployeeAuditLog`.
-- **Keys**: the primary key is `<Table>Id` (`EmployeeId`, `EmployeeSalaryId`); a foreign-key column has exactly the name of the key it references (`EmployeeAddress.EmployeeId`, `Employee.OfficeId`). A natural key keeps its natural name (`Employer.Username`).
-- **Column suffixes**: `…At` = a UTC moment (`DATETIME2`: `CreatedAt`, `LastInteractionAt`, `OccurredAt`); `…Date` = a calendar date (`DATE`: `BirthDate`, `HireDate`, `EffectiveDate`); `…Code` = a coded value backed by a `CHECK` (`StatusCode`, `RoleCode`). Plain English over jargon/abbreviations (`PhoneNumber` not `phoneNumber`, `PostalCode` not `zip_code`, `GrossSalary` not `brutto_salary`), and no reserved words (`ActionType`, not `Action`). A column doesn't repeat its table's name (`Office.Name`, `CostCenter.Code`) — result sets alias it where needed (`OfficeName`).
-- **Constraints and indexes are always named**: `PK_<Table>`, `FK_<Child>_<Parent>`, `UQ_<Table>_<Column>`, `CK_<Table>_<Column>`, `DF_<Table>_<Column>`, `IX_<Table>_<KeyColumn1>_<KeyColumn2>…`.
-- **Procs are `<Entity>_<Verb>`**: `Create`, `Get` (one row), `List` (many rows / a page; `ListBy<Parent>` when filtered by a parent), `Update`, `Delete`, plus domain verbs (`Deactivate`, `Reactivate`, `GetAuthData`). Parameters are named exactly like the column they feed or compare with (`@EmployeeId`, `@PhoneNumber`) — no `@var_` prefix. Local variables are PascalCase too (`@Result`, `@Now`).
-- **Result-set columns are PascalCase** (`Result`, `Message`, `TotalCount`, `CurrentGrossSalary`), and `DbHelper` reads them by exactly those names.
-- **Files**: one object per file, named after the object (`Tables/EmployeeAddress.sql`, `StoredProcedures/Employee_Get.sql`); seeds are `Scripts/PostDeployment/Seed_<Table>.sql`. The database (and `.sqlproj`) is `EmployeeManagement`, no `_DB` suffix.
-- **API and UI use the same names**: JSON/TypeScript properties are the camelCase column names — see "Data types" below.
-
-## Data types
-
-Aligned on 2026-09-23 across all three sibling projects (customer-management-system, employee-management-system, imalo-education-webapp), so the same kind of value has the same type everywhere — DB column, proc parameter, C# model, JSON and TypeScript:
-
-| Kind of value | SQL Server | C# | JSON / TypeScript |
-|---|---|---|---|
-| Entity key (a row addressed by a URL) | `UNIQUEIDENTIFIER` `DEFAULT NEWSEQUENTIALID()` — generated by the DB, handed back by the create proc/`OUTPUT` | `Guid` | string |
-| Key of an append-only history/log row | `INT IDENTITY(1, 1)` | `int` | number |
-| Person name | `NVARCHAR(100)` | `string` | string |
-| Email | `NVARCHAR(254)` (RFC 5321's path limit) | `string` | string |
-| Phone number | `VARCHAR(15)`, digits only (E.164's maximum; validated `^[0-9]{9,12}$`) | `string` | string |
-| Address | `Country`/`County`/`City`/`Street` `NVARCHAR(100)`, `StreetNumber` `NVARCHAR(50)`, `PostalCode` `VARCHAR(20)` (ASCII letters/digits/spaces/hyphens) | `string` | string |
-| Other names | `NVARCHAR(100)`; free text `NVARCHAR(500)` | `string` | string |
-| Money | `DECIMAL(12, 2)` (max 9,999,999,999.99), never `FLOAT` | `decimal` | number |
-| Calendar date (`…Date`) | `DATE` | `DateOnly` | `IsoDate`, `"1990-01-02"` |
-| UTC moment (`…At`) | `DATETIME2(3)` `DEFAULT SYSUTCDATETIME()` | `DateTime` with `Kind = Utc` (marked when read) | `IsoDateTime`, ends in `Z` |
-| Numeric code | `TINYINT`/`SMALLINT` + `CHECK` — `Gender` 0/1/2 (ISO/IEC 5218, `NOT NULL DEFAULT 0`), `StatusCode` 1901/1903/1904, `RoleCode` 1801 | enum (`: byte`/`: short`), serialized as its number | numeric `enum` |
-| Named code | `VARCHAR(20)` + `CHECK` (`ActionType`, `Role`) | enum, serialized by name | string-literal union |
-| Password | `BINARY(32)` hash + `BINARY(16)` salt | `byte[]` | never sent |
-| JSON payload (`…Json`) | `NVARCHAR(MAX)` + `CHECK (ISJSON(...) = 1)` | typed class | typed object |
-
-Rules that go with it:
-
-- **One name per value, at every layer.** JSON and TypeScript names are the camelCase column names (`customerId`, `phoneNumber`, `postalCode`, `createdAt`, `grossSalary`). A code column drops its `…Code` suffix once it's an enum (`StatusCode` → `status`), and the login fields are `username`/`password`. URLs are lowercase kebab-case (`/api/customer/audit-log`, `/api/cost-center`, `/create-customer`); route parameters are named like the id they carry (`/customers/:customerId`); query parameters are camelCase (`?customerId=`).
-- **A parameter has exactly its column's type**, in the proc and in the C# `SqlParameter` that feeds it. A `VARCHAR` column compared with an `NVARCHAR` parameter gets converted, which turns index seeks into scans.
-- **Required means `NOT NULL`.** A value the UI and API require is `NOT NULL` in the DB too. `NULL` means "unknown/not applicable", never a second spelling of an existing code.
+- **Naming:**
+  - PascalCase everywhere, with no `tbl_`/`usp_`/`sp_` prefixes.
+  - Tables are singular.
+  - The primary key is `<Table>Id`.
+  - A column doesn't repeat its table's name (`Office.Name`).
+  - Column suffixes: `…At` is a UTC `DATETIME2(3)`, `…Date` is a `DATE`, `…Code` is a checked code.
+  - Constraints are always named: `PK_`, `FK_`, `UQ_`, `CK_`, `DF_`, `IX_`.
+- **Types:**
+  - Entity keys are `UNIQUEIDENTIFIER` + `NEWSEQUENTIALID()`; history keys are `INT IDENTITY`.
+  - Names are `NVARCHAR(100)`, email is `NVARCHAR(254)`, phone number is `VARCHAR(15)` (digits only).
+  - Money is `DECIMAL(12,2)`.
+  - Timestamps are written with `SYSUTCDATETIME()`.
+- **Parameters:** every parameter has exactly its column's type. A `VARCHAR` column compared with an `NVARCHAR` parameter loses its index seek.
+- **API/UI names:** JSON and TypeScript names are the camelCase column names. A code column loses its `Code` suffix in C# and TypeScript: `StatusCode` → `status`.
 
 ## Gotchas / conventions
 
-- Every mutating stored proc's `(Result, Message)` convention is described in [api](api.md) — `Result = 0` success, nonzero maps directly to the HTTP status returned to the client.
-- Every new proc follows "Error handling" above: `SET XACT_ABORT ON`, expected outcomes as `(Result, Message)`, `TRY/CATCH` + `ROLLBACK` + `THROW` around multi-statement writes.
-
-## Known gaps / deliberately deferred
-
-**Resolved** (kept for history — don't rediscover these as "new" findings):
-- **Error-handling pass (2026-09-24).** Procs used to swallow unexpected errors into `Result = 500` with `ERROR_MESSAGE()` in the message (leaking SQL details to the client and bypassing the API's logging), had no `XACT_ABORT`, and answered duplicates with `400` — fixed as described in "Error handling" above.
-- **Cross-project consistency pass (2026-09-23).** Aligned with the "Data types" table and with the customer app: keys are now DB-generated (`NEWSEQUENTIALID()` defaults, returned by the create procs — the API's `SequentialGuid` was deleted), `EmployeeSalaryId` `UNIQUEIDENTIFIER` → `INT IDENTITY`, `FirstName`/`LastName` 50 → 100, `Gender` `NULL` → `NOT NULL DEFAULT 0`, every `EmployeeAddress` column `NOT NULL` (the UI already required them), `EmployeeAuditLog.ActionType` free `VARCHAR(50)` → `VARCHAR(20)` + `CHECK` (`"Salary changed"` → `SalaryChanged`), and `Employee_List`'s `NVARCHAR` search/sort parameters → `NVARCHAR(254)`/`VARCHAR(20)`/`VARCHAR(4)`. The API/UI names that differed from the columns — `guid`, `officeGuid`/`departmentGuid`/`costCenterGuid`, `salaryGuid`, `msisdn`, `town`, `zip`, `number`, `birthdate`, `creationDate`, `interactionDate`, `createdDate`, `employeeStatus`, `bruttoSalary` and its totals, the org models' `officeName`/`departmentName`/`costCenterCode`/`costCenterName`, `employerId`/`employerPassword`, `auditId`, `action`, `actionDate`, `validUntil` — were renamed to match, and the URLs became kebab-case.
-- **Naming pass (2026-09-23).** Every DB object was renamed to the "Naming conventions" above — was `tbl_employees`/`tbl_addresses`/`tbl_employee_salary_history`/…, `usp_getEmployee`/`usp_getEmployeesByOffice`/…, `PK_employee_guid`/`FK_office_guid`, snake_case columns with stray capitals (`creation_Date`, `employee_Status`, `hire_Date`), `brutto_salary`, `@var_`-prefixed parameters, and the `Employee_Management_System_DB` database; the single org-structure seed was split into `Seed_Office`/`Seed_Department`/`Seed_CostCenter`. The entries below use the new names. The renamed schema was deployed as a fresh database (the old one is left untouched on the container), not migrated in place.
-- `Employer` had no primary key/unique constraint, and `Username` was nullable — fixed: `Username` is now `NOT NULL` with `PRIMARY KEY (Username)`.
-- `Employee.Email`/`PhoneNumber` uniqueness was enforced only in `Employee_Create`'s app-level `IF EXISTS` check, racy under concurrent registrations — fixed: `UQ_Employee_Email`/`UQ_Employee_PhoneNumber` unique constraints added as a DB-level backstop, and `Email`/`PhoneNumber` are now `NOT NULL` (closing the NULL-bypasses-uniqueness gap described above). The app-level check is still there for the friendly message on the common case; the constraint closes the concurrent-registration race (now answered with the same `409`, see "Error handling").
-- `Employee_Update` had no transaction/duplicate-check and no `IF NOT EXISTS` 404 guard — fixed: see the `Employee_Update` bullet above.
-- `Employee_Get` used one query with a 3-way `OR` across search types — fixed: split into per-search-type `IF` branches for proper index seeks, and `@var_SearchOption`/`@var_Gender` changed from `NVARCHAR` to `INT` end-to-end.
-- `EmployeeAddress.EmployeeId` had no index/uniqueness — fixed: now the table's clustered primary key (first as a `UQ_` constraint on a heap, since superseded).
-- Every date/timestamp was `NVARCHAR(50)` and every GUID was `NVARCHAR(50)` — fixed (see "Type conventions" above). This *was* a live bug, not cosmetic: `GETDATE()` written into an `NVARCHAR` column is stored as `'Sep 22 2026 12:53PM'` (seconds lost, not chronologically sortable), and "current salary" used `ORDER BY EffectiveDate DESC` on text, which is only chronological if every client sent zero-padded ISO dates (the API's `DateOnly.TryParse` also accepted e.g. `12/1/2025`). "Current salary" now also breaks same-day ties by `CreatedAt DESC`, and `IX_EmployeeSalary_EmployeeId_EffectiveDate_CreatedAt` `INCLUDE`s `GrossSalary` so that lookup is one covering seek. Existing rows migrate in place via `sqlpackage`'s implicit conversions (verified: all dev data converts).
+- Keep `run.sh`'s deploy (`sqlpackage` publish) as the only way the schema changes. There are no migration scripts.
+- Org FKs are `NO ACTION`. Deleting an office, department or cost center is blocked while it's in use; there is no cascade.
+- There are no unit tests for procs. They are exercised by running the real stack.
