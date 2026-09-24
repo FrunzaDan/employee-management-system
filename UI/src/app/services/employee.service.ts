@@ -26,7 +26,6 @@ import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { PagedResponse } from '../interfaces/paged-response';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 export interface LoadEmployeesParams {
@@ -67,7 +66,6 @@ export class EmployeeService {
   private readonly API_URL = `${environment.apiUrl}/api/employee`;
 
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
   private readonly state = signal({
@@ -109,7 +107,6 @@ export class EmployeeService {
     this.loadEmployeesParams$
       .pipe(
         switchMap((params) => {
-          const headers = this.httpHeaderService.getHeadersWithTokenSet();
           let httpParams = new HttpParams()
             .set('pageNumber', params.pageNumber)
             .set('pageSize', params.pageSize)
@@ -123,7 +120,7 @@ export class EmployeeService {
           return this.http
             .get<GenericResponse<PagedResponse<Employee>>>(
               `${this.API_URL}/all`,
-              { headers, params: httpParams },
+              { params: httpParams },
             )
             .pipe(
               map((response) => ({ response, requestedParams: params })),
@@ -162,14 +159,10 @@ export class EmployeeService {
   getEmployee(employeeId: string): void {
     this.setLoading(true);
 
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('searchTerm', employeeId);
 
     this.http
-      .get<GenericResponse<Employee>>(`${this.API_URL}/get`, {
-        headers,
-        params,
-      })
+      .get<GenericResponse<Employee>>(`${this.API_URL}/get`, { params })
       .subscribe({
         next: (response) => {
           this.state.update((state) => ({
@@ -202,24 +195,19 @@ export class EmployeeService {
   createEmployeeSilently(
     employee: CreateEmployeeRequest,
   ): Observable<GenericResponse<string>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http.post<GenericResponse<string>>(
       `${this.API_URL}/create`,
       employee,
-      { headers },
     );
   }
 
   // Takes the whole edited employee (to update the local list with once saved) but sends
   // only the editable fields — the server-owned ones (status, dates) aren't part of an edit.
   updateEmployee(employee: Employee): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-
     return this.http
       .patch<GenericResponse<object>>(
         `${this.API_URL}/update`,
         toUpdateEmployeeRequest(employee),
-        { headers },
       )
       .pipe(
         tap(() => {
@@ -245,14 +233,10 @@ export class EmployeeService {
   deleteEmployeeSilently(
     employeeId: string,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('employeeId', employeeId);
 
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, {
-        headers,
-        params,
-      })
+      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
       .pipe(tap(() => this.removeEmployeeLocally(employeeId)));
   }
 
@@ -272,12 +256,10 @@ export class EmployeeService {
   deactivateEmployeeSilently(
     employeeId: string,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('employeeId', employeeId);
 
     return this.http
       .patch<GenericResponse<object>>(`${this.API_URL}/deactivate`, null, {
-        headers,
         params,
       })
       .pipe(
@@ -296,7 +278,6 @@ export class EmployeeService {
     this.exportLoading.set(true);
     this.exportError.set(null);
 
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     let httpParams = new HttpParams()
       .set('sortColumn', params.sortColumn ?? 'name')
       .set('sortDirection', params.sortDirection ?? 'asc');
@@ -307,7 +288,6 @@ export class EmployeeService {
 
     this.http
       .get(`${this.API_URL}/export`, {
-        headers,
         params: httpParams,
         responseType: 'blob',
       })
@@ -334,12 +314,10 @@ export class EmployeeService {
     status: EmployeeStatus,
   ): void {
     this.activationState.set({ loading: true, error: null });
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('employeeId', employeeId);
 
     this.http
       .patch<GenericResponse<object>>(`${this.API_URL}/${action}`, null, {
-        headers,
         params,
       })
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))

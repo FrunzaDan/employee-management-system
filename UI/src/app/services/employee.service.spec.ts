@@ -12,7 +12,6 @@ import {
   Gender,
 } from '../interfaces/employee';
 import { EmployeeService } from './employee.service';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 describe('EmployeeService', () => {
@@ -76,10 +75,6 @@ describe('EmployeeService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        {
-          provide: HttpHeaderService,
-          useValue: { getHeadersWithTokenSet: () => ({}) },
-        },
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });

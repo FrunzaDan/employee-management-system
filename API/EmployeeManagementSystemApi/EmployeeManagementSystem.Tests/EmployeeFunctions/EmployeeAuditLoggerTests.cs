@@ -2,6 +2,7 @@ using EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace EmployeeManagementSystem.Tests.EmployeeFunctions;
@@ -17,8 +18,8 @@ public class EmployeeAuditLoggerTests
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
-        var logger = new Mock<ILogger<EmployeeAuditLogger>>();
-        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger.Object);
+        var logger = new FakeLogger<EmployeeAuditLogger>();
+        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
         await auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", TestContext.Current.CancellationToken);
 
@@ -33,8 +34,8 @@ public class EmployeeAuditLoggerTests
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
-        var logger = new Mock<ILogger<EmployeeAuditLogger>>();
-        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger.Object);
+        var logger = new FakeLogger<EmployeeAuditLogger>();
+        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
         await auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Deactivated, cancellationToken: TestContext.Current.CancellationToken);
 
@@ -54,8 +55,8 @@ public class EmployeeAuditLoggerTests
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
-        var logger = new Mock<ILogger<EmployeeAuditLogger>>();
-        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger.Object);
+        var logger = new FakeLogger<EmployeeAuditLogger>();
+        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
         var exception = await Record.ExceptionAsync(() => auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken));
 
@@ -68,18 +69,16 @@ public class EmployeeAuditLoggerTests
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
-        var logger = new Mock<ILogger<EmployeeAuditLogger>>();
-        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger.Object);
+        var logger = new FakeLogger<EmployeeAuditLogger>();
+        var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
         await auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken);
 
-        logger.Verify(
-            l => l.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.IsAny<It.IsAnyType>(),
-                It.Is<Exception>(e => e is InvalidOperationException),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        var entry = Assert.Single(logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Error, entry.Level);
+        Assert.Equal(2, entry.Id.Id);
+        Assert.IsType<InvalidOperationException>(entry.Exception);
+        Assert.Equal(EmployeeId.ToString(), entry.GetStructuredStateValue("EmployeeId"));
+        Assert.Equal(nameof(AuditAction.Created), entry.GetStructuredStateValue("Action"));
     }
 }

@@ -8,7 +8,7 @@ namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 // mutation it's recording has already succeeded, so a DB hiccup while writing
 // the log must never turn an otherwise-successful request into a 500 — it's
 // swallowed and logged instead.
-public class EmployeeAuditLogger(IDbUtils dbUtils, ILogger<EmployeeAuditLogger> logger) : IEmployeeAuditLogger
+public partial class EmployeeAuditLogger(IDbUtils dbUtils, ILogger<EmployeeAuditLogger> logger) : IEmployeeAuditLogger
 {
     public async Task Log(Guid employeeId, string performedBy, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default)
@@ -19,9 +19,12 @@ public class EmployeeAuditLogger(IDbUtils dbUtils, ILogger<EmployeeAuditLogger> 
         }
         catch (Exception ex)
         {
-            logger.LogError(ex,
-                "Failed to write audit log entry for employee {EmployeeId}, action {Action}",
-                employeeId, action);
+            LogAuditWriteFailed(logger, ex, employeeId, action);
         }
     }
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Error,
+        Message = "Failed to write audit log entry for employee {EmployeeId}, action {Action}")]
+    private static partial void LogAuditWriteFailed(ILogger logger, Exception exception, Guid employeeId,
+        AuditAction action);
 }

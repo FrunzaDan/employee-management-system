@@ -1,14 +1,17 @@
 import {
   HttpClient,
   HttpErrorResponse,
-  HttpParams,
+  httpResource,
 } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
-import { SalaryHistoryEntry } from '../interfaces/salary-history';
-import { HttpHeaderService } from './http-header.service';
+import {
+  CreateSalaryRequest,
+  SalaryHistoryEntry,
+} from '../interfaces/salary-history';
+import { extractErrorMessage } from '../utils/extract-error-message';
 import { NotificationService } from './notification.service';
 
 @Injectable({
@@ -18,60 +21,56 @@ export class SalaryHistoryService {
   private readonly API_URL = `${environment.apiUrl}/api/employee/salary-history`;
 
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly state = signal({
-    entries: [] as SalaryHistoryEntry[],
-    loading: false,
-    error: null as string | null,
+  private readonly employeeId = signal<string | undefined>(undefined);
+
+  // Same shape as AuditLogService: the request is a function of `employeeId`, so a
+  // new employeeId cancels the in-flight request, and nothing is fetched until one is set.
+  private readonly historyResource = httpResource<
+    GenericResponse<SalaryHistoryEntry[]>
+  >(() => {
+    const employeeId = this.employeeId();
+    if (!employeeId) return undefined;
+    return { url: this.API_URL, params: { employeeId } };
   });
 
-  readonly entries = computed(() => this.state().entries);
-  readonly loading = computed(() => this.state().loading);
-  readonly error = computed(() => this.state().error);
+  // hasValue() guards the read: value() throws while the resource is in error.
+  readonly entries = computed(() =>
+    this.historyResource.hasValue()
+      ? (this.historyResource.value().data ?? [])
+      : [],
+  );
+  readonly loading = this.historyResource.isLoading;
+  readonly error = computed(() => {
+    const error = this.historyResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load salary history',
+        )
+      : null;
+  });
 
   loadHistory(employeeId: string): void {
-    this.state.update((s) => ({ ...s, loading: true, error: null }));
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('employeeId', employeeId);
-
-    this.http
-      .get<GenericResponse<SalaryHistoryEntry[]>>(this.API_URL, {
-        headers,
-        params,
-      })
-      .subscribe({
-        next: (response) =>
-          this.state.set({
-            entries: response.data ?? [],
-            loading: false,
-            error: null,
-          }),
-        error: (error: HttpErrorResponse) =>
-          this.state.set({
-            entries: [],
-            loading: false,
-            error: error.error?.message || 'Failed to load salary history.',
-          }),
-      });
+    if (this.employeeId() === employeeId) {
+      // Same employee (e.g. right after adding an entry) — the request itself
+      // hasn't changed, so ask for a fresh copy.
+      this.historyResource.reload();
+    } else {
+      this.employeeId.set(employeeId);
+    }
   }
 
   createSalary(
-    entry: Pick<
-      SalaryHistoryEntry,
-      'employeeId' | 'grossSalary' | 'effectiveDate'
-    >,
+    entry: CreateSalaryRequest,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    return this.http
-      .post<GenericResponse<object>>(this.API_URL, entry, { headers })
-      .pipe(
-        tap(() => {
-          this.notificationService.show('Salary entry added successfully.');
-          this.loadHistory(entry.employeeId);
-        }),
-      );
+    return this.createSalarySilently(entry).pipe(
+      tap(() => {
+        this.notificationService.show('Salary entry added successfully.');
+        this.loadHistory(entry.employeeId);
+      }),
+    );
   }
 
   /**
@@ -80,14 +79,8 @@ export class SalaryHistoryService {
    * entries for employees whose history page isn't even open.
    */
   createSalarySilently(
-    entry: Pick<
-      SalaryHistoryEntry,
-      'employeeId' | 'grossSalary' | 'effectiveDate'
-    >,
+    entry: CreateSalaryRequest,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    return this.http.post<GenericResponse<object>>(this.API_URL, entry, {
-      headers,
-    });
+    return this.http.post<GenericResponse<object>>(this.API_URL, entry);
   }
 }

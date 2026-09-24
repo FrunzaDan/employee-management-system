@@ -2,6 +2,7 @@ import {
   HttpClient,
   HttpErrorResponse,
   HttpParams,
+  httpResource,
 } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
@@ -9,9 +10,10 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { CostCenter } from '../interfaces/cost-center';
 import { EmployeeSummary } from '../interfaces/employee-summary';
-import { HttpHeaderService } from './http-header.service';
+import { extractErrorMessage } from '../utils/extract-error-message';
 import { NotificationService } from './notification.service';
 
+// Same shape as OfficeService.
 @Injectable({
   providedIn: 'root',
 })
@@ -19,58 +21,51 @@ export class CostCenterService {
   private readonly API_URL = `${environment.apiUrl}/api/cost-center`;
 
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly state = signal({
-    costCenters: [] as CostCenter[],
-    loading: false,
-    error: null as string | null,
+  private readonly requested = signal(false);
+
+  private readonly costCentersResource = httpResource<
+    GenericResponse<CostCenter[]>
+  >(() => (this.requested() ? `${this.API_URL}/all` : undefined));
+
+  // hasValue() guards the read: value() throws while the resource is in error.
+  readonly costCenters = computed(() =>
+    this.costCentersResource.hasValue()
+      ? (this.costCentersResource.value().data ?? [])
+      : [],
+  );
+  readonly loading = this.costCentersResource.isLoading;
+  readonly error = computed(() => {
+    const error = this.costCentersResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load cost centers',
+        )
+      : null;
   });
 
-  readonly costCenters = computed(() => this.state().costCenters);
-  readonly loading = computed(() => this.state().loading);
-  readonly error = computed(() => this.state().error);
-
   loadCostCenters(): void {
-    this.state.update((s) => ({ ...s, loading: true, error: null }));
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-
-    this.http
-      .get<GenericResponse<CostCenter[]>>(`${this.API_URL}/all`, { headers })
-      .subscribe({
-        next: (response) =>
-          this.state.set({
-            costCenters: response.data ?? [],
-            loading: false,
-            error: null,
-          }),
-        error: (error: HttpErrorResponse) =>
-          this.state.set({
-            costCenters: [],
-            loading: false,
-            error: error.error?.message || 'Failed to load cost centers.',
-          }),
-      });
+    if (this.requested()) {
+      this.costCentersResource.reload();
+    } else {
+      this.requested.set(true);
+    }
   }
 
   /** See OfficeService.fetchOffices for why this exists alongside loadCostCenters. */
   fetchCostCenters(): Observable<CostCenter[]> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .get<GenericResponse<CostCenter[]>>(`${this.API_URL}/all`, { headers })
+      .get<GenericResponse<CostCenter[]>>(`${this.API_URL}/all`)
       .pipe(map((response) => response.data ?? []));
   }
 
   /** A single cost center by costCenterId — for the cost center details page, reached directly by URL. */
   getCostCenter(costCenterId: string): Observable<CostCenter> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .get<GenericResponse<CostCenter>>(`${this.API_URL}/get`, {
-        headers,
-        params,
-      })
+      .get<GenericResponse<CostCenter>>(`${this.API_URL}/get`, { params })
       .pipe(
         map((response) => {
           if (!response.data) throw new Error('Cost center not found.');
@@ -81,11 +76,9 @@ export class CostCenterService {
 
   /** The employees currently assigned to this cost center (see Employee_ListByCostCenter). */
   getEmployees(costCenterId: string): Observable<EmployeeSummary[]> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
       .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, {
-        headers,
         params,
       })
       .pipe(map((response) => response.data ?? []));
@@ -94,11 +87,8 @@ export class CostCenterService {
   createCostCenter(
     costCenter: Partial<CostCenter>,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/create`, costCenter, {
-        headers,
-      })
+      .post<GenericResponse<object>>(`${this.API_URL}/create`, costCenter)
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center created successfully.');
@@ -110,11 +100,8 @@ export class CostCenterService {
   updateCostCenter(
     costCenter: Partial<CostCenter>,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/update`, costCenter, {
-        headers,
-      })
+      .patch<GenericResponse<object>>(`${this.API_URL}/update`, costCenter)
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center updated successfully.');
@@ -124,13 +111,9 @@ export class CostCenterService {
   }
 
   deleteCostCenter(costCenterId: string): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, {
-        headers,
-        params,
-      })
+      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center deleted successfully.');

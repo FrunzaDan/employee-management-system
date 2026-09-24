@@ -6,6 +6,5 @@ public interface IAppSettingsConfig
     string JwtIssuer { get; }
     string JwtAudience { get; }
     string AccessTokenTimeout { get; }
-    string EmployeeManagementSystemDbWindows { get; }
-    string EmployeeManagementSystemDbDocker { get; }
+    string DefaultConnection { get; }
 }

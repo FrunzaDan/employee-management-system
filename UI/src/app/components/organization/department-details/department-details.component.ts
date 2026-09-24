@@ -1,21 +1,13 @@
-import {
-  Component,
-  effect,
-  inject,
-  input,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { DepartmentService } from '../../../services/department.service';
-import { Department } from '../../../interfaces/department';
-import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
 // See OfficeDetailsComponent for why this page exists alongside the departments
-// list's inline "quickly view" expansion.
+// list's inline "quickly view" expansion, and for how it loads.
 @Component({
   selector: 'app-department-details',
   templateUrl: './department-details.component.html',
@@ -27,53 +19,44 @@ export class DepartmentDetailsComponent {
 
   readonly departmentId = input<string>();
 
-  readonly department = signal<Department | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
+  private readonly departmentResource = rxResource({
+    params: () => this.departmentId(),
+    stream: ({ params: departmentId }) =>
+      this.departmentService.getDepartment(departmentId),
+  });
+  readonly department = computed(() =>
+    this.departmentResource.hasValue() ? this.departmentResource.value() : null,
+  );
+  readonly loading = this.departmentResource.isLoading;
+  readonly error = computed(() => {
+    if (!this.departmentId()) return 'No department specified.';
+    const error = this.departmentResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load department',
+        )
+      : null;
+  });
 
-  readonly employees = signal<EmployeeSummary[]>([]);
-  readonly employeesLoading = signal(true);
-  readonly employeesError = signal<string | null>(null);
+  private readonly employeesResource = rxResource({
+    params: () => this.departmentId(),
+    stream: ({ params: departmentId }) =>
+      this.departmentService.getEmployees(departmentId),
+  });
+  readonly employees = computed(() =>
+    this.employeesResource.hasValue() ? this.employeesResource.value() : [],
+  );
+  readonly employeesLoading = this.employeesResource.isLoading;
+  readonly employeesError = computed(() => {
+    const error = this.employeesResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load employees',
+        )
+      : null;
+  });
 
   readonly employeeStatusLabel = employeeStatusLabel;
-
-  constructor() {
-    effect(() => {
-      const id = this.departmentId();
-      untracked(() => {
-        if (!id) {
-          this.error.set('No department specified.');
-          this.loading.set(false);
-          this.employeesLoading.set(false);
-          return;
-        }
-
-        this.departmentService.getDepartment(id).subscribe({
-          next: (department) => {
-            this.department.set(department);
-            this.loading.set(false);
-          },
-          error: (error: HttpErrorResponse) => {
-            this.error.set(
-              extractErrorMessage(error, 'Failed to load department'),
-            );
-            this.loading.set(false);
-          },
-        });
-
-        this.departmentService.getEmployees(id).subscribe({
-          next: (employees) => {
-            this.employees.set(employees);
-            this.employeesLoading.set(false);
-          },
-          error: (error: HttpErrorResponse) => {
-            this.employeesError.set(
-              extractErrorMessage(error, 'Failed to load employees'),
-            );
-            this.employeesLoading.set(false);
-          },
-        });
-      });
-    });
-  }
 }

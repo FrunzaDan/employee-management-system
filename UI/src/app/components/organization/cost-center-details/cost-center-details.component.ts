@@ -1,21 +1,13 @@
-import {
-  Component,
-  effect,
-  inject,
-  input,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { CostCenterService } from '../../../services/cost-center.service';
-import { CostCenter } from '../../../interfaces/cost-center';
-import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
 // See OfficeDetailsComponent for why this page exists alongside the cost centers
-// list's inline "quickly view" expansion.
+// list's inline "quickly view" expansion, and for how it loads.
 @Component({
   selector: 'app-cost-center-details',
   templateUrl: './cost-center-details.component.html',
@@ -27,53 +19,44 @@ export class CostCenterDetailsComponent {
 
   readonly costCenterId = input<string>();
 
-  readonly costCenter = signal<CostCenter | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
+  private readonly costCenterResource = rxResource({
+    params: () => this.costCenterId(),
+    stream: ({ params: costCenterId }) =>
+      this.costCenterService.getCostCenter(costCenterId),
+  });
+  readonly costCenter = computed(() =>
+    this.costCenterResource.hasValue() ? this.costCenterResource.value() : null,
+  );
+  readonly loading = this.costCenterResource.isLoading;
+  readonly error = computed(() => {
+    if (!this.costCenterId()) return 'No cost center specified.';
+    const error = this.costCenterResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load cost center',
+        )
+      : null;
+  });
 
-  readonly employees = signal<EmployeeSummary[]>([]);
-  readonly employeesLoading = signal(true);
-  readonly employeesError = signal<string | null>(null);
+  private readonly employeesResource = rxResource({
+    params: () => this.costCenterId(),
+    stream: ({ params: costCenterId }) =>
+      this.costCenterService.getEmployees(costCenterId),
+  });
+  readonly employees = computed(() =>
+    this.employeesResource.hasValue() ? this.employeesResource.value() : [],
+  );
+  readonly employeesLoading = this.employeesResource.isLoading;
+  readonly employeesError = computed(() => {
+    const error = this.employeesResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load employees',
+        )
+      : null;
+  });
 
   readonly employeeStatusLabel = employeeStatusLabel;
-
-  constructor() {
-    effect(() => {
-      const id = this.costCenterId();
-      untracked(() => {
-        if (!id) {
-          this.error.set('No cost center specified.');
-          this.loading.set(false);
-          this.employeesLoading.set(false);
-          return;
-        }
-
-        this.costCenterService.getCostCenter(id).subscribe({
-          next: (costCenter) => {
-            this.costCenter.set(costCenter);
-            this.loading.set(false);
-          },
-          error: (error: HttpErrorResponse) => {
-            this.error.set(
-              extractErrorMessage(error, 'Failed to load cost center'),
-            );
-            this.loading.set(false);
-          },
-        });
-
-        this.costCenterService.getEmployees(id).subscribe({
-          next: (employees) => {
-            this.employees.set(employees);
-            this.employeesLoading.set(false);
-          },
-          error: (error: HttpErrorResponse) => {
-            this.employeesError.set(
-              extractErrorMessage(error, 'Failed to load employees'),
-            );
-            this.employeesLoading.set(false);
-          },
-        });
-      });
-    });
-  }
 }
