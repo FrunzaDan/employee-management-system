@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Office_Get]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     SELECT OfficeId, Name, City, Country
     FROM dbo.Office

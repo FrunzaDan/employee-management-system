@@ -8,7 +8,7 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class CostCenterController(ICostCenterService costCenterService) : ControllerBase
+public class CostCenterController(ICostCenterService costCenterService) : ApiControllerBase
 {
     [HttpGet("all")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<CostCenterModel>>>> GetCostCenters(
@@ -39,7 +39,4 @@ public class CostCenterController(ICostCenterService costCenterService) : Contro
     public async Task<ActionResult<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>>> GetEmployeesByCostCenter(
         [FromQuery] Guid costCenterId, CancellationToken cancellationToken) =>
         Reply(await costCenterService.GetEmployeesByCostCenter(costCenterId, cancellationToken));
-
-    // The envelope's Status is the HTTP status to reply with.
-    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

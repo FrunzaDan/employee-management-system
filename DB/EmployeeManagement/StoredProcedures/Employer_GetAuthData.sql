@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Employer_GetAuthData]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     UPDATE dbo.Employer
     SET LastInteractionAt = SYSUTCDATETIME()

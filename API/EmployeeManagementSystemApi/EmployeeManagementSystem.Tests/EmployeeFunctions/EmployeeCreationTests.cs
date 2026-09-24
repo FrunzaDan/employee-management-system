@@ -206,12 +206,12 @@ public class EmployeeCreationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         dbUtils.Setup(d => d.CreateEmployee(It.IsAny<CreateEmployeeRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<Guid?>(400, "Email already exists."));
+            .ReturnsAsync(new ResponseModel<Guid?>(409, "Email already exists."));
         var registration = new EmployeeCreation(dbUtils.Object, auditLogger.Object);
 
         var result = await registration.CreateEmployeeFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
 
-        Assert.Equal(400, result.Status);
+        Assert.Equal(409, result.Status);
         auditLogger.Verify(
             a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()), Times.Never);

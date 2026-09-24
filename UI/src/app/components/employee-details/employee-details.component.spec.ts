@@ -260,7 +260,10 @@ describe('EmployeeDetailsComponent', () => {
           () =>
             new HttpErrorResponse({
               status: 409,
-              error: { responseMessage: 'Employee must be deactivated first.' },
+              error: {
+                title: 'Error',
+                detail: 'Employee must be deactivated first.',
+              },
             }),
         ),
       );

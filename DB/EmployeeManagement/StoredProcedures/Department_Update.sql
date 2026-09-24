@@ -4,6 +4,7 @@ CREATE PROCEDURE [dbo].[Department_Update]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -17,18 +18,12 @@ BEGIN
         RETURN;
     END
 
-    BEGIN TRY
-        UPDATE dbo.Department
-        SET Name = ISNULL(@Name, Name)
-        WHERE DepartmentId = @DepartmentId;
+    UPDATE dbo.Department
+    SET Name = ISNULL(@Name, Name)
+    WHERE DepartmentId = @DepartmentId;
 
-        SET @Result = 0;
-        SET @Message = 'Department updated successfully.';
-    END TRY
-    BEGIN CATCH
-        SET @Result = 500;
-        SET @Message = CONCAT('Failed to update department: ', ERROR_MESSAGE());
-    END CATCH
+    SET @Result = 0;
+    SET @Message = 'Department updated successfully.';
 
     SELECT @Result AS Result, @Message AS Message;
 END

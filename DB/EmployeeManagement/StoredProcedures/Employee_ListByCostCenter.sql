@@ -5,6 +5,7 @@ CREATE PROCEDURE [dbo].[Employee_ListByCostCenter]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     SELECT EmployeeId, FirstName, LastName, Email, StatusCode
     FROM dbo.Employee

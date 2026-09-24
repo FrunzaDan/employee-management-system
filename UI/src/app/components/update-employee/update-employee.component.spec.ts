@@ -203,7 +203,7 @@ describe('UpdateEmployeeComponent', () => {
           () =>
             new HttpErrorResponse({
               status: 400,
-              error: { responseMessage: 'Email already registered.' },
+              error: { title: 'Error', detail: 'Email already registered.' },
             }),
         ),
       );

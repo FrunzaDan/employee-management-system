@@ -8,7 +8,7 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class DepartmentController(IDepartmentService departmentService) : ControllerBase
+public class DepartmentController(IDepartmentService departmentService) : ApiControllerBase
 {
     [HttpGet("all")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<DepartmentModel>>>> GetDepartments(
@@ -39,7 +39,4 @@ public class DepartmentController(IDepartmentService departmentService) : Contro
     public async Task<ActionResult<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>>> GetEmployeesByDepartment(
         [FromQuery] Guid departmentId, CancellationToken cancellationToken) =>
         Reply(await departmentService.GetEmployeesByDepartment(departmentId, cancellationToken));
-
-    // The envelope's Status is the HTTP status to reply with.
-    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

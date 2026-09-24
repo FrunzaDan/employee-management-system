@@ -140,7 +140,7 @@ public static class DbHelper
     public static async Task<ResponseModel<object>> HandleResponseWithMessage(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
-            return new ResponseModel<object>(500, "No data returned or operation failed.");
+            throw new InvalidOperationException("The stored procedure returned no (Result, Message) row.");
 
         var result = reader.GetInt32("Result");
         var message = reader.GetNullableString("Message");
@@ -155,7 +155,7 @@ public static class DbHelper
         string guidColumn)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
-            return new ResponseModel<Guid?>(500, "No data returned or operation failed.");
+            throw new InvalidOperationException("The stored procedure returned no (Result, Message) row.");
 
         var result = reader.GetInt32("Result");
         var message = reader.GetNullableString("Message");

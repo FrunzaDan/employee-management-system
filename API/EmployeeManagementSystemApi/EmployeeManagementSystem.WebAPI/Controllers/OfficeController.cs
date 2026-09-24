@@ -8,7 +8,7 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class OfficeController(IOfficeService officeService) : ControllerBase
+public class OfficeController(IOfficeService officeService) : ApiControllerBase
 {
     [HttpGet("all")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<OfficeModel>>>> GetOffices(
@@ -39,7 +39,4 @@ public class OfficeController(IOfficeService officeService) : ControllerBase
     public async Task<ActionResult<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>>> GetEmployeesByOffice(
         [FromQuery] Guid officeId, CancellationToken cancellationToken) =>
         Reply(await officeService.GetEmployeesByOffice(officeId, cancellationToken));
-
-    // The envelope's Status is the HTTP status to reply with.
-    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

@@ -123,7 +123,7 @@ describe('CreateEmployeeComponent', () => {
 
     expect(component.employeeForm().submitting()).toBe(false);
     expect(component.errorMessage()).toBe(
-      'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+      'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
     );
     expect(navigate).not.toHaveBeenCalled();
   });
@@ -134,7 +134,7 @@ describe('CreateEmployeeComponent', () => {
         () =>
           new HttpErrorResponse({
             status: 400,
-            error: { responseMessage: 'Email already registered.' },
+            error: { title: 'Error', detail: 'Email already registered.' },
           }),
       ),
     );

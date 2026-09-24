@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Employee_Reactivate]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -29,7 +30,7 @@ BEGIN
         ELSE
         BEGIN
             SET @Result = 409;
-            SET @Message = 'Employee already reactivated or update failed.';
+            SET @Message = 'Employee is already active.';
         END
     END
     ELSE

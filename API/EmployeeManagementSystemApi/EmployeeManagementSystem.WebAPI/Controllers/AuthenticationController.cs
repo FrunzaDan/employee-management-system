@@ -8,16 +8,13 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthenticationController(IAuthService authService) : ControllerBase
+public class AuthenticationController(IAuthService authService) : ApiControllerBase
 {
     [HttpPost("access-token")]
     [EnableRateLimiting("login")]
     public async Task<ActionResult<ResponseModel<AccessTokenResponse>>> GetAccessToken(
-        [FromBody] EmployerCredentials employerCredentials, CancellationToken cancellationToken)
-    {
-        var response = await authService.GetAccessToken(employerCredentials, cancellationToken);
-        return StatusCode(response.Status, response);
-    }
+        [FromBody] EmployerCredentials employerCredentials, CancellationToken cancellationToken) =>
+        Reply(await authService.GetAccessToken(employerCredentials, cancellationToken));
 
     [Authorize]
     [HttpGet("verify-token")]

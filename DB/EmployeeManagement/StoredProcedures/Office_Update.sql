@@ -6,6 +6,7 @@ CREATE PROCEDURE [dbo].[Office_Update]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -19,21 +20,15 @@ BEGIN
         RETURN;
     END
 
-    BEGIN TRY
-        UPDATE dbo.Office
-        SET
-            Name = ISNULL(@Name, Name),
-            City = ISNULL(@City, City),
-            Country = ISNULL(@Country, Country)
-        WHERE OfficeId = @OfficeId;
+    UPDATE dbo.Office
+    SET
+        Name = ISNULL(@Name, Name),
+        City = ISNULL(@City, City),
+        Country = ISNULL(@Country, Country)
+    WHERE OfficeId = @OfficeId;
 
-        SET @Result = 0;
-        SET @Message = 'Office updated successfully.';
-    END TRY
-    BEGIN CATCH
-        SET @Result = 500;
-        SET @Message = CONCAT('Failed to update office: ', ERROR_MESSAGE());
-    END CATCH
+    SET @Result = 0;
+    SET @Message = 'Office updated successfully.';
 
     SELECT @Result AS Result, @Message AS Message;
 END

@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Office_Delete]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -26,16 +27,10 @@ BEGIN
         RETURN;
     END
 
-    BEGIN TRY
-        DELETE FROM dbo.Office WHERE OfficeId = @OfficeId;
+    DELETE FROM dbo.Office WHERE OfficeId = @OfficeId;
 
-        SET @Result = 0;
-        SET @Message = 'Office deleted successfully.';
-    END TRY
-    BEGIN CATCH
-        SET @Result = 500;
-        SET @Message = CONCAT('Failed to delete office: ', ERROR_MESSAGE());
-    END CATCH
+    SET @Result = 0;
+    SET @Message = 'Office deleted successfully.';
 
     SELECT @Result AS Result, @Message AS Message;
 END

@@ -2,6 +2,7 @@ CREATE PROCEDURE [dbo].[Department_List]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- EmployeeCount/TotalGrossSalary are computed over every employee assigned to the
     -- department regardless of status, same as Employee_ListByDepartment's unfiltered

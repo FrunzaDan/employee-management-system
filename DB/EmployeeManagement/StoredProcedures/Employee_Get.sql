@@ -9,6 +9,7 @@ CREATE PROCEDURE [dbo].[Employee_Get]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- Split by search type (instead of one query with an OR across all three) so the
     -- optimizer can seek the specific unique index for whichever branch actually runs,

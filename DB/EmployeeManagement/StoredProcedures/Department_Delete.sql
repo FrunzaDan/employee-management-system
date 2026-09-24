@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Department_Delete]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -25,16 +26,10 @@ BEGIN
         RETURN;
     END
 
-    BEGIN TRY
-        DELETE FROM dbo.Department WHERE DepartmentId = @DepartmentId;
+    DELETE FROM dbo.Department WHERE DepartmentId = @DepartmentId;
 
-        SET @Result = 0;
-        SET @Message = 'Department deleted successfully.';
-    END TRY
-    BEGIN CATCH
-        SET @Result = 500;
-        SET @Message = CONCAT('Failed to delete department: ', ERROR_MESSAGE());
-    END CATCH
+    SET @Result = 0;
+    SET @Message = 'Department deleted successfully.';
 
     SELECT @Result AS Result, @Message AS Message;
 END

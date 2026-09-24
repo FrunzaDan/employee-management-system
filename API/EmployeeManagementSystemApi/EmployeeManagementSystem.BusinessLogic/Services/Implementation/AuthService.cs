@@ -10,7 +10,7 @@ public class AuthService(JwtCreation jwtCreation) : IAuthService
     {
         if (string.IsNullOrWhiteSpace(employerCredentials.Username) ||
             string.IsNullOrWhiteSpace(employerCredentials.Password))
-            return new ResponseModel<AccessTokenResponse>(403, "Invalid or empty employer credentials.");
+            return new ResponseModel<AccessTokenResponse>(400, "Username and password are required.");
 
         return await jwtCreation.GenerateBearerJwt(employerCredentials, cancellationToken);
     }

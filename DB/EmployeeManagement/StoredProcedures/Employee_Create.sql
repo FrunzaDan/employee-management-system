@@ -19,6 +19,7 @@ CREATE PROCEDURE [dbo].[Employee_Create]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -27,12 +28,12 @@ BEGIN
 
     IF EXISTS (SELECT 1 FROM dbo.Employee WHERE PhoneNumber = @PhoneNumber)
     BEGIN
-        SET @Result = 400;  -- Phone number already exists
+        SET @Result = 409;
         SET @Message = 'Phone number already exists.';
     END
     ELSE IF EXISTS (SELECT 1 FROM dbo.Employee WHERE Email = @Email)
     BEGIN
-        SET @Result = 400;  -- Email already exists
+        SET @Result = 409;
         SET @Message = 'Email already exists.';
     END
     -- Friendly 400s instead of letting Employee's FK_Employee_Office/Department/CostCenter
@@ -94,9 +95,13 @@ BEGIN
             IF @@TRANCOUNT > 0
                 ROLLBACK TRANSACTION;
 
-            SET @EmployeeId = NULL;
-            SET @Result = 500;
-            SET @Message = CONCAT('Failed to create employee: ', ERROR_MESSAGE());
+            -- 2601/2627: a concurrent request took the value between the pre-check above and
+            -- this write; the UQ_ constraint caught it, so answer the same 409 as the pre-check.
+            IF ERROR_NUMBER() NOT IN (2601, 2627)
+                THROW;
+
+            SET @Result = 409;
+            SET @Message = 'Email or phone number already exists.';
         END CATCH
     END
 

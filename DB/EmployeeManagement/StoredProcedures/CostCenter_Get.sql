@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[CostCenter_Get]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     SELECT CostCenterId, Code, Name
     FROM dbo.CostCenter

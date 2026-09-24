@@ -169,7 +169,7 @@ describe('EmployeeService', () => {
 
       expect(service.loading()).toBe(false);
       expect(service.error()).toBe(
-        'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+        'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
       );
     });
   });
@@ -289,7 +289,10 @@ describe('EmployeeService', () => {
         .subscribe({ error: () => {} });
       httpMock
         .expectOne(`${API_URL}/update`)
-        .flush({ message: 'boom' }, { status: 400, statusText: 'Bad Request' });
+        .flush(
+          { title: 'Bad Request', status: 400, detail: 'boom' },
+          { status: 400, statusText: 'Bad Request' },
+        );
 
       expect(service.employees()).toEqual([original]);
       expect(notificationShow).not.toHaveBeenCalled();
@@ -334,7 +337,11 @@ describe('EmployeeService', () => {
       httpMock
         .expectOne((r) => r.url === `${API_URL}/delete`)
         .flush(
-          { message: 'Employee must be deactivated before it can be deleted.' },
+          {
+            title: 'Conflict',
+            status: 409,
+            detail: 'Employee must be deactivated before it can be deleted.',
+          },
           { status: 409, statusText: 'Conflict' },
         );
 
@@ -405,23 +412,6 @@ describe('EmployeeService', () => {
       );
     });
 
-    it('sets an error and skips the local update/notification when the response status is not 200', () => {
-      seedEmployees([buildEmployee()]);
-
-      service.deactivateEmployee('employee-1');
-      httpMock
-        .expectOne((r) => r.url === `${API_URL}/deactivate`)
-        .flush({
-          status: 409,
-          responseMessage: 'Employee is already deactivated.',
-        });
-
-      expect(service.employees()[0].status).toBe(EmployeeStatus.Active);
-      expect(notificationShow).not.toHaveBeenCalled();
-      expect(service.activationLoading()).toBe(false);
-      expect(service.activationError()).toBe('Deactivation failed');
-    });
-
     it('sets a not-found error and skips notification when the employee is not in the loaded list', () => {
       service.deactivateEmployee('missing-employeeId');
       httpMock
@@ -438,7 +428,11 @@ describe('EmployeeService', () => {
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
         .flush(
-          { message: 'Employee is already deactivated.' },
+          {
+            title: 'Conflict',
+            status: 409,
+            detail: 'Employee is already deactivated.',
+          },
           { status: 409, statusText: 'Conflict' },
         );
 
@@ -546,7 +540,7 @@ describe('EmployeeService', () => {
 
       expect(service.exportLoading()).toBe(false);
       expect(service.exportError()).toBe(
-        'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+        'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
       );
     });
 

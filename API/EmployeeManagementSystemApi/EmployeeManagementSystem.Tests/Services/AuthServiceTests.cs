@@ -56,7 +56,7 @@ public class AuthServiceTests
             Password = "Employer123",
         }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
+        Assert.Equal(400, result.Status);
         dbUtils.Verify(
             d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -79,8 +79,8 @@ public class AuthServiceTests
             Password = password,
         }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
-        Assert.Equal("Invalid or empty employer credentials.", result.ResponseMessage);
+        Assert.Equal(400, result.Status);
+        Assert.Equal("Username and password are required.", result.ResponseMessage);
         dbUtils.Verify(
             d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -91,7 +91,7 @@ public class AuthServiceTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(403, "Invalid username or password."));
+            .ReturnsAsync(new ResponseModel<EmployerRole?>(401, "Invalid username or password."));
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new EmployerCredentials
@@ -100,7 +100,7 @@ public class AuthServiceTests
             Password = "WrongPassword",
         }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
+        Assert.Equal(401, result.Status);
         Assert.Equal("Invalid username or password.", result.ResponseMessage);
     }
 }

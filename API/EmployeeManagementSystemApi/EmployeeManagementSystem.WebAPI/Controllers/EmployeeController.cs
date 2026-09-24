@@ -9,14 +9,14 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class EmployeeController(IEmployeeService employeeService) : ControllerBase
+public class EmployeeController(IEmployeeService employeeService) : ApiControllerBase
 {
     // Every [Authorize]-gated request has a verified JWT with ClaimTypes.Name set to the
     // employer's username (see JwtCreation.BuildTokenDescriptor) — never null/empty in practice.
     private string Username => User.Identity!.Name!;
 
     // ID query parameters are typed Guid: a malformed value is rejected by model binding
-    // (400, via the InvalidModelStateResponseFactory in Program.cs), and a missing one binds
+    // (400 ValidationProblemDetails, from [ApiController]), and a missing one binds
     // to Guid.Empty, which the business logic rejects with its own 400.
 
     [HttpPost("create")]
@@ -95,7 +95,4 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     public async Task<ActionResult<ResponseModel<object>>> DeleteAllEmployeeAuditLog(
         CancellationToken cancellationToken) =>
         Reply(await employeeService.DeleteAllEmployeeAuditLog(cancellationToken));
-
-    // The envelope's Status is the HTTP status to reply with.
-    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

@@ -5,6 +5,7 @@ CREATE PROCEDURE [dbo].[EmployeeSalary_ListByEmployee]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     SELECT EmployeeSalaryId, EmployeeId, GrossSalary, EffectiveDate, CreatedAt
     FROM dbo.EmployeeSalary

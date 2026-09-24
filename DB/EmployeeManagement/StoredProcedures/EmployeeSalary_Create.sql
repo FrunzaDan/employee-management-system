@@ -5,6 +5,7 @@ CREATE PROCEDURE [dbo].[EmployeeSalary_Create]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -18,18 +19,12 @@ BEGIN
         RETURN;
     END
 
-    BEGIN TRY
-        -- EmployeeSalaryId (IDENTITY) and CreatedAt (SYSUTCDATETIME()) come from the table.
-        INSERT INTO dbo.EmployeeSalary (EmployeeId, GrossSalary, EffectiveDate)
-        VALUES (@EmployeeId, @GrossSalary, @EffectiveDate);
+    -- EmployeeSalaryId (IDENTITY) and CreatedAt (SYSUTCDATETIME()) come from the table.
+    INSERT INTO dbo.EmployeeSalary (EmployeeId, GrossSalary, EffectiveDate)
+    VALUES (@EmployeeId, @GrossSalary, @EffectiveDate);
 
-        SET @Result = 0;
-        SET @Message = 'Salary entry added successfully.';
-    END TRY
-    BEGIN CATCH
-        SET @Result = 500;
-        SET @Message = CONCAT('Failed to add salary entry: ', ERROR_MESSAGE());
-    END CATCH
+    SET @Result = 0;
+    SET @Message = 'Salary entry added successfully.';
 
     SELECT @Result AS Result, @Message AS Message;
 END
