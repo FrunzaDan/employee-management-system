@@ -68,7 +68,7 @@ describe('CreateEmployeeComponent', () => {
     });
 
     expect(component.employeeForm.email().errors()[0].message).toBe(
-      'The Email should be a valid one',
+      'The email should be a valid one',
     );
     expect(component.employeeForm.phoneNumber().errors()[0].message).toBe(
       'The phone number should be a valid one',
@@ -110,7 +110,7 @@ describe('CreateEmployeeComponent', () => {
     await submit(component.employeeForm);
 
     expect(navigate).toHaveBeenCalledWith(['/employees']);
-    expect(component.errorMessage()).toBeNull();
+    expect(component.saveError()).toBeNull();
   });
 
   it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
@@ -122,7 +122,7 @@ describe('CreateEmployeeComponent', () => {
     await submit(component.employeeForm);
 
     expect(component.employeeForm().submitting()).toBe(false);
-    expect(component.errorMessage()).toBe(
+    expect(component.saveError()).toBe(
       'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
     );
     expect(navigate).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('CreateEmployeeComponent', () => {
 
     await submit(component.employeeForm);
 
-    expect(component.errorMessage()).toBe('Email already registered.');
+    expect(component.saveError()).toBe('Email already registered.');
   });
 
   describe('unsaved changes', () => {

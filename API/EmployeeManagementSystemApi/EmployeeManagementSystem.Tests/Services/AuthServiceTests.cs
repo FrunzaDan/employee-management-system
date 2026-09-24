@@ -22,14 +22,14 @@ public class AuthServiceTests
         new(new JwtCreation(CreateOptions(), dbUtils.Object));
 
     [Fact]
-    public async Task GetAccessToken_ReturnsAToken_WhenCredentialsAreValid()
+    public async Task GetAccessTokenAsync_ReturnsAToken_WhenCredentialsAreValid()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
         var sut = CreateSut(dbUtils);
 
-        var result = await sut.GetAccessToken(new EmployerCredentials
+        var result = await sut.GetAccessTokenAsync(new EmployerCredentials
         {
             Username = "TestEmployer",
             Password = "Employer123",
@@ -43,12 +43,12 @@ public class AuthServiceTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GetAccessToken_RejectsMissingUsername_WithoutTouchingTheDb(string? username)
+    public async Task GetAccessTokenAsync_RejectsMissingUsername_WithoutTouchingTheDb(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
         var sut = CreateSut(dbUtils);
 
-        var result = await sut.GetAccessToken(new EmployerCredentials
+        var result = await sut.GetAccessTokenAsync(new EmployerCredentials
         {
             Username = username,
             Password = "Employer123",
@@ -56,7 +56,7 @@ public class AuthServiceTests
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(
-            d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
+            d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -66,12 +66,12 @@ public class AuthServiceTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GetAccessToken_RejectsMissingPassword_WithoutTouchingTheDb(string? password)
+    public async Task GetAccessTokenAsync_RejectsMissingPassword_WithoutTouchingTheDb(string? password)
     {
         var dbUtils = new Mock<IDbUtils>();
         var sut = CreateSut(dbUtils);
 
-        var result = await sut.GetAccessToken(new EmployerCredentials
+        var result = await sut.GetAccessTokenAsync(new EmployerCredentials
         {
             Username = "TestEmployer",
             Password = password,
@@ -80,19 +80,19 @@ public class AuthServiceTests
         Assert.Equal(400, result.Status);
         Assert.Equal("Username and password are required.", result.ResponseMessage);
         dbUtils.Verify(
-            d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
+            d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task GetAccessToken_PropagatesTheDbRejection_WhenCredentialsAreWrong()
+    public async Task GetAccessTokenAsync_PropagatesTheDbRejection_WhenCredentialsAreWrong()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDb(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<EmployerRole?>(401, "Invalid username or password."));
         var sut = CreateSut(dbUtils);
 
-        var result = await sut.GetAccessToken(new EmployerCredentials
+        var result = await sut.GetAccessTokenAsync(new EmployerCredentials
         {
             Username = "TestEmployer",
             Password = "WrongPassword",

@@ -14,7 +14,7 @@ public class EmployeeSalary(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
     // overflow 500 — and so a third decimal isn't silently rounded away by SQL Server.
     private const decimal MaxGrossSalary = 9_999_999_999.99m;
 
-    public async Task<ResponseModel<object>> CreateSalaryFunction(CreateSalaryRequest request, string performedBy,
+    public async Task<ResponseModel<object>> CreateEmployeeSalaryAsync(CreateSalaryRequest request, string performedBy,
         CancellationToken cancellationToken = default)
     {
         if (request.EmployeeId == Guid.Empty)
@@ -32,24 +32,24 @@ public class EmployeeSalary(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
         if (request.EffectiveDate is not { } effectiveDate)
             return new ResponseModel<object>(400, "Effective date is required.");
 
-        var response = await dbUtils.CreateEmployeeSalary(request, cancellationToken);
+        var response = await dbUtils.CreateEmployeeSalaryAsync(request, cancellationToken);
 
         // Not forwarding cancellationToken: the entry was already recorded, so the audit write
         // should still be attempted even if the client has since disconnected.
         if (response.Status == 200)
-            await auditLogger.Log(request.EmployeeId, performedBy, AuditAction.SalaryChanged,
+            await auditLogger.LogAsync(request.EmployeeId, performedBy, AuditAction.SalaryChanged,
                 string.Create(CultureInfo.InvariantCulture,
                     $"Gross salary set to {grossSalary} effective {effectiveDate:yyyy-MM-dd}"));
 
         return response;
     }
 
-    public async Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetSalaryHistoryFunction(Guid employeeId,
+    public async Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistoryAsync(Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         if (employeeId == Guid.Empty)
             return new ResponseModel<IReadOnlyList<SalaryModel>>(400, "A valid employee ID is required.");
 
-        return await dbUtils.GetEmployeeSalaryHistory(employeeId, cancellationToken);
+        return await dbUtils.GetEmployeeSalaryHistoryAsync(employeeId, cancellationToken);
     }
 }

@@ -239,7 +239,7 @@ describe('EmployeeListComponent', () => {
     });
   });
 
-  describe('toggleSelection / toggleSelectAllOnPage', () => {
+  describe('toggleSelection / toggleSelectAll', () => {
     it('adds a employeeId to selectedEmployeeIds when checked, and removes it when unchecked', () => {
       component.toggleSelection('employeeId-1', true);
       expect(component.isSelected('employeeId-1')).toBe(true);
@@ -248,64 +248,36 @@ describe('EmployeeListComponent', () => {
       expect(component.isSelected('employeeId-1')).toBe(false);
     });
 
-    it('allOnPageSelected is false when the page is empty', () => {
+    it('allSelected is false when the page is empty', () => {
       employees.set([]);
-      expect(component.allOnPageSelected()).toBe(false);
+      expect(component.allSelected()).toBe(false);
     });
 
-    it('toggleSelectAllOnPage(true) selects every employee on the current page', () => {
+    it('toggleSelectAll(true) selects every employee on the current page', () => {
       employees.set([
         buildEmployee({ employeeId: 'g1' }),
         buildEmployee({ employeeId: 'g2' }),
       ]);
 
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
 
       expect(component.isSelected('g1')).toBe(true);
       expect(component.isSelected('g2')).toBe(true);
-      expect(component.allOnPageSelected()).toBe(true);
+      expect(component.allSelected()).toBe(true);
     });
 
-    it('toggleSelectAllOnPage(false) clears the selection for every employee on the current page', () => {
+    it('toggleSelectAll(false) clears the selection for every employee on the current page', () => {
       employees.set([
         buildEmployee({ employeeId: 'g1' }),
         buildEmployee({ employeeId: 'g2' }),
       ]);
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
 
-      component.toggleSelectAllOnPage(false);
+      component.toggleSelectAll(false);
 
       expect(component.isSelected('g1')).toBe(false);
       expect(component.isSelected('g2')).toBe(false);
-      expect(component.allOnPageSelected()).toBe(false);
-    });
-  });
-
-  describe('duplicateGuids effect', () => {
-    it('warns when the current page contains duplicate GUIDs', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      employees.set([
-        buildEmployee({ employeeId: 'dup' }),
-        buildEmployee({ employeeId: 'dup' }),
-      ]);
-      TestBed.flushEffects();
-
-      expect(warnSpy).toHaveBeenCalledWith('Duplicate GUIDs found:', ['dup']);
-      warnSpy.mockRestore();
-    });
-
-    it('does not warn when every GUID on the page is unique', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      employees.set([
-        buildEmployee({ employeeId: 'g1' }),
-        buildEmployee({ employeeId: 'g2' }),
-      ]);
-      TestBed.flushEffects();
-
-      expect(warnSpy).not.toHaveBeenCalled();
-      warnSpy.mockRestore();
+      expect(component.allSelected()).toBe(false);
     });
   });
 
@@ -384,7 +356,7 @@ describe('EmployeeListComponent', () => {
         }),
         buildEmployee({ employeeId: 'test-1', status: EmployeeStatus.Test }),
       ]);
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
       loadEmployees.mockClear();
 
       await component.bulkDeleteSelected();
@@ -415,7 +387,7 @@ describe('EmployeeListComponent', () => {
           status: EmployeeStatus.Deactivated,
         }),
       ]);
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
       deactivateEmployeeSilently.mockReturnValue(
         throwError(() => new Error('boom')),
       );

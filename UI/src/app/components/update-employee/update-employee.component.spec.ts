@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { ReplaySubject, of, throwError } from 'rxjs';
 import { Employee } from '../../interfaces/employee';
 import { EmployeeService } from '../../services/employee.service';
 import { OfficeService } from '../../services/office.service';
@@ -15,7 +15,14 @@ describe('UpdateEmployeeComponent', () => {
   let getEmployee: ReturnType<typeof vi.fn>;
   let updateEmployee: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let selectedEmployee: ReturnType<typeof signal<Employee | null>>;
+  let employee$: ReplaySubject<Employee>;
+  let fixture: ComponentFixture<UpdateEmployeeComponent>;
+
+  // Emits the employee the page's rxResource streams, and waits for it to land.
+  const loadEmployee = async (employee: Employee) => {
+    employee$.next(employee);
+    await fixture.whenStable();
+  };
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
     employeeId: 'employeeId-1',
@@ -49,19 +56,19 @@ describe('UpdateEmployeeComponent', () => {
 
   // `employeeId` is what withComponentInputBinding() binds from the `:employeeId` route param.
   const createComponent = (id: string | null = 'employeeId-1') => {
-    const fixture = TestBed.createComponent(UpdateEmployeeComponent);
+    fixture = TestBed.createComponent(UpdateEmployeeComponent);
     if (id) fixture.componentRef.setInput('employeeId', id);
     fixture.detectChanges();
     return fixture.componentInstance;
   };
 
   beforeEach(() => {
-    getEmployee = vi.fn();
+    employee$ = new ReplaySubject<Employee>(1);
+    getEmployee = vi.fn(() => employee$);
     updateEmployee = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
-    selectedEmployee = signal<Employee | null>(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -69,9 +76,6 @@ describe('UpdateEmployeeComponent', () => {
         {
           provide: EmployeeService,
           useValue: {
-            selectedEmployee: selectedEmployee,
-            selectedEmployeeLoading: signal(false),
-            selectedEmployeeError: signal<string | null>(null),
             getEmployee,
             updateEmployee,
           },
@@ -117,25 +121,25 @@ describe('UpdateEmployeeComponent', () => {
       expect(component.model().firstName).toBe('');
     });
 
-    it('pre-fills every field, converting gender to a string', () => {
+    it('pre-fills every field, converting gender to a string', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ gender: 2 }));
+      await loadEmployee(buildEmployee({ gender: 2 }));
 
       expect(component.model().firstName).toBe('Dan');
       expect(component.model().gender).toBe('2');
       expect(component.model().country).toBe('Romania');
     });
 
-    it('zero-pads an unpadded stored birthDate for the date input', () => {
+    it('zero-pads an unpadded stored birthDate for the date input', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ birthDate: '2020-1-5' }));
+      await loadEmployee(buildEmployee({ birthDate: '2020-1-5' }));
 
       expect(component.model().birthDate).toBe('2020-01-05');
     });
 
-    it('leaves the birthDate blank when the stored value is not a full date', () => {
+    it('leaves the birthDate blank when the stored value is not a full date', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ birthDate: '2020' }));
+      await loadEmployee(buildEmployee({ birthDate: '2020' }));
 
       expect(component.model().birthDate).toBe('');
     });
@@ -144,7 +148,7 @@ describe('UpdateEmployeeComponent', () => {
   describe('submitting', () => {
     it('does nothing and reports the errors when the form is invalid', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
       component.model.update((m) => ({ ...m, firstName: '' }));
 
       await submit(component.employeeForm);
@@ -169,7 +173,7 @@ describe('UpdateEmployeeComponent', () => {
 
     it('merges the form values onto the loaded employee and saves', async () => {
       const component = createComponent();
-      selectedEmployee.set(
+      await loadEmployee(
         buildEmployee({ employeeId: 'employeeId-1', createdAt: '2026-01-01' }),
       );
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
@@ -188,7 +192,7 @@ describe('UpdateEmployeeComponent', () => {
 
     it('navigates back to the employee list on success', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
 
       await submit(component.employeeForm);
 
@@ -197,7 +201,7 @@ describe('UpdateEmployeeComponent', () => {
 
     it('surfaces the error and stops submitting on failure', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
       updateEmployee.mockReturnValue(
         throwError(
           () =>
@@ -217,24 +221,24 @@ describe('UpdateEmployeeComponent', () => {
   });
 
   describe('unsaved changes', () => {
-    it('has none after the employee loads (loading is not editing)', () => {
+    it('has none after the employee loads (loading is not editing)', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
 
       expect(component.hasUnsavedChanges()).toBe(false);
     });
 
-    it('has some once the user changes a field', () => {
+    it('has some once the user changes a field', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       expect(component.hasUnsavedChanges()).toBe(true);
     });
 
-    it('has none again if the user puts the original value back', () => {
+    it('has none again if the user puts the original value back', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
       component.model.update((m) => ({ ...m, firstName: 'Dan' }));
 
@@ -243,7 +247,7 @@ describe('UpdateEmployeeComponent', () => {
 
     it('keeps them when the save fails', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
       updateEmployee.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 500 })),
       );
@@ -256,7 +260,7 @@ describe('UpdateEmployeeComponent', () => {
 
     it('clears them once saved, before navigating away', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
       let dirtyAtNavigation: boolean | undefined;
       navigate.mockImplementation(async () => {
         dirtyAtNavigation = component.hasUnsavedChanges();
@@ -269,9 +273,9 @@ describe('UpdateEmployeeComponent', () => {
       expect(dirtyAtNavigation).toBe(false);
     });
 
-    it('asks the browser to confirm closing/reloading the tab only when dirty', () => {
+    it('asks the browser to confirm closing/reloading the tab only when dirty', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee());
+      await loadEmployee(buildEmployee());
 
       const clean = new Event('beforeunload', {
         cancelable: true,

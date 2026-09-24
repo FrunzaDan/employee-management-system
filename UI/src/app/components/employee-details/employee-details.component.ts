@@ -1,6 +1,5 @@
 import {
   Component,
-  Signal,
   computed,
   effect,
   inject,
@@ -9,6 +8,7 @@ import {
   untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { RonPipe } from '../../pipes/ron.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -20,6 +20,13 @@ import { Employee, EmployeeStatus, Gender } from '../../interfaces/employee';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import { auditActionLabel } from '../../utils/audit-action-label';
+import { employeeStatusLabel } from '../../utils/employee-status-label';
+
+const GENDER_LABELS = new Map<Gender, string>([
+  [Gender.NotDeclared, 'not declared'],
+  [Gender.Male, 'male'],
+  [Gender.Female, 'female'],
+]);
 
 @Component({
   selector: 'app-employee-details',
@@ -37,21 +44,31 @@ export class EmployeeDetailsComponent {
   // Bound from the `:employeeId` route param by withComponentInputBinding() in app.config.ts.
   readonly employeeId = input<string>();
 
-  genderMap = new Map<Gender, string>([
-    [Gender.NotDeclared, 'not declared'],
-    [Gender.Male, 'male'],
-    [Gender.Female, 'female'],
-  ]);
-
-  statusMap = new Map<EmployeeStatus, string>([
-    [EmployeeStatus.Active, 'Active'],
-    [EmployeeStatus.Deactivated, 'Deactivated'],
-    [EmployeeStatus.Test, 'Test'],
-  ]);
-
-  readonly employee = this.employeeService.selectedEmployee;
-  readonly isLoading = this.employeeService.selectedEmployeeLoading;
-  readonly errorMessage = this.employeeService.selectedEmployeeError;
+  // Keyed on the route's id, like Imalo's ScholarDetailsComponent: a new id
+  // cancels whatever is still in flight. hasValue() guards the read, since
+  // value() throws while the resource is in error.
+  private readonly employeeResource = rxResource({
+    params: () => this.employeeId(),
+    stream: ({ params: employeeId }) =>
+      this.employeeService.getEmployee(employeeId),
+  });
+  readonly employee = computed(() =>
+    this.employeeResource.hasValue() ? this.employeeResource.value() : null,
+  );
+  // The first load only: a reload (after a status change) keeps the page on
+  // screen until the fresh copy arrives.
+  readonly loading = computed(
+    () => this.employeeResource.status() === 'loading',
+  );
+  readonly loadError = computed(() => {
+    const error = this.employeeResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load the employee',
+        )
+      : null;
+  });
 
   readonly EmployeeStatus = EmployeeStatus;
   readonly auditActionLabel = auditActionLabel;
@@ -82,24 +99,20 @@ export class EmployeeDetailsComponent {
   readonly addingSalary = signal(false);
   readonly createSalaryError = signal<string | null>(null);
 
-  employeeGender: Signal<string | undefined> = computed(() => {
-    const c = this.employee();
-    return c && c.gender !== undefined
-      ? this.genderMap.get(c.gender)
-      : undefined;
+  readonly genderLabel = computed(() => {
+    const employee = this.employee();
+    return employee ? GENDER_LABELS.get(employee.gender) : undefined;
   });
 
-  employeeStatusLabel: Signal<string | undefined> = computed(() => {
-    const c = this.employee();
-    return c && c.status !== undefined
-      ? this.statusMap.get(c.status)
-      : undefined;
+  readonly statusLabel = computed(() => {
+    const employee = this.employee();
+    return employee ? employeeStatusLabel(employee.status) : undefined;
   });
 
   // Deactivated employees follow the normal deactivate-then-delete lifecycle;
   // Test employees are fictitious data and are exempt from that guardrail
   // (see Employee_Delete), so they can be deleted straight away too.
-  canDelete: Signal<boolean> = computed(() => {
+  readonly canDelete = computed(() => {
     const status = this.employee()?.status;
     return (
       status === EmployeeStatus.Deactivated || status === EmployeeStatus.Test
@@ -112,26 +125,26 @@ export class EmployeeDetailsComponent {
       const id = this.employeeId();
       untracked(() => {
         if (id) {
-          this.employeeService.getEmployee(id);
           this.auditLogService.loadAuditLog(id);
-          this.salaryHistoryService.loadHistory(id);
+          this.salaryHistoryService.loadSalaryHistory(id);
         } else {
-          this.router.navigate(['']);
+          this.router.navigate(['/employees']);
         }
       });
     });
 
-    // The rest of the page (e.g. Account Status) updates live via
-    // updateEmployeeLocally() as soon as a deactivate/reactivate call
-    // resolves; the audit trail can only be refreshed by re-fetching, so
-    // this re-loads it whenever activationLoading() flips back to false.
+    // A deactivate/reactivate changes the status and adds an audit entry, so
+    // both are re-fetched once activationLoading() flips back to false.
     effect(() => {
-      const isLoading = this.activationLoading();
-      if (this.wasActivationLoading && !isLoading) {
+      const loading = this.activationLoading();
+      if (this.wasActivationLoading && !loading) {
         const employeeId = this.employee()?.employeeId;
-        if (employeeId) this.auditLogService.loadAuditLog(employeeId);
+        if (employeeId) {
+          this.employeeResource.reload();
+          this.auditLogService.loadAuditLog(employeeId);
+        }
       }
-      this.wasActivationLoading = isLoading;
+      this.wasActivationLoading = loading;
     });
   }
 
@@ -183,6 +196,9 @@ export class EmployeeDetailsComponent {
       );
       this.newSalaryAmount.set('');
       this.newSalaryEffectiveDate.set('');
+      // The new entry changes the current salary and adds an audit entry.
+      this.employeeResource.reload();
+      this.auditLogService.loadAuditLog(employeeId);
     } catch (error) {
       this.createSalaryError.set(
         extractErrorMessage(

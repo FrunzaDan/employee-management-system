@@ -11,15 +11,15 @@ namespace EmployeeManagementSystem.Tests.OrgFunctions;
 public class OrgFunctionsTests
 {
     [Fact]
-    public async Task CreateOfficeFunction_ReturnsTheDbGeneratedOfficeId()
+    public async Task CreateOfficeAsync_ReturnsTheDbGeneratedOfficeId()
     {
         var officeId = Guid.NewGuid();
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CreateOffice(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CreateOfficeAsync(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<Guid?>(200, "Office created successfully.", officeId));
         var functions = new OfficeFunctions(dbUtils.Object);
 
-        var result = await functions.CreateOfficeFunction(new CreateOfficeRequest { Name = "HQ" },
+        var result = await functions.CreateOfficeAsync(new CreateOfficeRequest { Name = "HQ" },
             TestContext.Current.CancellationToken);
 
         Assert.Equal(officeId, result.Data);
@@ -28,36 +28,36 @@ public class OrgFunctionsTests
     [Theory]
     [InlineData(null)]
     [InlineData(" ")]
-    public async Task CreateOfficeFunction_RejectsAMissingName_WithoutTouchingTheDb(string? name)
+    public async Task CreateOfficeAsync_RejectsAMissingName_WithoutTouchingTheDb(string? name)
     {
         var dbUtils = new Mock<IDbUtils>();
         var functions = new OfficeFunctions(dbUtils.Object);
 
-        var result = await functions.CreateOfficeFunction(new CreateOfficeRequest { Name = name },
+        var result = await functions.CreateOfficeAsync(new CreateOfficeRequest { Name = name },
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Equal("Office name is required.", result.ResponseMessage);
-        dbUtils.Verify(d => d.CreateOffice(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.CreateOfficeAsync(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task CreateCostCenterFunction_RejectsAMissingCode_WithoutTouchingTheDb()
+    public async Task CreateCostCenterAsync_RejectsAMissingCode_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var functions = new CostCenterFunctions(dbUtils.Object);
 
-        var result = await functions.CreateCostCenterFunction(new CreateCostCenterRequest { Name = "Sales" },
+        var result = await functions.CreateCostCenterAsync(new CreateCostCenterRequest { Name = "Sales" },
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Equal("Cost center code is required.", result.ResponseMessage);
-        dbUtils.Verify(d => d.CreateCostCenter(It.IsAny<CreateCostCenterRequest>(), It.IsAny<CancellationToken>()),
+        dbUtils.Verify(d => d.CreateCostCenterAsync(It.IsAny<CreateCostCenterRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task UpdateDepartmentFunction_RejectsAnOverLengthName_WithoutTouchingTheDb()
+    public async Task UpdateDepartmentAsync_RejectsAnOverLengthName_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var functions = new DepartmentFunctions(dbUtils.Object);
@@ -67,51 +67,51 @@ public class OrgFunctionsTests
             Name = new string('a', FieldLengthConstants.DepartmentName + 1)
         };
 
-        var result = await functions.UpdateDepartmentFunction(request, TestContext.Current.CancellationToken);
+        var result = await functions.UpdateDepartmentAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Equal("Department name is too long.", result.ResponseMessage);
-        dbUtils.Verify(d => d.UpdateDepartment(It.IsAny<UpdateDepartmentRequest>(), It.IsAny<CancellationToken>()),
+        dbUtils.Verify(d => d.UpdateDepartmentAsync(It.IsAny<UpdateDepartmentRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task UpdateOfficeFunction_RejectsAnEmptyOfficeId_WithoutTouchingTheDb()
+    public async Task UpdateOfficeAsync_RejectsAnEmptyOfficeId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var functions = new OfficeFunctions(dbUtils.Object);
 
-        var result = await functions.UpdateOfficeFunction(new UpdateOfficeRequest { Name = "HQ" },
+        var result = await functions.UpdateOfficeAsync(new UpdateOfficeRequest { Name = "HQ" },
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Equal("A valid office ID is required.", result.ResponseMessage);
-        dbUtils.Verify(d => d.UpdateOffice(It.IsAny<UpdateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.UpdateOfficeAsync(It.IsAny<UpdateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task DeleteCostCenterFunction_RejectsAnEmptyCostCenterId_WithoutTouchingTheDb()
+    public async Task DeleteCostCenterAsync_RejectsAnEmptyCostCenterId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var functions = new CostCenterFunctions(dbUtils.Object);
 
-        var result = await functions.DeleteCostCenterFunction(Guid.Empty, TestContext.Current.CancellationToken);
+        var result = await functions.DeleteCostCenterAsync(Guid.Empty, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.DeleteCostCenter(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.DeleteCostCenterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task GetEmployeesByDepartmentFunction_DelegatesToTheDbLayer()
+    public async Task GetEmployeesByDepartmentAsync_DelegatesToTheDbLayer()
     {
         var departmentId = Guid.NewGuid();
         var dbUtils = new Mock<IDbUtils>();
         var expected = new ResponseModel<IReadOnlyList<EmployeeSummaryModel>>(200, "0 employees found.", []);
-        dbUtils.Setup(d => d.GetEmployeesByDepartment(departmentId, It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.GetEmployeesByDepartmentAsync(departmentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
         var functions = new DepartmentFunctions(dbUtils.Object);
 
-        var result = await functions.GetEmployeesByDepartmentFunction(departmentId,
+        var result = await functions.GetEmployeesByDepartmentAsync(departmentId,
             TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);

@@ -94,6 +94,12 @@ Other settings:
 - **`GET /health`:** liveness only, no auth.
 - **Creates:** return the new GUID as `data`. Other mutations return no `data`.
 
+### Naming
+
+- Every async method ends in `Async`, in the services, the logic classes and the data layer. Controller actions are the exception, since their routes are explicit.
+- **Logic classes:** the main entity has one class per action (`EmployeeCreation`, `EmployeeGetting`, …). Each secondary entity has one class for all its operations (`OfficeFunctions`, `DepartmentFunctions`, `CostCenterFunctions`, like the customer app's `ProductFunctions`). A logic method has the same name as the service method it backs.
+- Collections are returned as `IReadOnlyList<T>`.
+
 ### Validation and data types
 
 - **Requests and responses are separate models.**

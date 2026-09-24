@@ -7,15 +7,15 @@ namespace EmployeeManagementSystem.DataAccess.DBConnection;
 
 public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
 {
-    public Task<ResponseModel<Guid?>> CreateEmployee(CreateEmployeeRequest employee,
+    public Task<ResponseModel<Guid?>> CreateEmployeeAsync(CreateEmployeeRequest employee,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Create",
             command => DbHelper.AddEmployeeParametersForCreate(command, employee),
-            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "EmployeeId"),
+            reader => DbHelper.HandleResponseWithCreatedGuidAsync(reader, "EmployeeId"),
             cancellationToken);
 
-    public Task<ResponseModel<EmployeeModel>> GetEmployee(EmployeeLookup lookup,
+    public Task<ResponseModel<EmployeeModel>> GetEmployeeAsync(EmployeeLookup lookup,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Get",
@@ -25,10 +25,10 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
                 command.Parameters.AddVarChar("@PhoneNumber", FieldLengthConstants.PhoneNumber, lookup.PhoneNumber);
                 command.Parameters.AddNVarChar("@Email", FieldLengthConstants.Email, lookup.Email);
             },
-            DbHelper.HandleResponseWithEmployee,
+            DbHelper.HandleResponseWithEmployeeAsync,
             cancellationToken);
 
-    public Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployees(GetEmployeesRequest request,
+    public Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployeesAsync(GetEmployeesRequest request,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_List",
@@ -43,49 +43,49 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
                 command.Parameters.AddVarChar("@SortDirection", FieldLengthConstants.SortDirection,
                     request.SortDirection.ToString().ToLowerInvariant());
             },
-            reader => DbHelper.HandleResponseWithPagedEmployees(reader, request.PageNumber, request.PageSize),
+            reader => DbHelper.HandleResponseWithPagedEmployeesAsync(reader, request.PageNumber, request.PageSize),
             cancellationToken);
 
-    public Task<ResponseModel<object>> UpdateEmployee(UpdateEmployeeRequest employee,
+    public Task<ResponseModel<object>> UpdateEmployeeAsync(UpdateEmployeeRequest employee,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Update",
             command => DbHelper.AddEmployeeParametersForUpdate(command, employee),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> DeactivateEmployee(Guid employeeId,
+    public Task<ResponseModel<object>> DeactivateEmployeeAsync(Guid employeeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Deactivate",
             command => command.Parameters.AddGuid("@EmployeeId", employeeId),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> ReactivateEmployee(Guid employeeId,
+    public Task<ResponseModel<object>> ReactivateEmployeeAsync(Guid employeeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Reactivate",
             command => command.Parameters.AddGuid("@EmployeeId", employeeId),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteEmployee(Guid employeeId,
+    public Task<ResponseModel<object>> DeleteEmployeeAsync(Guid employeeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_Delete",
             command => command.Parameters.AddGuid("@EmployeeId", employeeId),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public async Task<ResponseModel<EmployerRole?>> CheckEmployerCredentialsFromDb(
+    public async Task<ResponseModel<EmployerRole?>> CheckEmployerCredentialsFromDbAsync(
         EmployerCredentials employerCredentials, CancellationToken cancellationToken = default)
     {
         var authData = await ExecuteStoredProcedureAsync(
             "dbo.Employer_GetAuthData",
             command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username,
                 employerCredentials.Username),
-            DbHelper.HandleEmployerAuthDataResponse,
+            DbHelper.HandleEmployerAuthDataResponseAsync,
             cancellationToken
         );
 
@@ -101,7 +101,7 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             : new ResponseModel<EmployerRole?>(403, $"The provided employer role ({roleCode}) is not valid.");
     }
 
-    public Task<ResponseModel<object>> LogEmployeeAudit(Guid employeeId, string performedBy, AuditAction action,
+    public Task<ResponseModel<object>> LogEmployeeAuditAsync(Guid employeeId, string performedBy, AuditAction action,
         string? details, CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.EmployeeAuditLog_Create",
@@ -112,18 +112,18 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
                 command.Parameters.AddVarChar("@ActionType", FieldLengthConstants.AuditAction, action.ToString());
                 command.Parameters.AddNVarChar("@Details", FieldLengthConstants.AuditDetails, details);
             },
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLog(Guid employeeId,
+    public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLogAsync(Guid employeeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.EmployeeAuditLog_ListByEmployee",
             command => command.Parameters.AddGuid("@EmployeeId", employeeId),
-            DbHelper.HandleResponseWithAuditLogList,
+            DbHelper.HandleResponseWithAuditLogListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLog(int pageNumber,
+    public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLogAsync(int pageNumber,
         int pageSize, CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.EmployeeAuditLog_List",
@@ -132,171 +132,171 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
                 command.Parameters.AddInt("@PageNumber", pageNumber);
                 command.Parameters.AddInt("@PageSize", pageSize);
             },
-            reader => DbHelper.HandleResponseWithPagedAuditLogList(reader, pageNumber, pageSize),
+            reader => DbHelper.HandleResponseWithPagedAuditLogListAsync(reader, pageNumber, pageSize),
             cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteAllEmployeeAuditLog(CancellationToken cancellationToken = default) =>
+    public Task<ResponseModel<object>> DeleteAllEmployeeAuditLogAsync(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.EmployeeAuditLog_DeleteAll",
             null,
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> CreateEmployeeSalary(CreateSalaryRequest salary,
+    public Task<ResponseModel<object>> CreateEmployeeSalaryAsync(CreateSalaryRequest salary,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.EmployeeSalary_Create",
             command => DbHelper.AddSalaryParametersForCreate(command, salary),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistory(Guid employeeId,
+    public Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistoryAsync(Guid employeeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.EmployeeSalary_ListByEmployee",
             command => command.Parameters.AddGuid("@EmployeeId", employeeId),
-            DbHelper.HandleResponseWithSalaryList,
+            DbHelper.HandleResponseWithSalaryListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<Guid?>> CreateOffice(CreateOfficeRequest office,
+    public Task<ResponseModel<Guid?>> CreateOfficeAsync(CreateOfficeRequest office,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Office_Create",
             command => DbHelper.AddOfficeParametersForCreate(command, office),
-            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "OfficeId"),
+            reader => DbHelper.HandleResponseWithCreatedGuidAsync(reader, "OfficeId"),
             cancellationToken);
 
-    public Task<ResponseModel<OfficeModel>> GetOffice(Guid officeId,
+    public Task<ResponseModel<OfficeModel>> GetOfficeAsync(Guid officeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Office_Get",
             command => command.Parameters.AddGuid("@OfficeId", officeId),
-            DbHelper.HandleResponseWithOffice,
+            DbHelper.HandleResponseWithOfficeAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<OfficeModel>>> GetOffices(CancellationToken cancellationToken = default) =>
+    public Task<ResponseModel<IReadOnlyList<OfficeModel>>> GetOfficesAsync(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Office_List",
             null,
-            DbHelper.HandleResponseWithOfficeList,
+            DbHelper.HandleResponseWithOfficeListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> UpdateOffice(UpdateOfficeRequest office,
+    public Task<ResponseModel<object>> UpdateOfficeAsync(UpdateOfficeRequest office,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Office_Update",
             command => DbHelper.AddOfficeParametersForUpdate(command, office),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteOffice(Guid officeId,
+    public Task<ResponseModel<object>> DeleteOfficeAsync(Guid officeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Office_Delete",
             command => command.Parameters.AddGuid("@OfficeId", officeId),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByOffice(Guid officeId,
+    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByOfficeAsync(Guid officeId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_ListByOffice",
             command => command.Parameters.AddGuid("@OfficeId", officeId),
-            DbHelper.HandleResponseWithEmployeeSummaryList,
+            DbHelper.HandleResponseWithEmployeeSummaryListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<Guid?>> CreateDepartment(CreateDepartmentRequest department,
+    public Task<ResponseModel<Guid?>> CreateDepartmentAsync(CreateDepartmentRequest department,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Department_Create",
             command => DbHelper.AddDepartmentParametersForCreate(command, department),
-            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "DepartmentId"),
+            reader => DbHelper.HandleResponseWithCreatedGuidAsync(reader, "DepartmentId"),
             cancellationToken);
 
-    public Task<ResponseModel<DepartmentModel>> GetDepartment(Guid departmentId,
+    public Task<ResponseModel<DepartmentModel>> GetDepartmentAsync(Guid departmentId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Department_Get",
             command => command.Parameters.AddGuid("@DepartmentId", departmentId),
-            DbHelper.HandleResponseWithDepartment,
+            DbHelper.HandleResponseWithDepartmentAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<DepartmentModel>>> GetDepartments(CancellationToken cancellationToken = default) =>
+    public Task<ResponseModel<IReadOnlyList<DepartmentModel>>> GetDepartmentsAsync(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Department_List",
             null,
-            DbHelper.HandleResponseWithDepartmentList,
+            DbHelper.HandleResponseWithDepartmentListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> UpdateDepartment(UpdateDepartmentRequest department,
+    public Task<ResponseModel<object>> UpdateDepartmentAsync(UpdateDepartmentRequest department,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Department_Update",
             command => DbHelper.AddDepartmentParametersForUpdate(command, department),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteDepartment(Guid departmentId,
+    public Task<ResponseModel<object>> DeleteDepartmentAsync(Guid departmentId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Department_Delete",
             command => command.Parameters.AddGuid("@DepartmentId", departmentId),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByDepartment(Guid departmentId,
+    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByDepartmentAsync(Guid departmentId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_ListByDepartment",
             command => command.Parameters.AddGuid("@DepartmentId", departmentId),
-            DbHelper.HandleResponseWithEmployeeSummaryList,
+            DbHelper.HandleResponseWithEmployeeSummaryListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<Guid?>> CreateCostCenter(CreateCostCenterRequest costCenter,
+    public Task<ResponseModel<Guid?>> CreateCostCenterAsync(CreateCostCenterRequest costCenter,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.CostCenter_Create",
             command => DbHelper.AddCostCenterParametersForCreate(command, costCenter),
-            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "CostCenterId"),
+            reader => DbHelper.HandleResponseWithCreatedGuidAsync(reader, "CostCenterId"),
             cancellationToken);
 
-    public Task<ResponseModel<CostCenterModel>> GetCostCenter(Guid costCenterId,
+    public Task<ResponseModel<CostCenterModel>> GetCostCenterAsync(Guid costCenterId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.CostCenter_Get",
             command => command.Parameters.AddGuid("@CostCenterId", costCenterId),
-            DbHelper.HandleResponseWithCostCenter,
+            DbHelper.HandleResponseWithCostCenterAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<CostCenterModel>>> GetCostCenters(CancellationToken cancellationToken = default) =>
+    public Task<ResponseModel<IReadOnlyList<CostCenterModel>>> GetCostCentersAsync(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.CostCenter_List",
             null,
-            DbHelper.HandleResponseWithCostCenterList,
+            DbHelper.HandleResponseWithCostCenterListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> UpdateCostCenter(UpdateCostCenterRequest costCenter,
+    public Task<ResponseModel<object>> UpdateCostCenterAsync(UpdateCostCenterRequest costCenter,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.CostCenter_Update",
             command => DbHelper.AddCostCenterParametersForUpdate(command, costCenter),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteCostCenter(Guid costCenterId,
+    public Task<ResponseModel<object>> DeleteCostCenterAsync(Guid costCenterId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.CostCenter_Delete",
             command => command.Parameters.AddGuid("@CostCenterId", costCenterId),
-            DbHelper.HandleResponseWithMessage,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByCostCenter(Guid costCenterId,
+    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByCostCenterAsync(Guid costCenterId,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Employee_ListByCostCenter",
             command => command.Parameters.AddGuid("@CostCenterId", costCenterId),
-            DbHelper.HandleResponseWithEmployeeSummaryList,
+            DbHelper.HandleResponseWithEmployeeSummaryListAsync,
             cancellationToken);
 
     private async Task<T> ExecuteStoredProcedureAsync<T>(

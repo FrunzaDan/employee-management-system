@@ -1,14 +1,13 @@
 import {
   Component,
   computed,
-  effect,
   inject,
   input,
   linkedSignal,
   signal,
-  untracked,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -24,7 +23,7 @@ import {
 import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-form-fields.component';
 
 @Component({
-  selector: 'app-edit-employee',
+  selector: 'app-update-employee',
   templateUrl: './update-employee.component.html',
   styleUrl: './update-employee.component.css',
   imports: [EmployeeFormFieldsComponent, FormRoot, RouterLink],
@@ -38,9 +37,26 @@ export class UpdateEmployeeComponent {
   // Bound from the `:employeeId` route param by withComponentInputBinding() in app.config.ts.
   readonly employeeId = input<string>();
 
-  readonly employee = this.employeeService.selectedEmployee;
-  readonly isLoading = this.employeeService.selectedEmployeeLoading;
-  readonly errorMessage = this.employeeService.selectedEmployeeError;
+  // Keyed on the route's id, like the details page; hasValue() guards the read,
+  // since value() throws while the resource is in error.
+  private readonly employeeResource = rxResource({
+    params: () => this.employeeId(),
+    stream: ({ params: employeeId }) =>
+      this.employeeService.getEmployee(employeeId),
+  });
+  readonly employee = computed(() =>
+    this.employeeResource.hasValue() ? this.employeeResource.value() : null,
+  );
+  readonly loading = this.employeeResource.isLoading;
+  readonly loadError = computed(() => {
+    const error = this.employeeResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load the employee',
+        )
+      : null;
+  });
 
   // The form model *is* the loaded employee, mapped: it re-derives whenever
   // employee() changes and stays writable for the user's edits — no effect +
@@ -59,7 +75,7 @@ export class UpdateEmployeeComponent {
     () => !this.saved() && isEmployeeFormDirty(this.model(), this.baseline()),
   );
 
-  // Distinct from isLoading/errorMessage above, which reflect fetching the
+  // Distinct from loading/loadError above, which reflect fetching the
   // employee being edited — these track the save (PATCH) request itself.
   readonly saveError = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
@@ -76,13 +92,6 @@ export class UpdateEmployeeComponent {
       },
     },
   });
-
-  constructor() {
-    effect(() => {
-      const id = this.employeeId();
-      if (id) untracked(() => this.employeeService.getEmployee(id));
-    });
-  }
 
   private async save(): Promise<void> {
     const current = this.employee();

@@ -17,7 +17,7 @@
       ></span
       >Loading department…
     </div>
-  } @else if (error(); as err) {
+  } @else if (loadError(); as err) {
     <div class="alert alert-danger" role="alert">{{ err }}</div>
   } @else if (department(); as d) {
     <div class="card app-card mb-4">

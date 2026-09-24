@@ -5,27 +5,27 @@ namespace EmployeeManagementSystem.BusinessLogic.Services.Implementation;
 
 public class OfficeService(OfficeFunctions officeFunctions) : IOfficeService
 {
-    public async Task<ResponseModel<Guid?>> CreateOffice(CreateOfficeRequest request,
+    public async Task<ResponseModel<Guid?>> CreateOfficeAsync(CreateOfficeRequest request,
         CancellationToken cancellationToken = default) =>
-        await officeFunctions.CreateOfficeFunction(request, cancellationToken);
+        await officeFunctions.CreateOfficeAsync(request, cancellationToken);
 
-    public async Task<ResponseModel<OfficeModel>> GetOffice(Guid officeId,
+    public async Task<ResponseModel<OfficeModel>> GetOfficeAsync(Guid officeId,
         CancellationToken cancellationToken = default) =>
-        await officeFunctions.GetOfficeFunction(officeId, cancellationToken);
+        await officeFunctions.GetOfficeAsync(officeId, cancellationToken);
 
-    public async Task<ResponseModel<IReadOnlyList<OfficeModel>>> GetOffices(
+    public async Task<ResponseModel<IReadOnlyList<OfficeModel>>> GetOfficesAsync(
         CancellationToken cancellationToken = default) =>
-        await officeFunctions.GetOfficesFunction(cancellationToken);
+        await officeFunctions.GetOfficesAsync(cancellationToken);
 
-    public async Task<ResponseModel<object>> UpdateOffice(UpdateOfficeRequest request,
+    public async Task<ResponseModel<object>> UpdateOfficeAsync(UpdateOfficeRequest request,
         CancellationToken cancellationToken = default) =>
-        await officeFunctions.UpdateOfficeFunction(request, cancellationToken);
+        await officeFunctions.UpdateOfficeAsync(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteOffice(Guid officeId,
+    public async Task<ResponseModel<object>> DeleteOfficeAsync(Guid officeId,
         CancellationToken cancellationToken = default) =>
-        await officeFunctions.DeleteOfficeFunction(officeId, cancellationToken);
+        await officeFunctions.DeleteOfficeAsync(officeId, cancellationToken);
 
-    public async Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByOffice(Guid officeId,
+    public async Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByOfficeAsync(Guid officeId,
         CancellationToken cancellationToken = default) =>
-        await officeFunctions.GetEmployeesByOfficeFunction(officeId, cancellationToken);
+        await officeFunctions.GetEmployeesByOfficeAsync(officeId, cancellationToken);
 }

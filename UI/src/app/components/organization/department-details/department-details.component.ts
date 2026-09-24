@@ -28,7 +28,7 @@ export class DepartmentDetailsComponent {
     this.departmentResource.hasValue() ? this.departmentResource.value() : null,
   );
   readonly loading = this.departmentResource.isLoading;
-  readonly error = computed(() => {
+  readonly loadError = computed(() => {
     if (!this.departmentId()) return 'No department specified.';
     const error = this.departmentResource.error();
     return error

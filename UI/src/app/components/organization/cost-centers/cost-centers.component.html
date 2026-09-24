@@ -80,8 +80,8 @@
       ></span
       >Loading cost centers…
     </div>
-  } @else if (error()) {
-    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger" role="alert">{{ loadError() }}</div>
   } @else if (costCenters().length === 0) {
     <div class="app-card empty-state">No cost centers yet.</div>
   } @else {

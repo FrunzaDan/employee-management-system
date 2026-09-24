@@ -23,13 +23,13 @@ public class JwtCreation
         _signingKey = JwtSigningKey.Create(_authOptions.SecureJwtKey);
     }
 
-    public async Task<ResponseModel<AccessTokenResponse>> GenerateBearerJwt(EmployerCredentials employerCredentials,
+    public async Task<ResponseModel<AccessTokenResponse>> GenerateBearerJwtAsync(EmployerCredentials employerCredentials,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(employerCredentials.Username))
             return new ResponseModel<AccessTokenResponse>(400, "Username and password are required.");
 
-        var credentialsCheck = await _dbUtils.CheckEmployerCredentialsFromDb(employerCredentials, cancellationToken);
+        var credentialsCheck = await _dbUtils.CheckEmployerCredentialsFromDbAsync(employerCredentials, cancellationToken);
 
         // 401 (wrong username or password) or 403 (a role that may not sign in), with its message.
         if (credentialsCheck.Status != StatusCodes.Status200OK)

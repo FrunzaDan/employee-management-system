@@ -28,7 +28,7 @@ export class CostCentersComponent implements OnInit {
 
   readonly costCenters = this.costCenterService.costCenters;
   readonly loading = this.costCenterService.loading;
-  readonly error = this.costCenterService.error;
+  readonly loadError = this.costCenterService.error;
 
   readonly draft = signal<CostCenterDraft | null>(null);
   readonly saving = signal(false);

@@ -70,8 +70,8 @@
       ></span
       >Loading departments…
     </div>
-  } @else if (error()) {
-    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger" role="alert">{{ loadError() }}</div>
   } @else if (departments().length === 0) {
     <div class="app-card empty-state">No departments yet.</div>
   } @else {

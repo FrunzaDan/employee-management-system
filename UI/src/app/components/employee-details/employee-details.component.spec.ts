@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { ReplaySubject, of, throwError } from 'rxjs';
 import { Employee, EmployeeStatus } from '../../interfaces/employee';
 import { EmployeeService } from '../../services/employee.service';
 import { AuditLogService } from '../../services/audit-log.service';
@@ -18,9 +18,16 @@ describe('EmployeeDetailsComponent', () => {
   let deleteEmployee: ReturnType<typeof vi.fn>;
   let confirm: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let selectedEmployee: ReturnType<typeof signal<Employee | null>>;
+  let employee$: ReplaySubject<Employee>;
+  let fixture: ComponentFixture<EmployeeDetailsComponent>;
+
+  // Emits the employee the page's rxResource streams, and waits for it to land.
+  const loadEmployee = async (employee: Employee) => {
+    employee$.next(employee);
+    await fixture.whenStable();
+  };
   let activationLoading: ReturnType<typeof signal<boolean>>;
-  let loadHistory: ReturnType<typeof vi.fn>;
+  let loadSalaryHistory: ReturnType<typeof vi.fn>;
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
     employeeId: 'employeeId-1',
@@ -57,7 +64,8 @@ describe('EmployeeDetailsComponent', () => {
   let routeParamId: string | null = 'employeeId-1';
 
   const createComponent = (): EmployeeDetailsComponent => {
-    getEmployee = vi.fn();
+    employee$ = new ReplaySubject<Employee>(1);
+    getEmployee = vi.fn(() => employee$);
     loadAuditLog = vi.fn();
     deactivateEmployee = vi.fn();
     reactivateEmployee = vi.fn();
@@ -66,9 +74,8 @@ describe('EmployeeDetailsComponent', () => {
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     confirm = vi.fn().mockResolvedValue(true);
     navigate = vi.fn().mockResolvedValue(true);
-    selectedEmployee = signal<Employee | null>(null);
     activationLoading = signal(false);
-    loadHistory = vi.fn();
+    loadSalaryHistory = vi.fn();
 
     // EmployeeDetailsComponent resolves its dependencies via field-initializer
     // inject() calls, so it needs TestBed provider tokens (not positional
@@ -79,9 +86,6 @@ describe('EmployeeDetailsComponent', () => {
         {
           provide: EmployeeService,
           useValue: {
-            selectedEmployee: selectedEmployee,
-            selectedEmployeeLoading: signal(false),
-            selectedEmployeeError: signal<string | null>(null),
             getEmployee,
             activationLoading,
             activationError: signal<string | null>(null),
@@ -106,7 +110,7 @@ describe('EmployeeDetailsComponent', () => {
             entries: signal([]),
             loading: signal(false),
             error: signal<string | null>(null),
-            loadHistory,
+            loadSalaryHistory,
             createSalary: vi.fn(),
           },
         },
@@ -117,7 +121,7 @@ describe('EmployeeDetailsComponent', () => {
     // RouterLink in the template needs the real Router; only stub navigate().
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
 
-    const fixture = TestBed.createComponent(EmployeeDetailsComponent);
+    fixture = TestBed.createComponent(EmployeeDetailsComponent);
     if (routeParamId) fixture.componentRef.setInput('employeeId', routeParamId);
     fixture.detectChanges();
     return fixture.componentInstance;
@@ -139,61 +143,57 @@ describe('EmployeeDetailsComponent', () => {
       expect(loadAuditLog).toHaveBeenCalledWith('employeeId-1');
     });
 
-    it('navigates home instead of fetching when there is no id', () => {
+    it('navigates to the employee list instead of fetching when there is no id', () => {
       routeParamId = null;
       createComponent();
 
       expect(getEmployee).not.toHaveBeenCalled();
       expect(loadAuditLog).not.toHaveBeenCalled();
-      expect(navigate).toHaveBeenCalledWith(['']);
+      expect(navigate).toHaveBeenCalledWith(['/employees']);
     });
   });
 
   describe('computed labels', () => {
-    it('employeeGender maps the numeric code to a label', () => {
+    it('genderLabel maps the numeric code to a label', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ gender: 2 }));
+      await loadEmployee(buildEmployee({ gender: 2 }));
 
-      expect(component.employeeGender()).toBe('female');
+      expect(component.genderLabel()).toBe('female');
     });
 
-    it('employeeStatusLabel maps the status code to a label', () => {
+    it('statusLabel maps the status code to a label', async () => {
       const component = createComponent();
-      selectedEmployee.set(
-        buildEmployee({ status: EmployeeStatus.Deactivated }),
-      );
+      await loadEmployee(buildEmployee({ status: EmployeeStatus.Deactivated }));
 
-      expect(component.employeeStatusLabel()).toBe('Deactivated');
+      expect(component.statusLabel()).toBe('Deactivated');
     });
 
     it('both are undefined when no employee is loaded', () => {
       const component = createComponent();
 
-      expect(component.employeeGender()).toBeUndefined();
-      expect(component.employeeStatusLabel()).toBeUndefined();
+      expect(component.genderLabel()).toBeUndefined();
+      expect(component.statusLabel()).toBeUndefined();
     });
   });
 
   describe('canDelete', () => {
-    it('is false for an Active employee', () => {
+    it('is false for an Active employee', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ status: EmployeeStatus.Active }));
+      await loadEmployee(buildEmployee({ status: EmployeeStatus.Active }));
 
       expect(component.canDelete()).toBe(false);
     });
 
-    it('is true for a Deactivated employee', () => {
+    it('is true for a Deactivated employee', async () => {
       const component = createComponent();
-      selectedEmployee.set(
-        buildEmployee({ status: EmployeeStatus.Deactivated }),
-      );
+      await loadEmployee(buildEmployee({ status: EmployeeStatus.Deactivated }));
 
       expect(component.canDelete()).toBe(true);
     });
 
-    it('is true for a Test employee (exempt from the deactivate-first rule)', () => {
+    it('is true for a Test employee (exempt from the deactivate-first rule)', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ status: EmployeeStatus.Test }));
+      await loadEmployee(buildEmployee({ status: EmployeeStatus.Test }));
 
       expect(component.canDelete()).toBe(true);
     });
@@ -202,7 +202,7 @@ describe('EmployeeDetailsComponent', () => {
   describe('deactivateEmployee / reactivateEmployee', () => {
     it('deactivateEmployee asks for confirmation before delegating to the service', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
 
       await component.deactivateEmployee();
 
@@ -212,7 +212,7 @@ describe('EmployeeDetailsComponent', () => {
 
     it('deactivateEmployee does nothing when the user cancels', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deactivateEmployee();
@@ -220,9 +220,9 @@ describe('EmployeeDetailsComponent', () => {
       expect(deactivateEmployee).not.toHaveBeenCalled();
     });
 
-    it('reactivateEmployee delegates directly, without a confirmation prompt', () => {
+    it('reactivateEmployee delegates directly, without a confirmation prompt', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
 
       component.reactivateEmployee();
 
@@ -234,7 +234,7 @@ describe('EmployeeDetailsComponent', () => {
   describe('deleteEmployee', () => {
     it('does nothing when the user cancels the confirmation', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deleteEmployee();
@@ -244,7 +244,7 @@ describe('EmployeeDetailsComponent', () => {
 
     it('deletes the employee and navigates back to the list on success', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
 
       await component.deleteEmployee();
 
@@ -254,7 +254,7 @@ describe('EmployeeDetailsComponent', () => {
 
     it('surfaces the error and stops loading when the delete request fails', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
       deleteEmployee.mockReturnValue(
         throwError(
           () =>
@@ -278,9 +278,9 @@ describe('EmployeeDetailsComponent', () => {
   });
 
   describe('audit log reload on activation-loading transition', () => {
-    it('reloads the audit log once a deactivate/reactivate call resolves (true -> false)', () => {
+    it('reloads the employee and its audit log once a deactivate/reactivate call resolves (true -> false)', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
       loadAuditLog.mockClear();
 
       activationLoading.set(true);
@@ -291,11 +291,12 @@ describe('EmployeeDetailsComponent', () => {
       TestBed.flushEffects();
 
       expect(loadAuditLog).toHaveBeenCalledWith('employeeId-1');
+      expect(getEmployee).toHaveBeenCalledTimes(2); // the first load, then the refresh
     });
 
-    it('does not reload on the initial false state (no prior true)', () => {
+    it('does not reload on the initial false state (no prior true)', async () => {
       const component = createComponent();
-      selectedEmployee.set(buildEmployee({ employeeId: 'employeeId-1' }));
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
       loadAuditLog.mockClear();
 
       TestBed.flushEffects();

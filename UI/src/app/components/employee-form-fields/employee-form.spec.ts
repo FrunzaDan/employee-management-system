@@ -1,4 +1,5 @@
 import { emptyEmployeeForm, isEmployeeFormDirty } from './employee-form';
+import { environment } from '../../../environments/environment';
 
 describe('isEmployeeFormDirty', () => {
   it('is false when nothing differs from the baseline', () => {
@@ -21,4 +22,20 @@ describe('isEmployeeFormDirty', () => {
     expect(isEmployeeFormDirty(edited, baseline)).toBe(true);
     expect(isEmployeeFormDirty(reverted, baseline)).toBe(false);
   });
+});
+
+// Must accept and reject the same addresses as the API's RegexConstants.EmailRegex.
+describe('environment.emailRegex', () => {
+  const emailRegex = new RegExp(environment.emailRegex);
+
+  it('accepts a plain address', () => {
+    expect(emailRegex.test('ana.pop@example.com')).toBe(true);
+  });
+
+  it.each(['a@b@c.com', 'ana pop@example.com', 'ana@example', '@example.com'])(
+    'rejects %s',
+    (email) => {
+      expect(emailRegex.test(email)).toBe(false);
+    },
+  );
 });

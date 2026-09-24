@@ -28,7 +28,7 @@ export class CostCenterDetailsComponent {
     this.costCenterResource.hasValue() ? this.costCenterResource.value() : null,
   );
   readonly loading = this.costCenterResource.isLoading;
-  readonly error = computed(() => {
+  readonly loadError = computed(() => {
     if (!this.costCenterId()) return 'No cost center specified.';
     const error = this.costCenterResource.error();
     return error

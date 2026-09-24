@@ -14,7 +14,7 @@ public class AuthenticationController(IAuthService authService) : ApiControllerB
     [EnableRateLimiting("login")]
     public async Task<ActionResult<ResponseModel<AccessTokenResponse>>> GetAccessToken(
         [FromBody] EmployerCredentials employerCredentials, CancellationToken cancellationToken) =>
-        Reply(await authService.GetAccessToken(employerCredentials, cancellationToken));
+        Reply(await authService.GetAccessTokenAsync(employerCredentials, cancellationToken));
 
     [Authorize]
     [HttpGet("verify-token")]

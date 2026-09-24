@@ -13,34 +13,34 @@ public class EmployeeAuditLoggerTests
     private const string PerformedBy = "TestEmployer";
 
     [Fact]
-    public async Task Log_PassesTheGivenArgumentsThroughToTheDbLayer()
+    public async Task LogAsync_PassesTheGivenArgumentsThroughToTheDbLayer()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogEmployeeAuditAsync(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
         var logger = new FakeLogger<EmployeeAuditLogger>();
         var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
-        await auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", TestContext.Current.CancellationToken);
+        await auditLogger.LogAsync(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", TestContext.Current.CancellationToken);
 
         dbUtils.Verify(
-            d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()),
+            d => d.LogEmployeeAuditAsync(EmployeeId, PerformedBy, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task Log_DefaultsDetailsToNull_WhenNotProvided()
+    public async Task LogAsync_DefaultsDetailsToNull_WhenNotProvided()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogEmployeeAuditAsync(EmployeeId, PerformedBy, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
         var logger = new FakeLogger<EmployeeAuditLogger>();
         var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
-        await auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Deactivated, cancellationToken: TestContext.Current.CancellationToken);
+        await auditLogger.LogAsync(EmployeeId, PerformedBy, AuditAction.Deactivated, cancellationToken: TestContext.Current.CancellationToken);
 
         dbUtils.Verify(
-            d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()),
+            d => d.LogEmployeeAuditAsync(EmployeeId, PerformedBy, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -50,29 +50,29 @@ public class EmployeeAuditLoggerTests
     // mocks IEmployeeAuditLogger away, so this is the only place that actually exercises
     // that swallow-and-log behavior against the real class.
     [Fact]
-    public async Task Log_SwallowsAnyExceptionFromTheDbLayer_InsteadOfPropagatingIt()
+    public async Task LogAsync_SwallowsAnyExceptionFromTheDbLayer_InsteadOfPropagatingIt()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogEmployeeAuditAsync(EmployeeId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
         var logger = new FakeLogger<EmployeeAuditLogger>();
         var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
-        var exception = await Record.ExceptionAsync(() => auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken));
+        var exception = await Record.ExceptionAsync(() => auditLogger.LogAsync(EmployeeId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Null(exception);
     }
 
     [Fact]
-    public async Task Log_LogsAnError_WhenTheDbLayerThrows()
+    public async Task LogAsync_LogsAnError_WhenTheDbLayerThrows()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogEmployeeAudit(EmployeeId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogEmployeeAuditAsync(EmployeeId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
         var logger = new FakeLogger<EmployeeAuditLogger>();
         var auditLogger = new EmployeeAuditLogger(dbUtils.Object, logger);
 
-        await auditLogger.Log(EmployeeId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken);
+        await auditLogger.LogAsync(EmployeeId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken);
 
         var entry = Assert.Single(logger.Collector.GetSnapshot());
         Assert.Equal(LogLevel.Error, entry.Level);

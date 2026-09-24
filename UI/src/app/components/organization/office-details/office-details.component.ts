@@ -33,7 +33,7 @@ export class OfficeDetailsComponent {
     this.officeResource.hasValue() ? this.officeResource.value() : null,
   );
   readonly loading = this.officeResource.isLoading;
-  readonly error = computed(() => {
+  readonly loadError = computed(() => {
     if (!this.officeId()) return 'No office specified.';
     const error = this.officeResource.error();
     return error

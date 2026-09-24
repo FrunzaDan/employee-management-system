@@ -22,7 +22,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class OfficeService {
-  private readonly API_URL = `${environment.apiUrl}/api/office`;
+  private readonly apiUrl = `${environment.apiUrl}/api/office`;
 
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
@@ -30,7 +30,7 @@ export class OfficeService {
   private readonly requested = signal(false);
 
   private readonly officesResource = httpResource<GenericResponse<Office[]>>(
-    () => (this.requested() ? `${this.API_URL}/all` : undefined),
+    () => (this.requested() ? `${this.apiUrl}/all` : undefined),
   );
 
   // hasValue() guards the read: value() throws while the resource is in error.
@@ -66,7 +66,7 @@ export class OfficeService {
    */
   fetchOffices(): Observable<Office[]> {
     return this.http
-      .get<GenericResponse<Office[]>>(`${this.API_URL}/all`)
+      .get<GenericResponse<Office[]>>(`${this.apiUrl}/all`)
       .pipe(map((response) => response.data ?? []));
   }
 
@@ -74,7 +74,7 @@ export class OfficeService {
   getOffice(officeId: string): Observable<Office> {
     const params = new HttpParams().set('officeId', officeId);
     return this.http
-      .get<GenericResponse<Office>>(`${this.API_URL}/get`, { params })
+      .get<GenericResponse<Office>>(`${this.apiUrl}/get`, { params })
       .pipe(
         map((response) => {
           if (!response.data) throw new Error('Office not found.');
@@ -87,7 +87,7 @@ export class OfficeService {
   getEmployees(officeId: string): Observable<EmployeeSummary[]> {
     const params = new HttpParams().set('officeId', officeId);
     return this.http
-      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, {
+      .get<GenericResponse<EmployeeSummary[]>>(`${this.apiUrl}/employees`, {
         params,
       })
       .pipe(map((response) => response.data ?? []));
@@ -95,10 +95,10 @@ export class OfficeService {
 
   createOffice(office: Partial<Office>): Observable<GenericResponse<object>> {
     return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/create`, office)
+      .post<GenericResponse<object>>(`${this.apiUrl}/create`, office)
       .pipe(
         tap(() => {
-          this.notificationService.show('Office created successfully.');
+          this.notificationService.show('Office added successfully.');
           this.loadOffices();
         }),
       );
@@ -106,7 +106,7 @@ export class OfficeService {
 
   updateOffice(office: Partial<Office>): Observable<GenericResponse<object>> {
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/update`, office)
+      .patch<GenericResponse<object>>(`${this.apiUrl}/update`, office)
       .pipe(
         tap(() => {
           this.notificationService.show('Office updated successfully.');
@@ -118,7 +118,7 @@ export class OfficeService {
   deleteOffice(officeId: string): Observable<GenericResponse<object>> {
     const params = new HttpParams().set('officeId', officeId);
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
+      .delete<GenericResponse<object>>(`${this.apiUrl}/delete`, { params })
       .pipe(
         tap(() => {
           this.notificationService.show('Office deleted successfully.');

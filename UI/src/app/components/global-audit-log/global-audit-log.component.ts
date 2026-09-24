@@ -21,8 +21,8 @@ export class GlobalAuditLogComponent implements OnInit {
   private readonly globalAuditLogService = inject(GlobalAuditLogService);
 
   readonly entries = this.globalAuditLogService.entries;
-  readonly isLoading = this.globalAuditLogService.loading;
-  readonly errorMessage = this.globalAuditLogService.error;
+  readonly loading = this.globalAuditLogService.loading;
+  readonly loadError = this.globalAuditLogService.error;
   readonly totalItems = this.globalAuditLogService.totalItems;
 
   readonly pageSize = 50;

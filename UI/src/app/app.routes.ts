@@ -1,12 +1,6 @@
-import { inject } from '@angular/core';
-import { CanActivateFn, Routes } from '@angular/router';
-import { AuthGuardService } from './services/auth-guard.service';
+import { Routes } from '@angular/router';
+import { authGuard } from './services/auth.guard';
 import { unsavedChangesGuard } from './services/unsaved-changes.guard';
-
-const authGuardFn: CanActivateFn = () => {
-  const authService = inject(AuthGuardService);
-  return authService.canActivate();
-};
 
 // Every page is lazy-loaded so the initial bundle only carries the shell;
 // `title` feeds AppTitleStrategy (document title = WCAG 2.4.2).
@@ -21,17 +15,14 @@ export const routes: Routes = [
   },
   {
     path: '',
+    redirectTo: 'employees',
     pathMatch: 'full',
-    loadComponent: () =>
-      import('./components/home/home.component').then((m) => m.HomeComponent),
-    canActivate: [authGuardFn],
-    title: 'Employees',
   },
   {
     path: 'employees',
     loadComponent: () =>
       import('./components/home/home.component').then((m) => m.HomeComponent),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Employees',
   },
   {
@@ -40,9 +31,9 @@ export const routes: Routes = [
       import('./components/create-employee/create-employee.component').then(
         (m) => m.CreateEmployeeComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     canDeactivate: [unsavedChangesGuard],
-    title: 'Register employee',
+    title: 'Add employee',
   },
   {
     path: 'employees/update/:employeeId',
@@ -50,7 +41,7 @@ export const routes: Routes = [
       import('./components/update-employee/update-employee.component').then(
         (m) => m.UpdateEmployeeComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     canDeactivate: [unsavedChangesGuard],
     title: 'Edit employee',
   },
@@ -60,7 +51,7 @@ export const routes: Routes = [
       import('./components/about/about.component').then(
         (m) => m.AboutComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'About',
   },
   {
@@ -69,7 +60,7 @@ export const routes: Routes = [
       import('./components/employee-details/employee-details.component').then(
         (m) => m.EmployeeDetailsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Employee details',
   },
   {
@@ -78,7 +69,7 @@ export const routes: Routes = [
       import('./components/global-audit-log/global-audit-log.component').then(
         (m) => m.GlobalAuditLogComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Audit log',
   },
   {
@@ -87,7 +78,7 @@ export const routes: Routes = [
       import('./components/organization/offices/offices.component').then(
         (m) => m.OfficesComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Offices',
   },
   {
@@ -96,7 +87,7 @@ export const routes: Routes = [
       import('./components/organization/office-details/office-details.component').then(
         (m) => m.OfficeDetailsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Office details',
   },
   {
@@ -105,7 +96,7 @@ export const routes: Routes = [
       import('./components/organization/departments/departments.component').then(
         (m) => m.DepartmentsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Departments',
   },
   {
@@ -114,7 +105,7 @@ export const routes: Routes = [
       import('./components/organization/department-details/department-details.component').then(
         (m) => m.DepartmentDetailsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Department details',
   },
   {
@@ -123,7 +114,7 @@ export const routes: Routes = [
       import('./components/organization/cost-centers/cost-centers.component').then(
         (m) => m.CostCentersComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Cost centers',
   },
   {
@@ -132,7 +123,7 @@ export const routes: Routes = [
       import('./components/organization/cost-center-details/cost-center-details.component').then(
         (m) => m.CostCenterDetailsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Cost center details',
   },
   {

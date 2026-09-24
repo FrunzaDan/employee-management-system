@@ -7,7 +7,7 @@ namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 
 public class EmployeeUpdating(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> UpdateEmployeeFunction(UpdateEmployeeRequest request, string performedBy,
+    public async Task<ResponseModel<object>> UpdateEmployeeAsync(UpdateEmployeeRequest request, string performedBy,
         CancellationToken cancellationToken = default)
     {
         if (request.EmployeeId == Guid.Empty)
@@ -40,12 +40,12 @@ public class EmployeeUpdating(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger
                 return new ResponseModel<object>(400, addressLengthError);
         }
 
-        var response = await dbUtils.UpdateEmployee(request, cancellationToken);
+        var response = await dbUtils.UpdateEmployeeAsync(request, cancellationToken);
 
         // Not forwarding cancellationToken: the edit already succeeded, so the audit write
         // should still be attempted even if the client has since disconnected.
         if (response.Status == 200)
-            await auditLogger.Log(request.EmployeeId, performedBy, AuditAction.Edited, DescribeChangedFields(request));
+            await auditLogger.LogAsync(request.EmployeeId, performedBy, AuditAction.Edited, DescribeChangedFields(request));
 
         return response;
     }

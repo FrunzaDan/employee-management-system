@@ -5,6 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   CreateEmployeeRequest,
@@ -251,60 +252,24 @@ describe('EmployeeService', () => {
   });
 
   describe('getEmployee', () => {
-    const select = async (employee: Employee) => {
-      service.getEmployee(employee.employeeId);
-      TestBed.tick();
+    it('GETs one employee by id and emits it', async () => {
+      const employee = buildEmployee();
+
+      const result = firstValueFrom(service.getEmployee(employee.employeeId));
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/get`);
       expect(req.request.params.get('searchTerm')).toBe(employee.employeeId);
       req.flush({ status: 200, responseMessage: 'ok', data: employee });
-      await settle();
-    };
 
-    it('loads the selected employee by id', async () => {
-      const employee = buildEmployee();
-
-      await select(employee);
-
-      expect(service.selectedEmployee()).toEqual(employee);
-      expect(service.selectedEmployeeLoading()).toBe(false);
-      expect(service.selectedEmployeeError()).toBeNull();
+      expect(await result).toEqual(employee);
     });
 
-    it('fetches again when asked for the employee already selected', async () => {
-      await select(buildEmployee());
-
-      await select(buildEmployee({ firstName: 'Fresh' }));
-
-      expect(service.selectedEmployee()?.firstName).toBe('Fresh');
-    });
-
-    it('names the failed load on a server error', async () => {
-      service.getEmployee('employee-1');
-      TestBed.tick();
+    it('errors when the response carries no employee', async () => {
+      const result = firstValueFrom(service.getEmployee('employee-1'));
       httpMock
         .expectOne((r) => r.url === `${API_URL}/get`)
-        .flush(null, { status: 500, statusText: 'Server Error' });
-      await settle();
+        .flush({ status: 200, responseMessage: 'ok', data: null });
 
-      expect(service.selectedEmployee()).toBeNull();
-      expect(service.selectedEmployeeError()).toBe(
-        'Failed to load the employee (500). Please try again.',
-      );
-    });
-
-    it('deactivating the selected employee updates it even when no list is loaded', async () => {
-      vi.spyOn(console, 'error').mockImplementation(() => {});
-      await select(buildEmployee());
-
-      service.deactivateEmployee('employee-1');
-      httpMock
-        .expectOne((r) => r.url === `${API_URL}/deactivate`)
-        .flush({ status: 200, responseMessage: 'ok' });
-
-      expect(service.selectedEmployee()?.status).toBe(
-        EmployeeStatus.Deactivated,
-      );
-      expect(service.activationError()).toBeNull();
+      await expect(result).rejects.toThrow('Employee not found.');
     });
   });
 
@@ -348,7 +313,7 @@ describe('EmployeeService', () => {
       });
 
       expect(notificationShow).toHaveBeenCalledWith(
-        'Employee registered successfully.',
+        'Employee added successfully.',
       );
     });
 
@@ -548,14 +513,14 @@ describe('EmployeeService', () => {
       );
     });
 
-    it('sets a not-found error and skips notification when the employee is not in the loaded list', () => {
+    it('succeeds and notifies even when the employee is not in the loaded list (e.g. from the details page)', () => {
       service.deactivateEmployee('missing-employeeId');
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
         .flush({ status: 200, responseMessage: 'ok' });
 
-      expect(notificationShow).not.toHaveBeenCalled();
-      expect(service.activationError()).toContain('not found locally');
+      expect(notificationShow).toHaveBeenCalled();
+      expect(service.activationError()).toBeNull();
     });
 
     it('does not retry a definitive 4xx error and surfaces the server message', () => {

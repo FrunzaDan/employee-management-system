@@ -6,7 +6,7 @@ import {
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { SalaryHistoryEntry } from '../interfaces/salary-history';
+import { Salary } from '../interfaces/salary';
 import { NotificationService } from './notification.service';
 import { SalaryHistoryService } from './salary-history.service';
 
@@ -18,9 +18,7 @@ describe('SalaryHistoryService', () => {
   const API_URL = `${environment.apiUrl}/api/employee/salary-history`;
   const urlFor = (employeeId: string) => `${API_URL}?employeeId=${employeeId}`;
 
-  const buildEntry = (
-    overrides: Partial<SalaryHistoryEntry> = {},
-  ): SalaryHistoryEntry => ({
+  const buildEntry = (overrides: Partial<Salary> = {}): Salary => ({
     employeeSalaryId: 1,
     employeeId: 'employee-1',
     grossSalary: 7000,
@@ -50,7 +48,7 @@ describe('SalaryHistoryService', () => {
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
   const load = (employeeId: string) => {
-    service.loadHistory(employeeId);
+    service.loadSalaryHistory(employeeId);
     TestBed.tick();
   };
 

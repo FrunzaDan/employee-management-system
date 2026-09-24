@@ -1,7 +1,7 @@
 import { IsoDate, IsoDateTime } from './iso-date';
 
 // One EmployeeSalary row: the salary history is append-only.
-export interface SalaryHistoryEntry {
+export interface Salary {
   employeeSalaryId: number;
   employeeId: string;
   grossSalary: number;
@@ -11,6 +11,6 @@ export interface SalaryHistoryEntry {
 
 // POST /api/employee/salary-history. No employeeSalaryId or createdAt: the DB sets both.
 export type CreateSalaryRequest = Pick<
-  SalaryHistoryEntry,
+  Salary,
   'employeeId' | 'grossSalary' | 'effectiveDate'
 >;

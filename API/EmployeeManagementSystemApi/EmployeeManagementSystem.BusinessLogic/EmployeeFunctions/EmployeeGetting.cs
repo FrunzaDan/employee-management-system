@@ -14,7 +14,7 @@ public class EmployeeGetting(IDbUtils dbUtils)
     // response — generous enough that no real local/demo dataset will ever hit it.
     private const int MaxExportRows = 5000;
 
-    public async Task<ResponseModel<EmployeeModel>> GetEmployeeFunction(string? searchTerm,
+    public async Task<ResponseModel<EmployeeModel>> GetEmployeeAsync(string? searchTerm,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
@@ -25,10 +25,10 @@ public class EmployeeGetting(IDbUtils dbUtils)
             return new ResponseModel<EmployeeModel>(404,
                 "No valid search variable was provided! It must be a employee ID, phone number, or email.");
 
-        return await dbUtils.GetEmployee(lookup, cancellationToken);
+        return await dbUtils.GetEmployeeAsync(lookup, cancellationToken);
     }
 
-    public async Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployeesFunction(GetEmployeesRequest request,
+    public async Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployeesAsync(GetEmployeesRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.PageNumber < 1)
@@ -42,14 +42,14 @@ public class EmployeeGetting(IDbUtils dbUtils)
         if (validationError != null)
             return new ResponseModel<PagedResponse<EmployeeModel>>(400, validationError);
 
-        return await dbUtils.GetEmployees(request, cancellationToken);
+        return await dbUtils.GetEmployeesAsync(request, cancellationToken);
     }
 
     // Exports the full search/sort result (capped at MaxExportRows), not just one
     // page — it reuses Employee_List via the same dbUtils.GetEmployees call the
     // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
     // filtering/sorting SQL stays in exactly one place.
-    public async Task<ResponseModel<string>> GetEmployeesForExportFunction(ExportEmployeesRequest request,
+    public async Task<ResponseModel<string>> GetEmployeesForExportAsync(ExportEmployeesRequest request,
         CancellationToken cancellationToken = default)
     {
         var pagedRequest = new GetEmployeesRequest
@@ -65,7 +65,7 @@ public class EmployeeGetting(IDbUtils dbUtils)
         if (validationError != null)
             return new ResponseModel<string>(400, validationError);
 
-        var response = await dbUtils.GetEmployees(pagedRequest, cancellationToken);
+        var response = await dbUtils.GetEmployeesAsync(pagedRequest, cancellationToken);
         if (response is not { Status: 200, Data: { } paged })
             return new ResponseModel<string>(response.Status, response.ResponseMessage);
 
@@ -91,16 +91,16 @@ public class EmployeeGetting(IDbUtils dbUtils)
         return null;
     }
 
-    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLogFunction(Guid employeeId,
+    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLogAsync(Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         if (employeeId == Guid.Empty)
             return new ResponseModel<IReadOnlyList<AuditLogEntry>>(400, "A valid employee ID is required.");
 
-        return await dbUtils.GetEmployeeAuditLog(employeeId, cancellationToken);
+        return await dbUtils.GetEmployeeAuditLogAsync(employeeId, cancellationToken);
     }
 
-    public async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllAuditLogFunction(int pageNumber,
+    public async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLogAsync(int pageNumber,
         int pageSize, CancellationToken cancellationToken = default)
     {
         if (pageNumber < 1)
@@ -110,7 +110,7 @@ public class EmployeeGetting(IDbUtils dbUtils)
             return new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(400,
                 $"Page size must be between 1 and {MaxPageSize}.");
 
-        return await dbUtils.GetAllEmployeeAuditLog(pageNumber, pageSize, cancellationToken);
+        return await dbUtils.GetAllEmployeeAuditLogAsync(pageNumber, pageSize, cancellationToken);
     }
 
     // Picks the one key Employee_Get should seek on, from the search term's shape: GUID

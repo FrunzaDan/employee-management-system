@@ -18,7 +18,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class CostCenterService {
-  private readonly API_URL = `${environment.apiUrl}/api/cost-center`;
+  private readonly apiUrl = `${environment.apiUrl}/api/cost-center`;
 
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
@@ -27,7 +27,7 @@ export class CostCenterService {
 
   private readonly costCentersResource = httpResource<
     GenericResponse<CostCenter[]>
-  >(() => (this.requested() ? `${this.API_URL}/all` : undefined));
+  >(() => (this.requested() ? `${this.apiUrl}/all` : undefined));
 
   // hasValue() guards the read: value() throws while the resource is in error.
   readonly costCenters = computed(() =>
@@ -57,7 +57,7 @@ export class CostCenterService {
   /** See OfficeService.fetchOffices for why this exists alongside loadCostCenters. */
   fetchCostCenters(): Observable<CostCenter[]> {
     return this.http
-      .get<GenericResponse<CostCenter[]>>(`${this.API_URL}/all`)
+      .get<GenericResponse<CostCenter[]>>(`${this.apiUrl}/all`)
       .pipe(map((response) => response.data ?? []));
   }
 
@@ -65,7 +65,7 @@ export class CostCenterService {
   getCostCenter(costCenterId: string): Observable<CostCenter> {
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .get<GenericResponse<CostCenter>>(`${this.API_URL}/get`, { params })
+      .get<GenericResponse<CostCenter>>(`${this.apiUrl}/get`, { params })
       .pipe(
         map((response) => {
           if (!response.data) throw new Error('Cost center not found.');
@@ -78,7 +78,7 @@ export class CostCenterService {
   getEmployees(costCenterId: string): Observable<EmployeeSummary[]> {
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, {
+      .get<GenericResponse<EmployeeSummary[]>>(`${this.apiUrl}/employees`, {
         params,
       })
       .pipe(map((response) => response.data ?? []));
@@ -88,10 +88,10 @@ export class CostCenterService {
     costCenter: Partial<CostCenter>,
   ): Observable<GenericResponse<object>> {
     return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/create`, costCenter)
+      .post<GenericResponse<object>>(`${this.apiUrl}/create`, costCenter)
       .pipe(
         tap(() => {
-          this.notificationService.show('Cost center created successfully.');
+          this.notificationService.show('Cost center added successfully.');
           this.loadCostCenters();
         }),
       );
@@ -101,7 +101,7 @@ export class CostCenterService {
     costCenter: Partial<CostCenter>,
   ): Observable<GenericResponse<object>> {
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/update`, costCenter)
+      .patch<GenericResponse<object>>(`${this.apiUrl}/update`, costCenter)
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center updated successfully.');
@@ -113,7 +113,7 @@ export class CostCenterService {
   deleteCostCenter(costCenterId: string): Observable<GenericResponse<object>> {
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
+      .delete<GenericResponse<object>>(`${this.apiUrl}/delete`, { params })
       .pipe(
         tap(() => {
           this.notificationService.show('Cost center deleted successfully.');

@@ -18,7 +18,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class DepartmentService {
-  private readonly API_URL = `${environment.apiUrl}/api/department`;
+  private readonly apiUrl = `${environment.apiUrl}/api/department`;
 
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
@@ -27,7 +27,7 @@ export class DepartmentService {
 
   private readonly departmentsResource = httpResource<
     GenericResponse<Department[]>
-  >(() => (this.requested() ? `${this.API_URL}/all` : undefined));
+  >(() => (this.requested() ? `${this.apiUrl}/all` : undefined));
 
   // hasValue() guards the read: value() throws while the resource is in error.
   readonly departments = computed(() =>
@@ -57,7 +57,7 @@ export class DepartmentService {
   /** See OfficeService.fetchOffices for why this exists alongside loadDepartments. */
   fetchDepartments(): Observable<Department[]> {
     return this.http
-      .get<GenericResponse<Department[]>>(`${this.API_URL}/all`)
+      .get<GenericResponse<Department[]>>(`${this.apiUrl}/all`)
       .pipe(map((response) => response.data ?? []));
   }
 
@@ -65,7 +65,7 @@ export class DepartmentService {
   getDepartment(departmentId: string): Observable<Department> {
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http
-      .get<GenericResponse<Department>>(`${this.API_URL}/get`, { params })
+      .get<GenericResponse<Department>>(`${this.apiUrl}/get`, { params })
       .pipe(
         map((response) => {
           if (!response.data) throw new Error('Department not found.');
@@ -78,7 +78,7 @@ export class DepartmentService {
   getEmployees(departmentId: string): Observable<EmployeeSummary[]> {
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http
-      .get<GenericResponse<EmployeeSummary[]>>(`${this.API_URL}/employees`, {
+      .get<GenericResponse<EmployeeSummary[]>>(`${this.apiUrl}/employees`, {
         params,
       })
       .pipe(map((response) => response.data ?? []));
@@ -88,10 +88,10 @@ export class DepartmentService {
     department: Partial<Department>,
   ): Observable<GenericResponse<object>> {
     return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/create`, department)
+      .post<GenericResponse<object>>(`${this.apiUrl}/create`, department)
       .pipe(
         tap(() => {
-          this.notificationService.show('Department created successfully.');
+          this.notificationService.show('Department added successfully.');
           this.loadDepartments();
         }),
       );
@@ -101,7 +101,7 @@ export class DepartmentService {
     department: Partial<Department>,
   ): Observable<GenericResponse<object>> {
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/update`, department)
+      .patch<GenericResponse<object>>(`${this.apiUrl}/update`, department)
       .pipe(
         tap(() => {
           this.notificationService.show('Department updated successfully.');
@@ -113,7 +113,7 @@ export class DepartmentService {
   deleteDepartment(departmentId: string): Observable<GenericResponse<object>> {
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
+      .delete<GenericResponse<object>>(`${this.apiUrl}/delete`, { params })
       .pipe(
         tap(() => {
           this.notificationService.show('Department deleted successfully.');

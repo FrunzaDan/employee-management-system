@@ -17,7 +17,7 @@
       ></span
       >Loading cost center…
     </div>
-  } @else if (error(); as err) {
+  } @else if (loadError(); as err) {
     <div class="alert alert-danger" role="alert">{{ err }}</div>
   } @else if (costCenter(); as cc) {
     <div class="card app-card mb-4">

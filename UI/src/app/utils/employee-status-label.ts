@@ -1,9 +1,7 @@
 import { EmployeeStatus } from '../interfaces/employee';
 
-// Shared by any page that renders an EmployeeSummary/Employee status badge
-// outside the main employee list (which keeps its own Map for historical
-// reasons) — e.g. the organization admin pages' "employees in this office/
-// department/cost center" lists.
+// The one place an employee status code becomes its label: the employee list, the
+// details page and the organization pages' employee lists all render it.
 export function employeeStatusLabel(status: EmployeeStatus): string {
   switch (status) {
     case EmployeeStatus.Active:

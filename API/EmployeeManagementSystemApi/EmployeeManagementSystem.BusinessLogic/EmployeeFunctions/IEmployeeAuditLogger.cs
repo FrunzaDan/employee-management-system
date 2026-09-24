@@ -4,6 +4,6 @@ namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 
 public interface IEmployeeAuditLogger
 {
-    Task Log(Guid employeeId, string performedBy, AuditAction action, string? details = null,
+    Task LogAsync(Guid employeeId, string performedBy, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default);
 }

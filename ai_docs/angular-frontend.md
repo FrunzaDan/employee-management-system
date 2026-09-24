@@ -10,7 +10,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - `src/app/app.config.ts`, `app.routes.ts`, `app.ts` (the shell).
 - `src/app/services/`:
   - `employee`, `salary-history`, `office`, `department`, `cost-center`, `audit-log`, `global-audit-log`;
-  - the auth pieces (`auth-guard`, `verify-token`, `auth-token.interceptor`, `auth-error.interceptor`, `session-storage`);
+  - the auth pieces (`auth.guard`, `verify-token`, `auth-token.interceptor`, `auth-error.interceptor`, `session-storage`);
   - the shared helpers (`notification`, `confirm-dialog`, `api-logger`, `health`, `unsaved-changes.guard`).
 - `src/app/components/` — one folder per page or widget. `organization/` holds the admin and details pages for offices, departments and cost centers.
 - `src/app/interfaces/` — mirrors of the API's JSON.
@@ -41,7 +41,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 | Route | Component |
 |---|---|
 | `/login` | `user-login` |
-| `/`, `/employees` | `home` → `employee-list` |
+| `/employees` (`/` redirects here) | `home` → `employee-list` |
 | `/employees/:employeeId` | `employee-details` (record, job info, salary history, audit trail) |
 | `/create-employee`, `/employees/update/:employeeId` | `create-employee`, `update-employee` |
 | `/offices`, `/departments`, `/cost-centers` | admin pages: a table with one inline add/edit form and "Quickly view employees" |
@@ -58,8 +58,8 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - **`EmployeeService`:**
   - **List:** `loadEmployees(params)` sets a params signal, and `employeesResource` refetches on each change. A newer request cancels the older one.
   - **While loading:** a `linkedSignal` keeps the last page on screen during a load and after a failed one.
-  - **Selected employee:** `getEmployee(id)` drives `selectedEmployeeResource`, which has its own `selectedEmployeeLoading`/`selectedEmployeeError`.
-  - **After a change:** an update, status change or delete is written straight into the loaded values, with no refetch.
+  - **One employee:** `getEmployee(id)` returns an Observable. `employee-details` and `update-employee` each key an `rxResource` on the route id; the details page reloads it after a deactivate, a reactivate or a new salary entry.
+  - **After a change:** an update, status change or delete is written straight into the loaded list, with no refetch.
 - **Office, department and cost-center services:**
   - the list is an `httpResource`, reloaded after each mutation;
   - `getEmployees(id)` and `fetchX()` are one-off Observables;
@@ -78,8 +78,17 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - `form()`, `[formField]` and `[formRoot]` with `submission: { action, onInvalid }`. There's no `FormGroup` or `ngModel`.
 - `employee-form-fields/employee-form.ts` holds the model, the schema and the mappers.
 - The "Job information" card (hire date, office, department, cost center) is required. `EmployeeFormFieldsComponent` loads its selects.
-- `update-employee`'s model is a `linkedSignal` from the selected employee.
+- `update-employee`'s model is a `linkedSignal` from the employee its `rxResource` loads.
 - **Unsaved changes:** `unsavedChangesGuard` plus `beforeunload`. "Dirty" means the values differ from the baseline.
+
+### Naming (same in all three apps)
+
+- **Page state:** `loading` and `loadError` for the data the page itself loads. Actions get their own: `saveError`, `deleteError`, `loginError`.
+- **Service verbs:** `loadX()` starts a resource the service holds and returns nothing. `getX()` and `fetchX()` return an Observable. Writes are `createX`, `updateX` and `deleteX`, plus `…Silently` variants.
+- **Service fields:** private resources end in `Resource`, and the base URL field is `apiUrl`.
+- **Lists:** `sortColumn` and `sortDirection` (`'asc' | 'desc'`), with `SORT_LABELS` for the table caption. Bulk selection uses `selectedXIds`, `isSelected`, `toggleSelection`, `allSelected`, `toggleSelectAll` and `bulkActionInProgress`.
+- **Status labels:** `employeeStatusLabel()` in `utils/employee-status-label.ts` is the only place a status code becomes text.
+- **Page titles and buttons:** "Add employee" and "Edit employee"; the edit form's button is "Save changes".
 
 ### User feedback (same in all three apps)
 

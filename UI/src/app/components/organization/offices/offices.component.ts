@@ -32,7 +32,7 @@ export class OfficesComponent implements OnInit {
 
   readonly offices = this.officeService.offices;
   readonly loading = this.officeService.loading;
-  readonly error = this.officeService.error;
+  readonly loadError = this.officeService.error;
 
   readonly draft = signal<OfficeDraft | null>(null);
   readonly saving = signal(false);

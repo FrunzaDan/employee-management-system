@@ -10,12 +10,12 @@ namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 // swallowed and logged instead.
 public partial class EmployeeAuditLogger(IDbUtils dbUtils, ILogger<EmployeeAuditLogger> logger) : IEmployeeAuditLogger
 {
-    public async Task Log(Guid employeeId, string performedBy, AuditAction action, string? details = null,
+    public async Task LogAsync(Guid employeeId, string performedBy, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            await dbUtils.LogEmployeeAudit(employeeId, performedBy, action, details, cancellationToken);
+            await dbUtils.LogEmployeeAuditAsync(employeeId, performedBy, action, details, cancellationToken);
         }
         catch (Exception ex)
         {

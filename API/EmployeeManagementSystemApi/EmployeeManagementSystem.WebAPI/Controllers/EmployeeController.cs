@@ -22,23 +22,23 @@ public class EmployeeController(IEmployeeService employeeService) : ApiControlle
     [HttpPost("create")]
     public async Task<ActionResult<ResponseModel<Guid?>>> CreateEmployee(
         [FromBody] CreateEmployeeRequest request, CancellationToken cancellationToken) =>
-        Reply(await employeeService.CreateEmployee(request, Username, cancellationToken));
+        Reply(await employeeService.CreateEmployeeAsync(request, Username, cancellationToken));
 
     [HttpGet("get")]
     public async Task<ActionResult<ResponseModel<EmployeeModel>>> GetEmployee([FromQuery] string? searchTerm,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.GetEmployee(searchTerm, cancellationToken));
+        Reply(await employeeService.GetEmployeeAsync(searchTerm, cancellationToken));
 
     [HttpGet("all")]
     public async Task<ActionResult<ResponseModel<PagedResponse<EmployeeModel>>>> GetEmployees(
         [FromQuery] GetEmployeesRequest request, CancellationToken cancellationToken) =>
-        Reply(await employeeService.GetEmployees(request, cancellationToken));
+        Reply(await employeeService.GetEmployeesAsync(request, cancellationToken));
 
     [HttpGet("export")]
     public async Task<IActionResult> ExportEmployees([FromQuery] ExportEmployeesRequest request,
         CancellationToken cancellationToken)
     {
-        var response = await employeeService.GetEmployeesForExport(request, cancellationToken);
+        var response = await employeeService.GetEmployeesForExportAsync(request, cancellationToken);
         if (response is not { Status: 200, Data: { } csv })
             return Reply(response);
 
@@ -49,42 +49,42 @@ public class EmployeeController(IEmployeeService employeeService) : ApiControlle
     [HttpGet("audit-log")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<AuditLogEntry>>>> GetEmployeeAuditLog(
         [FromQuery] Guid employeeId, CancellationToken cancellationToken) =>
-        Reply(await employeeService.GetEmployeeAuditLog(employeeId, cancellationToken));
+        Reply(await employeeService.GetEmployeeAuditLogAsync(employeeId, cancellationToken));
 
     [HttpGet("audit-log/all")]
     public async Task<ActionResult<ResponseModel<PagedResponse<GlobalAuditLogEntry>>>> GetAllEmployeeAuditLog(
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) =>
-        Reply(await employeeService.GetAllEmployeeAuditLog(pageNumber, pageSize, cancellationToken));
+        Reply(await employeeService.GetAllEmployeeAuditLogAsync(pageNumber, pageSize, cancellationToken));
 
     [HttpPatch("update")]
     public async Task<ActionResult<ResponseModel<object>>> UpdateEmployee([FromBody] UpdateEmployeeRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.UpdateEmployee(request, Username, cancellationToken));
+        Reply(await employeeService.UpdateEmployeeAsync(request, Username, cancellationToken));
 
     [HttpPatch("deactivate")]
     public async Task<ActionResult<ResponseModel<object>>> DeactivateEmployee([FromQuery] Guid employeeId,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.DeactivateEmployee(employeeId, Username, cancellationToken));
+        Reply(await employeeService.DeactivateEmployeeAsync(employeeId, Username, cancellationToken));
 
     [HttpPatch("reactivate")]
     public async Task<ActionResult<ResponseModel<object>>> ReactivateEmployee([FromQuery] Guid employeeId,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.ReactivateEmployee(employeeId, Username, cancellationToken));
+        Reply(await employeeService.ReactivateEmployeeAsync(employeeId, Username, cancellationToken));
 
     [HttpDelete("delete")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteEmployee([FromQuery] Guid employeeId,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.DeleteEmployee(employeeId, Username, cancellationToken));
+        Reply(await employeeService.DeleteEmployeeAsync(employeeId, Username, cancellationToken));
 
     [HttpGet("salary-history")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<SalaryModel>>>> GetEmployeeSalaryHistory(
         [FromQuery] Guid employeeId, CancellationToken cancellationToken) =>
-        Reply(await employeeService.GetEmployeeSalaryHistory(employeeId, cancellationToken));
+        Reply(await employeeService.GetEmployeeSalaryHistoryAsync(employeeId, cancellationToken));
 
     [HttpPost("salary-history")]
     public async Task<ActionResult<ResponseModel<object>>> CreateEmployeeSalary([FromBody] CreateSalaryRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.CreateEmployeeSalary(request, Username, cancellationToken));
+        Reply(await employeeService.CreateEmployeeSalaryAsync(request, Username, cancellationToken));
 
     // Explicit role check (not just the class-level [Authorize]) on top of a destructive,
     // untargeted action — wipes every audit row for every employee in one call. Today this
@@ -94,5 +94,5 @@ public class EmployeeController(IEmployeeService employeeService) : ApiControlle
     [HttpDelete("audit-log/all")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteAllEmployeeAuditLog(
         CancellationToken cancellationToken) =>
-        Reply(await employeeService.DeleteAllEmployeeAuditLog(cancellationToken));
+        Reply(await employeeService.DeleteAllEmployeeAuditLogAsync(cancellationToken));
 }

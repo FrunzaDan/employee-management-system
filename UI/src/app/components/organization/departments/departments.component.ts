@@ -27,7 +27,7 @@ export class DepartmentsComponent implements OnInit {
 
   readonly departments = this.departmentService.departments;
   readonly loading = this.departmentService.loading;
-  readonly error = this.departmentService.error;
+  readonly loadError = this.departmentService.error;
 
   readonly draft = signal<DepartmentDraft | null>(null);
   readonly saving = signal(false);

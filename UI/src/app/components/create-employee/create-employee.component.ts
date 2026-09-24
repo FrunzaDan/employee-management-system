@@ -34,7 +34,7 @@ export class CreateEmployeeComponent {
     () =>
       !this.saved() && isEmployeeFormDirty(this.model(), emptyEmployeeForm()),
   );
-  readonly errorMessage = signal<string | null>(null);
+  readonly saveError = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
 
   readonly employeeForm = form(this.model, employeeFormSchema, {
@@ -54,7 +54,7 @@ export class CreateEmployeeComponent {
   // Runs only when the form is valid (FormRoot -> submit()); the form's own
   // submitting() state replaces the old hand-rolled `loading` signal.
   private async save(): Promise<void> {
-    this.errorMessage.set(null);
+    this.saveError.set(null);
     this.invalidSummary.set(null);
 
     try {
@@ -68,7 +68,7 @@ export class CreateEmployeeComponent {
       await this.router.navigate(['/employees']);
     } catch (error) {
       // A 401 (session expired mid-form) is handled globally by authErrorInterceptor.
-      this.errorMessage.set(
+      this.saveError.set(
         extractErrorMessage(
           error as HttpErrorResponse,
           'Failed to add employee',

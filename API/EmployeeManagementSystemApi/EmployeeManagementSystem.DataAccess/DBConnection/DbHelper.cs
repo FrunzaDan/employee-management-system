@@ -108,7 +108,7 @@ public static class DbHelper
         command.Parameters.AddGuid("@CostCenterId", costCenterId);
     }
 
-    public static async Task<ResponseModel<EmployeeModel>> HandleResponseWithEmployee(SqlDataReader reader)
+    public static async Task<ResponseModel<EmployeeModel>> HandleResponseWithEmployeeAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<EmployeeModel>(404, "Employee not found.");
@@ -116,7 +116,7 @@ public static class DbHelper
         return new ResponseModel<EmployeeModel>(200, "Employee found.", MapEmployeeFromReader(reader));
     }
 
-    public static async Task<ResponseModel<PagedResponse<EmployeeModel>>> HandleResponseWithPagedEmployees(
+    public static async Task<ResponseModel<PagedResponse<EmployeeModel>>> HandleResponseWithPagedEmployeesAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
         var items = new List<EmployeeModel>();
@@ -137,7 +137,7 @@ public static class DbHelper
 
     // The standard (Result, Message) row every mutating proc returns: Result 0 = success,
     // anything else is the HTTP status to reply with.
-    public static async Task<ResponseModel<object>> HandleResponseWithMessage(SqlDataReader reader)
+    public static async Task<ResponseModel<object>> HandleResponseWithMessageAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             throw new InvalidOperationException("The stored procedure returned no (Result, Message) row.");
@@ -151,7 +151,7 @@ public static class DbHelper
 
     // Employee_Create and the org <Entity>_Create procs return the usual (Result, Message) row
     // plus the new row's DB-generated key in guidColumn, which is handed back as Data on success.
-    public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuid(SqlDataReader reader,
+    public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuidAsync(SqlDataReader reader,
         string guidColumn)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
@@ -164,7 +164,7 @@ public static class DbHelper
             : new ResponseModel<Guid?>(result, message ?? "Operation failed.");
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> HandleResponseWithAuditLogList(
+    public static async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> HandleResponseWithAuditLogListAsync(
         SqlDataReader reader)
     {
         var items = new List<AuditLogEntry>();
@@ -177,7 +177,7 @@ public static class DbHelper
 
     // EmployeeAuditLog_List returns two result sets: the total (one row), then the page. The total
     // comes first, on its own, so it's right even when the page is empty.
-    public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogList(
+    public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogListAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
         await reader.ReadAsync().ConfigureAwait(false);
@@ -193,7 +193,7 @@ public static class DbHelper
             new PagedResponse<GlobalAuditLogEntry>(items, totalItems, pageNumber, pageSize));
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<SalaryModel>>> HandleResponseWithSalaryList(
+    public static async Task<ResponseModel<IReadOnlyList<SalaryModel>>> HandleResponseWithSalaryListAsync(
         SqlDataReader reader)
     {
         var items = new List<SalaryModel>();
@@ -205,7 +205,7 @@ public static class DbHelper
             items);
     }
 
-    public static async Task<ResponseModel<OfficeModel>> HandleResponseWithOffice(SqlDataReader reader)
+    public static async Task<ResponseModel<OfficeModel>> HandleResponseWithOfficeAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<OfficeModel>(404, "Office not found.");
@@ -215,7 +215,7 @@ public static class DbHelper
 
     // Office_List additionally aggregates EmployeeCount/TotalGrossSalary, which the
     // single-entity Office_Get doesn't compute.
-    public static async Task<ResponseModel<IReadOnlyList<OfficeModel>>> HandleResponseWithOfficeList(
+    public static async Task<ResponseModel<IReadOnlyList<OfficeModel>>> HandleResponseWithOfficeListAsync(
         SqlDataReader reader)
     {
         var items = new List<OfficeModel>();
@@ -230,7 +230,7 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<OfficeModel>>(200, $"{items.Count} offices found.", items);
     }
 
-    public static async Task<ResponseModel<DepartmentModel>> HandleResponseWithDepartment(SqlDataReader reader)
+    public static async Task<ResponseModel<DepartmentModel>> HandleResponseWithDepartmentAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<DepartmentModel>(404, "Department not found.");
@@ -238,7 +238,7 @@ public static class DbHelper
         return new ResponseModel<DepartmentModel>(200, "Department found.", MapDepartmentFromReader(reader));
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<DepartmentModel>>> HandleResponseWithDepartmentList(
+    public static async Task<ResponseModel<IReadOnlyList<DepartmentModel>>> HandleResponseWithDepartmentListAsync(
         SqlDataReader reader)
     {
         var items = new List<DepartmentModel>();
@@ -253,7 +253,7 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<DepartmentModel>>(200, $"{items.Count} departments found.", items);
     }
 
-    public static async Task<ResponseModel<CostCenterModel>> HandleResponseWithCostCenter(SqlDataReader reader)
+    public static async Task<ResponseModel<CostCenterModel>> HandleResponseWithCostCenterAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<CostCenterModel>(404, "Cost center not found.");
@@ -261,7 +261,7 @@ public static class DbHelper
         return new ResponseModel<CostCenterModel>(200, "Cost center found.", MapCostCenterFromReader(reader));
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<CostCenterModel>>> HandleResponseWithCostCenterList(
+    public static async Task<ResponseModel<IReadOnlyList<CostCenterModel>>> HandleResponseWithCostCenterListAsync(
         SqlDataReader reader)
     {
         var items = new List<CostCenterModel>();
@@ -276,7 +276,7 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<CostCenterModel>>(200, $"{items.Count} cost centers found.", items);
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> HandleResponseWithEmployeeSummaryList(
+    public static async Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> HandleResponseWithEmployeeSummaryListAsync(
         SqlDataReader reader)
     {
         var items = new List<EmployeeSummaryModel>();
@@ -287,7 +287,7 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<EmployeeSummaryModel>>(200, $"{items.Count} employees found.", items);
     }
 
-    public static async Task<EmployerAuthData?> HandleEmployerAuthDataResponse(SqlDataReader reader)
+    public static async Task<EmployerAuthData?> HandleEmployerAuthDataResponseAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false)) return null;
 

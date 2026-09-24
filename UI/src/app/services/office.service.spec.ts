@@ -126,9 +126,7 @@ describe('OfficeService', () => {
     });
     await settle();
 
-    expect(notificationShow).toHaveBeenCalledWith(
-      'Office created successfully.',
-    );
+    expect(notificationShow).toHaveBeenCalledWith('Office added successfully.');
     expect(service.offices().map((o) => o.name)).toEqual(['Branch']);
   });
 

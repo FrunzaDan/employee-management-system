@@ -90,8 +90,8 @@
       ></span
       >Loading offices…
     </div>
-  } @else if (error()) {
-    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger" role="alert">{{ loadError() }}</div>
   } @else if (offices().length === 0) {
     <div class="app-card empty-state">No offices yet.</div>
   } @else {

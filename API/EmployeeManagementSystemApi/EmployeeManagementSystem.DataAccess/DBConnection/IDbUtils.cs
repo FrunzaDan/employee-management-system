@@ -4,40 +4,40 @@ namespace EmployeeManagementSystem.DataAccess.DBConnection;
 
 public interface IDbUtils
 {
-    public Task<ResponseModel<Guid?>> CreateEmployee(CreateEmployeeRequest employee, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<EmployeeModel>> GetEmployee(EmployeeLookup lookup, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployees(GetEmployeesRequest request, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> UpdateEmployee(UpdateEmployeeRequest employee, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> DeactivateEmployee(Guid employeeId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> ReactivateEmployee(Guid employeeId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> DeleteEmployee(Guid employeeId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<EmployerRole?>> CheckEmployerCredentialsFromDb(EmployerCredentials employerCredentials, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> LogEmployeeAudit(Guid employeeId, string performedBy, AuditAction action, string? details, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLog(Guid employeeId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLog(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> DeleteAllEmployeeAuditLog(CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateEmployeeAsync(CreateEmployeeRequest employee, CancellationToken cancellationToken = default);
+    Task<ResponseModel<EmployeeModel>> GetEmployeeAsync(EmployeeLookup lookup, CancellationToken cancellationToken = default);
+    Task<ResponseModel<PagedResponse<EmployeeModel>>> GetEmployeesAsync(GetEmployeesRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> UpdateEmployeeAsync(UpdateEmployeeRequest employee, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeactivateEmployeeAsync(Guid employeeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> ReactivateEmployeeAsync(Guid employeeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteEmployeeAsync(Guid employeeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<EmployerRole?>> CheckEmployerCredentialsFromDbAsync(EmployerCredentials employerCredentials, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> LogEmployeeAuditAsync(Guid employeeId, string performedBy, AuditAction action, string? details, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLogAsync(Guid employeeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLogAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteAllEmployeeAuditLogAsync(CancellationToken cancellationToken = default);
 
-    public Task<ResponseModel<object>> CreateEmployeeSalary(CreateSalaryRequest salary, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistory(Guid employeeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> CreateEmployeeSalaryAsync(CreateSalaryRequest salary, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistoryAsync(Guid employeeId, CancellationToken cancellationToken = default);
 
-    public Task<ResponseModel<Guid?>> CreateOffice(CreateOfficeRequest office, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<OfficeModel>> GetOffice(Guid officeId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<OfficeModel>>> GetOffices(CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> UpdateOffice(UpdateOfficeRequest office, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> DeleteOffice(Guid officeId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByOffice(Guid officeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateOfficeAsync(CreateOfficeRequest office, CancellationToken cancellationToken = default);
+    Task<ResponseModel<OfficeModel>> GetOfficeAsync(Guid officeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<OfficeModel>>> GetOfficesAsync(CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> UpdateOfficeAsync(UpdateOfficeRequest office, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteOfficeAsync(Guid officeId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByOfficeAsync(Guid officeId, CancellationToken cancellationToken = default);
 
-    public Task<ResponseModel<Guid?>> CreateDepartment(CreateDepartmentRequest department, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<DepartmentModel>> GetDepartment(Guid departmentId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<DepartmentModel>>> GetDepartments(CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> UpdateDepartment(UpdateDepartmentRequest department, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> DeleteDepartment(Guid departmentId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByDepartment(Guid departmentId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateDepartmentAsync(CreateDepartmentRequest department, CancellationToken cancellationToken = default);
+    Task<ResponseModel<DepartmentModel>> GetDepartmentAsync(Guid departmentId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<DepartmentModel>>> GetDepartmentsAsync(CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> UpdateDepartmentAsync(UpdateDepartmentRequest department, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteDepartmentAsync(Guid departmentId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByDepartmentAsync(Guid departmentId, CancellationToken cancellationToken = default);
 
-    public Task<ResponseModel<Guid?>> CreateCostCenter(CreateCostCenterRequest costCenter, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<CostCenterModel>> GetCostCenter(Guid costCenterId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<CostCenterModel>>> GetCostCenters(CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> UpdateCostCenter(UpdateCostCenterRequest costCenter, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> DeleteCostCenter(Guid costCenterId, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByCostCenter(Guid costCenterId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateCostCenterAsync(CreateCostCenterRequest costCenter, CancellationToken cancellationToken = default);
+    Task<ResponseModel<CostCenterModel>> GetCostCenterAsync(Guid costCenterId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<CostCenterModel>>> GetCostCentersAsync(CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> UpdateCostCenterAsync(UpdateCostCenterRequest costCenter, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteCostCenterAsync(Guid costCenterId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>> GetEmployeesByCostCenterAsync(Guid costCenterId, CancellationToken cancellationToken = default);
 }

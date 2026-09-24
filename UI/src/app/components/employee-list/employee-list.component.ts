@@ -1,21 +1,22 @@
-// employee-list.component.ts
-import {
-  Component,
-  OnInit,
-  computed,
-  effect,
-  signal,
-  Signal,
-  inject,
-} from '@angular/core';
+import { Component, OnInit, computed, signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { EmployeeService } from '../../services/employee.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { NotificationService } from '../../services/notification.service';
-import { Employee, EmployeeStatus } from '../../interfaces/employee';
+import { EmployeeStatus } from '../../interfaces/employee';
 import { extractErrorMessage } from '../../utils/extract-error-message';
+import { employeeStatusLabel } from '../../utils/employee-status-label';
+
+type EmployeeSortColumn = 'name' | 'email' | 'phoneNumber';
+
+// How each sort column reads in the table caption.
+const SORT_LABELS: Record<EmployeeSortColumn, string> = {
+  name: 'name',
+  email: 'email',
+  phoneNumber: 'phone number',
+};
 
 @Component({
   selector: 'app-employee-list',
@@ -24,15 +25,13 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   imports: [RouterLink],
 })
 export class EmployeeListComponent implements OnInit {
-  // Use dependency injection with inject()
   private readonly employeeService = inject(EmployeeService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
 
-  // Public signals for template
   readonly employees = this.employeeService.employees;
-  readonly isLoading = this.employeeService.loading;
-  readonly errorMessage = this.employeeService.error;
+  readonly loading = this.employeeService.loading;
+  readonly loadError = this.employeeService.error;
   readonly activationLoading = this.employeeService.activationLoading;
   readonly activationError = this.employeeService.activationError;
 
@@ -48,7 +47,7 @@ export class EmployeeListComponent implements OnInit {
   readonly selectedEmployeeIds = signal<ReadonlySet<string>>(new Set());
   readonly bulkActionInProgress = signal(false);
 
-  readonly allOnPageSelected = computed(
+  readonly allSelected = computed(
     () =>
       this.employees().length > 0 &&
       this.employees().every((c) =>
@@ -61,21 +60,16 @@ export class EmployeeListComponent implements OnInit {
   readonly exportLoading = this.employeeService.exportLoading;
   readonly exportError = this.employeeService.exportError;
 
-  // Register employeeStatus enum for better type checking
   readonly EmployeeStatus = EmployeeStatus;
 
-  readonly statusLabels = new Map<Employee['status'], string>([
-    [EmployeeStatus.Active, 'Active'],
-    [EmployeeStatus.Deactivated, 'Deactivated'],
-    [EmployeeStatus.Test, 'Test'],
-  ]);
+  readonly employeeStatusLabel = employeeStatusLabel;
 
   // Search, sorting, and pagination are all server-side now: every change to
   // any of these re-fetches just the relevant page from the API rather than
   // filtering/sorting an already-loaded full list in memory (see
   // EmployeeService.loadEmployees and Employee_List).
   readonly searchTerm = signal('');
-  readonly sortColumn = signal<'name' | 'email' | 'phoneNumber'>('name');
+  readonly sortColumn = signal<EmployeeSortColumn>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
   readonly pageSize = 50;
@@ -89,47 +83,20 @@ export class EmployeeListComponent implements OnInit {
   // Spoken by the polite live region so a screen-reader user hears the outcome
   // of a search / page change without hunting for it.
   readonly resultsAnnouncement = computed(() => {
-    if (this.isLoading()) return 'Loading employees';
+    if (this.loading()) return 'Loading employees';
     const total = this.totalItems();
     return `${total} ${total === 1 ? 'employee' : 'employees'} found`;
   });
 
   readonly tableCaption = computed(
     () =>
-      `Employees, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${this.sortColumn()} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
+      `Employees, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${SORT_LABELS[this.sortColumn()]} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
   );
 
   // Debounced so typing doesn't fire an API call per keystroke — the search
   // used to be a synchronous in-memory filter, but now it's a network call.
   private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   private static readonly SEARCH_DEBOUNCE_MS = 300;
-
-  // Computed signal for duplicate GUIDs
-  readonly duplicateGuids = computed(() => {
-    const employees = this.employees();
-    const employeeIdCount = new Map<string, number>();
-
-    employees.forEach((employee) => {
-      const count = employeeIdCount.get(employee.employeeId) ?? 0;
-      employeeIdCount.set(employee.employeeId, count + 1);
-    });
-
-    return Array.from(employeeIdCount.entries())
-      .filter(([_, count]) => count > 1)
-      .map(([employeeId]) => employeeId);
-  });
-
-  constructor() {
-    // duplicateGuids() is a computed signal, so re-run this check whenever
-    // it actually changes instead of only once, synchronously, right after
-    // the (async) loadEmployees() call in ngOnInit.
-    effect(() => {
-      const duplicates = this.duplicateGuids();
-      if (duplicates.length > 0) {
-        console.warn('Duplicate GUIDs found:', duplicates);
-      }
-    });
-  }
 
   onSearchInput(value: string): void {
     this.searchTerm.set(value);
@@ -152,14 +119,12 @@ export class EmployeeListComponent implements OnInit {
   }
 
   // Exposed on the <th> so assistive tech announces the current sort.
-  ariaSort(
-    column: 'name' | 'email' | 'phoneNumber',
-  ): 'ascending' | 'descending' | 'none' {
+  ariaSort(column: EmployeeSortColumn): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
   }
 
-  setSort(column: 'name' | 'email' | 'phoneNumber'): void {
+  setSort(column: EmployeeSortColumn): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -193,7 +158,6 @@ export class EmployeeListComponent implements OnInit {
     });
   }
 
-  // Employee action methods
   async deactivateEmployee(employeeId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this employee?',
@@ -246,7 +210,7 @@ export class EmployeeListComponent implements OnInit {
     this.selectedEmployeeIds.set(next);
   }
 
-  toggleSelectAllOnPage(checked: boolean): void {
+  toggleSelectAll(checked: boolean): void {
     const next = new Set(this.selectedEmployeeIds());
     for (const employee of this.employees()) {
       if (checked) {

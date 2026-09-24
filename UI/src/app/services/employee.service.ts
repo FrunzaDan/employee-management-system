@@ -11,7 +11,7 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { Observable, retry, tap, throwError, timer } from 'rxjs';
+import { Observable, map, retry, tap, throwError, timer } from 'rxjs';
 import {
   CreateEmployeeRequest,
   Employee,
@@ -53,13 +53,14 @@ const TRANSIENT_ERROR_RETRY_CONFIG = {
 };
 
 // Every /api/employee call, in one service (like Imalo's ScholarService). It also holds
-// the loaded page of employees and the selected employee, and keeps them in step with
-// each successful update, status change and delete.
+// the loaded page of employees and keeps it in step with each successful update,
+// status change and delete. A single employee is read with getEmployee(), which the details
+// and edit pages key their own rxResource on.
 @Injectable({
   providedIn: 'root',
 })
 export class EmployeeService {
-  private readonly API_URL = `${environment.apiUrl}/api/employee`;
+  private readonly apiUrl = `${environment.apiUrl}/api/employee`;
 
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
@@ -79,7 +80,7 @@ export class EmployeeService {
     const params = this.listParams();
     if (!params) return undefined;
     return {
-      url: `${this.API_URL}/all`,
+      url: `${this.apiUrl}/all`,
       params: {
         pageNumber: params.pageNumber,
         pageSize: params.pageSize,
@@ -124,33 +125,6 @@ export class EmployeeService {
       : null;
   });
 
-  // The employee the details/edit pages show; same shape as ProductService's details.
-  private readonly selectedEmployeeId = signal<string | undefined>(undefined);
-
-  private readonly selectedEmployeeResource = httpResource<
-    GenericResponse<Employee>
-  >(() => {
-    const employeeId = this.selectedEmployeeId();
-    if (!employeeId) return undefined;
-    return { url: `${this.API_URL}/get`, params: { searchTerm: employeeId } };
-  });
-
-  readonly selectedEmployee = computed(() =>
-    this.selectedEmployeeResource.hasValue()
-      ? (this.selectedEmployeeResource.value().data ?? null)
-      : null,
-  );
-  readonly selectedEmployeeLoading = this.selectedEmployeeResource.isLoading;
-  readonly selectedEmployeeError = computed(() => {
-    const error = this.selectedEmployeeResource.error();
-    return error
-      ? extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to load the employee',
-        )
-      : null;
-  });
-
   // Deactivate/reactivate have their own in-flight/error state, separate from the list's.
   private readonly activationState = signal({
     loading: false,
@@ -168,12 +142,18 @@ export class EmployeeService {
     this.listParams.set({ ...params });
   }
 
-  getEmployee(employeeId: string): void {
-    if (this.selectedEmployeeId() === employeeId) {
-      this.selectedEmployeeResource.reload();
-    } else {
-      this.selectedEmployeeId.set(employeeId);
-    }
+  // One employee by id, for the details and edit pages (each keys an rxResource on it).
+  getEmployee(employeeId: string): Observable<Employee> {
+    return this.http
+      .get<GenericResponse<Employee>>(`${this.apiUrl}/get`, {
+        params: { searchTerm: employeeId },
+      })
+      .pipe(
+        map((response) => {
+          if (!response.data) throw new Error('Employee not found.');
+          return response.data;
+        }),
+      );
   }
 
   // On success, `data` is the new employee's server-generated ID.
@@ -181,9 +161,7 @@ export class EmployeeService {
     employee: CreateEmployeeRequest,
   ): Observable<GenericResponse<string>> {
     return this.createEmployeeSilently(employee).pipe(
-      tap(() =>
-        this.notificationService.show('Employee registered successfully.'),
-      ),
+      tap(() => this.notificationService.show('Employee added successfully.')),
     );
   }
 
@@ -196,7 +174,7 @@ export class EmployeeService {
     employee: CreateEmployeeRequest,
   ): Observable<GenericResponse<string>> {
     return this.http.post<GenericResponse<string>>(
-      `${this.API_URL}/create`,
+      `${this.apiUrl}/create`,
       employee,
     );
   }
@@ -206,7 +184,7 @@ export class EmployeeService {
   updateEmployee(employee: Employee): Observable<GenericResponse<object>> {
     return this.http
       .patch<GenericResponse<object>>(
-        `${this.API_URL}/update`,
+        `${this.apiUrl}/update`,
         toUpdateEmployeeRequest(employee),
       )
       .pipe(
@@ -236,7 +214,7 @@ export class EmployeeService {
     const params = new HttpParams().set('employeeId', employeeId);
 
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
+      .delete<GenericResponse<object>>(`${this.apiUrl}/delete`, { params })
       .pipe(tap(() => this.removeEmployeeLocally(employeeId)));
   }
 
@@ -259,7 +237,7 @@ export class EmployeeService {
     const params = new HttpParams().set('employeeId', employeeId);
 
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/deactivate`, null, {
+      .patch<GenericResponse<object>>(`${this.apiUrl}/deactivate`, null, {
         params,
       })
       .pipe(
@@ -287,7 +265,7 @@ export class EmployeeService {
     }
 
     this.http
-      .get(`${this.API_URL}/export`, {
+      .get(`${this.apiUrl}/export`, {
         params: httpParams,
         responseType: 'blob',
       })
@@ -317,7 +295,7 @@ export class EmployeeService {
     const params = new HttpParams().set('employeeId', employeeId);
 
     this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/${action}`, null, {
+      .patch<GenericResponse<object>>(`${this.apiUrl}/${action}`, null, {
         params,
       })
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
@@ -325,13 +303,7 @@ export class EmployeeService {
         // A rejected change (e.g. 409 "already deactivated") arrives as an HTTP
         // error with a Problem Details body, so reaching next() means it was done.
         next: () => {
-          if (!this.setStatusLocally(employeeId, status)) {
-            this.handleActivationError(
-              new Error(`Employee with GUID ${employeeId} not found locally.`),
-            );
-            return;
-          }
-
+          this.setStatusLocally(employeeId, status);
           this.activationState.set({ loading: false, error: null });
           this.notificationService.show(`Employee ${action}d successfully.`);
         },
@@ -339,46 +311,30 @@ export class EmployeeService {
       });
   }
 
-  // Returns false when the employee is neither in the loaded list nor the one selected.
-  private setStatusLocally(
-    employeeId: string,
-    status: EmployeeStatus,
-  ): boolean {
-    const existingEmployee =
-      this.employees().find((c) => c.employeeId === employeeId) ??
-      (this.selectedEmployee()?.employeeId === employeeId
-        ? this.selectedEmployee()
-        : null);
-    if (!existingEmployee) return false;
-
-    this.updateEmployeeLocally({ ...existingEmployee, status });
-    return true;
+  // Shows the new status in the loaded list straight away. A details page
+  // reloads its own copy once activationLoading() turns false.
+  private setStatusLocally(employeeId: string, status: EmployeeStatus): void {
+    const existingEmployee = this.employees().find(
+      (c) => c.employeeId === employeeId,
+    );
+    if (existingEmployee)
+      this.updateEmployeeLocally({ ...existingEmployee, status });
   }
 
-  // Edits the loaded values in place (no refetch), so the list and the selected
-  // employee keep in step with a change the API just confirmed.
+  // Edits the loaded list in place (no refetch), so it keeps in step with a
+  // change the API just confirmed.
   private updateEmployeeLocally(updatedEmployee: Employee): void {
     this.updateLoadedPage((items) =>
       items.map((c) =>
         c.employeeId === updatedEmployee.employeeId ? updatedEmployee : c,
       ),
     );
-    if (this.selectedEmployee()?.employeeId === updatedEmployee.employeeId) {
-      this.selectedEmployeeResource.update(
-        (response) => response && { ...response, data: updatedEmployee },
-      );
-    }
   }
 
   private removeEmployeeLocally(employeeId: string): void {
     this.updateLoadedPage((items) =>
       items.filter((c) => c.employeeId !== employeeId),
     );
-    if (this.selectedEmployee()?.employeeId === employeeId) {
-      this.selectedEmployeeResource.update(
-        (response) => response && { ...response, data: null },
-      );
-    }
   }
 
   private updateLoadedPage(update: (items: Employee[]) => Employee[]): void {
@@ -399,15 +355,10 @@ export class EmployeeService {
     URL.revokeObjectURL(url);
   }
 
-  // An Error (not an HttpErrorResponse) is a change the API made that this page
-  // couldn't reflect (the row isn't in the loaded list); its message is already user-facing.
-  private handleActivationError(error: HttpErrorResponse | Error): void {
+  private handleActivationError(error: HttpErrorResponse): void {
     this.activationState.set({
       loading: false,
-      error:
-        error instanceof HttpErrorResponse
-          ? extractErrorMessage(error, 'Failed to update the employee status')
-          : error.message,
+      error: extractErrorMessage(error, 'Failed to update the employee status'),
     });
   }
 }
