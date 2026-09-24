@@ -114,4 +114,4 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - `linkedSignal` is lazy: it only remembers a page that something has read.
 - `value()` throws while a resource is in error. Guard reads with `hasValue()`.
 - SSR runs HTTP through Node's `fetch`, which has its own TLS trust. See [build-and-run](build-and-run.md).
-- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together.
+- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together. `utils/chart-scale.ts` (axis math: `niceMax`, `formatTick`) is identical in the customer and Imalo apps; the employee app has no charts.
