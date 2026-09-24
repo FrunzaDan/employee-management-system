@@ -41,12 +41,8 @@ export class EmployeeDetailsComponent {
   private readonly salaryHistoryService = inject(SalaryHistoryService);
   private readonly router = inject(Router);
 
-  // Bound from the `:employeeId` route param by withComponentInputBinding() in app.config.ts.
   readonly employeeId = input<string>();
 
-  // Keyed on the route's id, like Imalo's ScholarDetailsComponent: a new id
-  // cancels whatever is still in flight. hasValue() guards the read, since
-  // value() throws while the resource is in error.
   private readonly employeeResource = rxResource({
     params: () => this.employeeId(),
     stream: ({ params: employeeId }) =>
@@ -55,8 +51,6 @@ export class EmployeeDetailsComponent {
   readonly employee = computed(() =>
     this.employeeResource.hasValue() ? this.employeeResource.value() : null,
   );
-  // The first load only: a reload (after a status change) keeps the page on
-  // screen until the fresh copy arrives.
   readonly loading = computed(
     () => this.employeeResource.status() === 'loading',
   );
@@ -74,9 +68,6 @@ export class EmployeeDetailsComponent {
   readonly auditActionLabel = auditActionLabel;
   readonly Gender = Gender;
 
-  // Deactivate/reactivate share EmployeeService's loading/error state (it's
-  // providedIn: 'root', same instance the employee list uses); delete gets its own,
-  // same split as employee-list.component.ts.
   readonly activationLoading = this.employeeService.activationLoading;
   readonly activationError = this.employeeService.activationError;
   readonly deleting = signal(false);
@@ -91,9 +82,6 @@ export class EmployeeDetailsComponent {
   readonly salaryHistoryLoading = this.salaryHistoryService.loading;
   readonly salaryHistoryError = this.salaryHistoryService.error;
 
-  // Draft state for the inline "add salary entry" form — deliberately not a
-  // signal-forms FieldTree like employee-form.ts: two plain fields, no shared
-  // schema/validation needed across pages.
   readonly newSalaryAmount = signal('');
   readonly newSalaryEffectiveDate = signal('');
   readonly addingSalary = signal(false);
@@ -109,9 +97,6 @@ export class EmployeeDetailsComponent {
     return employee ? employeeStatusLabel(employee.status) : undefined;
   });
 
-  // Deactivated employees follow the normal deactivate-then-delete lifecycle;
-  // Test employees are fictitious data and are exempt from that guardrail
-  // (see Employee_Delete), so they can be deleted straight away too.
   readonly canDelete = computed(() => {
     const status = this.employee()?.status;
     return (
@@ -120,7 +105,6 @@ export class EmployeeDetailsComponent {
   });
 
   constructor() {
-    // (Re)load whenever the id in the URL changes; no id means nothing to show.
     effect(() => {
       const id = this.employeeId();
       untracked(() => {
@@ -133,8 +117,6 @@ export class EmployeeDetailsComponent {
       });
     });
 
-    // A deactivate/reactivate changes the status and adds an audit entry, so
-    // both are re-fetched once activationLoading() flips back to false.
     effect(() => {
       const loading = this.activationLoading();
       if (this.wasActivationLoading && !loading) {
@@ -196,7 +178,6 @@ export class EmployeeDetailsComponent {
       );
       this.newSalaryAmount.set('');
       this.newSalaryEffectiveDate.set('');
-      // The new entry changes the current salary and adds an audit entry.
       this.employeeResource.reload();
       this.auditLogService.loadAuditLog(employeeId);
     } catch (error) {

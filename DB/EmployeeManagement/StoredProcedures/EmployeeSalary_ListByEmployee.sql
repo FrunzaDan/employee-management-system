@@ -1,5 +1,3 @@
--- Unpaginated, same reasoning as EmployeeAuditLog_ListByEmployee: bounded by one employee's
--- history, which stays small in practice.
 CREATE PROCEDURE [dbo].[EmployeeSalary_ListByEmployee]
     @EmployeeId UNIQUEIDENTIFIER
 AS

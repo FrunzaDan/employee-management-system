@@ -8,9 +8,6 @@ public sealed record EmployerAuthData(byte[] PasswordHash, byte[] PasswordSalt, 
 
 public static class DbHelper
 {
-    // Employee_Create takes @StatusCode; Employee_Update does not (status is
-    // only ever changed via deactivate/reactivate) — so create and edit need separate
-    // parameter sets, not one shared method that adds a parameter edit's proc doesn't declare.
     public static void AddEmployeeParametersForCreate(SqlCommand command, CreateEmployeeRequest employee)
     {
         AddEmployeeCoreParameters(command, employee.FirstName, employee.LastName, employee.Email,
@@ -34,7 +31,6 @@ public static class DbHelper
     public static void AddSalaryParametersForCreate(SqlCommand command, CreateSalaryRequest salary)
     {
         command.Parameters.AddGuid("@EmployeeId", salary.EmployeeId);
-        // EmployeeSalary validated GrossSalary/EffectiveDate are present before this runs.
         command.Parameters.AddDecimal("@GrossSalary", 12, 2, salary.GrossSalary!.Value);
         command.Parameters.AddDate("@EffectiveDate", salary.EffectiveDate);
     }
@@ -97,8 +93,6 @@ public static class DbHelper
         command.Parameters.AddNVarChar("@StreetNumber", FieldLengthConstants.StreetNumber, address?.StreetNumber);
     }
 
-    // Shared by create and edit — Employee_Create/Employee_Update declare the same
-    // four optional job-info parameters (see database.md).
     private static void AddJobInfoParameters(SqlCommand command, DateOnly? hireDate, Guid? officeId,
         Guid? departmentId, Guid? costCenterId)
     {
@@ -135,8 +129,6 @@ public static class DbHelper
             new PagedResponse<EmployeeModel>(items, totalItems, pageNumber, pageSize));
     }
 
-    // The standard (Result, Message) row every mutating proc returns: Result 0 = success,
-    // anything else is the HTTP status to reply with.
     public static async Task<ResponseModel<object>> HandleResponseWithMessageAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
@@ -149,8 +141,6 @@ public static class DbHelper
             : new ResponseModel<object>(result, message ?? "Operation failed.");
     }
 
-    // Employee_Create and the org <Entity>_Create procs return the usual (Result, Message) row
-    // plus the new row's DB-generated key in guidColumn, which is handed back as Data on success.
     public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuidAsync(SqlDataReader reader,
         string guidColumn)
     {
@@ -175,8 +165,6 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<AuditLogEntry>>(200, $"{items.Count} audit log entries found.", items);
     }
 
-    // EmployeeAuditLog_List returns two result sets: the total (one row), then the page. The total
-    // comes first, on its own, so it's right even when the page is empty.
     public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogListAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
@@ -213,8 +201,6 @@ public static class DbHelper
         return new ResponseModel<OfficeModel>(200, "Office found.", MapOfficeFromReader(reader));
     }
 
-    // Office_List additionally aggregates EmployeeCount/TotalGrossSalary, which the
-    // single-entity Office_Get doesn't compute.
     public static async Task<ResponseModel<IReadOnlyList<OfficeModel>>> HandleResponseWithOfficeListAsync(
         SqlDataReader reader)
     {
@@ -382,7 +368,6 @@ public static class DbHelper
     {
         EmployeeAuditLogId = reader.GetInt32("EmployeeAuditLogId"),
         EmployeeId = reader.GetGuid("EmployeeId"),
-        // NULL here (deleted employee, via the proc's LEFT JOIN) must come back as a real null.
         EmployeeFirstName = reader.GetNullableString("FirstName"),
         EmployeeLastName = reader.GetNullableString("LastName"),
         PerformedBy = reader.GetString("PerformedBy"),

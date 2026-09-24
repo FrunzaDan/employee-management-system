@@ -67,7 +67,7 @@ describe('GlobalAuditLogComponent', () => {
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
-      totalItems.set(120); // 120 items / 50 per page = 3 pages
+      totalItems.set(120);
       loadAllAuditLog.mockClear();
 
       component.goToPage(10);
@@ -104,7 +104,6 @@ describe('GlobalAuditLogComponent', () => {
     });
 
     it('labels a deleted employee by GUID instead of a blank name', () => {
-      // The API sends a deleted employee's name as null.
       const entry = buildEntry({
         employeeFirstName: null,
         employeeLastName: null,

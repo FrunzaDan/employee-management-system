@@ -6,8 +6,6 @@ using Moq;
 
 namespace EmployeeManagementSystem.Tests.OrgFunctions;
 
-// Office/Department/CostCenter functions share one shape (see OrgFunctions), so one
-// representative per rule is enough: required name/code on create, lengths, and the ID guard.
 public class OrgFunctionsTests
 {
     [Fact]

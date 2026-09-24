@@ -6,12 +6,6 @@ import { OfficeService } from '../../../services/office.service';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
-// A dedicated page for one office (reached from the offices list, or directly by
-// URL) — the full employees table, as opposed to that list's inline "quickly view"
-// expansion, which only shows a compact name/email/status summary. Both reads are
-// rxResources keyed on the route's id (like Imalo's ScholarDetailsComponent): a new
-// id cancels whatever is still in flight, and reading value() is guarded by
-// hasValue(), since it throws while a resource is in error.
 @Component({
   selector: 'app-office-details',
   templateUrl: './office-details.component.html',
@@ -21,8 +15,6 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 export class OfficeDetailsComponent {
   private readonly officeService = inject(OfficeService);
 
-  // Bound from the `:officeId` route param by withComponentInputBinding() in
-  // app.config.ts, same as EmployeeDetailsComponent.employeeId.
   readonly officeId = input<string>();
 
   private readonly officeResource = rxResource({

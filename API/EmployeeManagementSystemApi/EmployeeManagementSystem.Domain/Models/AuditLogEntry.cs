@@ -12,7 +12,6 @@ public sealed record AuditLogEntry
 
     public string? Details { get; init; }
 
-    // UTC.
     public required DateTime OccurredAt { get; init; }
 }
 
@@ -22,8 +21,6 @@ public sealed record GlobalAuditLogEntry
 
     public required Guid EmployeeId { get; init; }
 
-    // Null when the employee no longer exists (EmployeeAuditLog_List LEFT
-    // JOINs Employee, since audit history outlives a deleted employee).
     public string? EmployeeFirstName { get; init; }
 
     public string? EmployeeLastName { get; init; }
@@ -34,6 +31,5 @@ public sealed record GlobalAuditLogEntry
 
     public string? Details { get; init; }
 
-    // UTC.
     public required DateTime OccurredAt { get; init; }
 }

@@ -11,15 +11,12 @@ import { employeeStatusLabel } from '../../../utils/employee-status-label';
 import { RonPipe } from '../../../pipes/ron.pipe';
 
 interface OfficeDraft {
-  officeId: string | null; // null = creating a new office, not editing an existing one
+  officeId: string | null;
   name: string;
   city: string;
   country: string;
 }
 
-// A single page combining a list + one inline form reused for add and edit —
-// unlike the employee add/edit split, offices are a 1-3 field lookup entity
-// with no status lifecycle, so a separate pair of routes/pages would be excessive.
 @Component({
   selector: 'app-offices',
   templateUrl: './offices.component.html',
@@ -39,9 +36,6 @@ export class OfficesComponent implements OnInit {
   readonly saveError = signal<string | null>(null);
   readonly deleteError = signal<string | null>(null);
 
-  // Which office's employee list is currently expanded (at most one at a
-  // time) — fetched on demand rather than eagerly per office, since most
-  // rows are never expanded in a given visit.
   readonly expandedOfficeId = signal<string | null>(null);
   readonly expandedEmployees = signal<EmployeeSummary[]>([]);
   readonly expandedEmployeesLoading = signal(false);
@@ -125,7 +119,6 @@ export class OfficesComponent implements OnInit {
     try {
       await firstValueFrom(this.officeService.deleteOffice(office.officeId));
     } catch (error) {
-      // e.g. 409 when the office is still assigned to an employee.
       this.deleteError.set(
         extractErrorMessage(
           error as HttpErrorResponse,

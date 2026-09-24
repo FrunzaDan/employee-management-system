@@ -124,7 +124,7 @@ describe('AboutComponent', () => {
       const component = createComponent();
 
       const first = component.createTestEmployees();
-      await component.createTestEmployees(); // re-entrant call
+      await component.createTestEmployees();
       await first;
 
       expect(createEmployeeSilently).toHaveBeenCalledTimes(50);

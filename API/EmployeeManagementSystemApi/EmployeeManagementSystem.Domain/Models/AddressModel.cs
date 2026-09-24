@@ -1,6 +1,5 @@
 namespace EmployeeManagementSystem.Domain.Models;
 
-// Response shape: every EmployeeAddress column is NOT NULL.
 public sealed record AddressModel
 {
     public required string Country { get; init; }
@@ -11,8 +10,6 @@ public sealed record AddressModel
     public required string StreetNumber { get; init; }
 }
 
-// Request shape, shared by register (where AddressValidation requires every field) and edit
-// (where an omitted field means "leave unchanged").
 public sealed class AddressRequest
 {
     public string? Country { get; set; }

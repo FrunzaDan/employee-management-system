@@ -53,18 +53,13 @@ describe('EmployeeService', () => {
     ...overrides,
   });
 
-  // The response is applied asynchronously, so wait for the app to settle
-  // after flushing before asserting on the signals.
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
-  // httpResource issues its request from an effect, so flush effects after
-  // calling loadEmployees() before expecting the HTTP call.
   const load = (params: Parameters<EmployeeService['loadEmployees']>[0]) => {
     service.loadEmployees(params);
     TestBed.tick();
   };
 
-  // Loads one page holding `employees`, the way the list page fills the service.
   const seedEmployees = async (employees: Employee[]) => {
     load({ pageNumber: 1, pageSize: 10 });
     httpMock
@@ -208,7 +203,6 @@ describe('EmployeeService', () => {
     it('keeps the loaded page on screen while the next page loads', async () => {
       const first = buildEmployee();
       await seedEmployees([first]);
-      // Read it, as the list page's template does.
       expect(service.employees()).toEqual([first]);
 
       load({ pageNumber: 2, pageSize: 10 });
@@ -343,8 +337,6 @@ describe('EmployeeService', () => {
 
       const req = httpMock.expectOne(`${API_URL}/update`);
       expect(req.request.method).toBe('PATCH');
-      // Server-owned fields (status, dates) and the joined names/salary aren't part of an
-      // edit request.
       const {
         status,
         createdAt,
@@ -541,7 +533,6 @@ describe('EmployeeService', () => {
       expect(service.activationError()).toBe(
         'Employee is already deactivated.',
       );
-      // httpMock.verify() in afterEach confirms no retry request was made.
     });
 
     it('retries once on a transient (5xx) failure and then succeeds', async () => {
@@ -570,11 +561,6 @@ describe('EmployeeService', () => {
     let triggerDownloadSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      // triggerDownload drives browser-only APIs (URL.createObjectURL, an <a>
-      // click) that jsdom doesn't implement — stub it (via an `any` cast, since
-      // it's private) so tests can assert the HTTP/signal behavior without
-      // exercising that DOM plumbing.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       triggerDownloadSpy = vi
         .spyOn(service as any, 'triggerDownload')
         .mockImplementation(() => {});

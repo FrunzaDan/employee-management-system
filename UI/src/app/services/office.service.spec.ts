@@ -10,7 +10,6 @@ import { Office } from '../interfaces/office';
 import { NotificationService } from './notification.service';
 import { OfficeService } from './office.service';
 
-// DepartmentService and CostCenterService have the same shape; this pins it once.
 describe('OfficeService', () => {
   let service: OfficeService;
   let httpMock: HttpTestingController;
@@ -47,12 +46,8 @@ describe('OfficeService', () => {
     httpMock.verify();
   });
 
-  // The response is applied asynchronously, so wait for the app to settle
-  // after flushing before asserting on the signals.
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
-  // httpResource issues its request from an effect, so flush effects after
-  // calling loadOffices() before expecting the HTTP call.
   const load = () => {
     service.loadOffices();
     TestBed.tick();
@@ -140,7 +135,7 @@ describe('OfficeService', () => {
       .flush({ status: 200, responseMessage: 'ok', data: [office] });
 
     expect(result).toEqual([office]);
-    expect(service.offices()).toEqual([]); // the resource was never loaded
+    expect(service.offices()).toEqual([]);
   });
 
   it('getOffice and getEmployees send the id as a query parameter', () => {

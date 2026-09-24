@@ -27,18 +27,14 @@ import { EmployeeFormFieldsComponent } from '../employee-form-fields/employee-fo
   templateUrl: './update-employee.component.html',
   styleUrl: './update-employee.component.css',
   imports: [EmployeeFormFieldsComponent, FormRoot, RouterLink],
-  // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
 export class UpdateEmployeeComponent {
   private readonly router = inject(Router);
   private readonly employeeService = inject(EmployeeService);
 
-  // Bound from the `:employeeId` route param by withComponentInputBinding() in app.config.ts.
   readonly employeeId = input<string>();
 
-  // Keyed on the route's id, like the details page; hasValue() guards the read,
-  // since value() throws while the resource is in error.
   private readonly employeeResource = rxResource({
     params: () => this.employeeId(),
     stream: ({ params: employeeId }) =>
@@ -58,9 +54,6 @@ export class UpdateEmployeeComponent {
       : null;
   });
 
-  // The form model *is* the loaded employee, mapped: it re-derives whenever
-  // employee() changes and stays writable for the user's edits — no effect +
-  // patchValue copy step.
   private readonly baseline = computed(() => {
     const employee = this.employee();
     return employee ? toFormModel(employee) : emptyEmployeeForm();
@@ -69,14 +62,10 @@ export class UpdateEmployeeComponent {
 
   private readonly saved = signal(false);
 
-  // Read by unsavedChangesGuard: edits that differ from the loaded employee and
-  // haven't been saved. Putting a value back to the original clears it.
   readonly hasUnsavedChanges = computed(
     () => !this.saved() && isEmployeeFormDirty(this.model(), this.baseline()),
   );
 
-  // Distinct from loading/loadError above, which reflect fetching the
-  // employee being edited — these track the save (PATCH) request itself.
   readonly saveError = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
 
@@ -106,7 +95,6 @@ export class UpdateEmployeeComponent {
           applyFormModel(this.model(), current),
         ),
       );
-      // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
       await this.router.navigate(['/employees']);
     } catch (error) {

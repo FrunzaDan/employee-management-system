@@ -6,14 +6,12 @@ import {
   Gender,
 } from '../../interfaces/employee';
 
-// Shared by create-employee and update-employee: one model shape, one validation
-// schema, and the two-way mapping between the form and the API's Employee.
 export interface EmployeeFormModel {
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  gender: string; // <select> emits strings; the API wants a Gender number (see toCreateEmployeeRequest)
+  gender: string;
   birthDate: string;
   country: string;
   county: string;
@@ -71,9 +69,6 @@ export const employeeFormSchema = schema<EmployeeFormModel>((p) => {
   required(p.costCenterId, { message: 'Cost center is required' });
 });
 
-// <input type="date"> requires a strictly zero-padded "YYYY-MM-DD" value to
-// pre-fill correctly. Older records saved via the previous year/month/day
-// text-box form could store unpadded values (e.g. "2020-1-5"), so normalize.
 export function toDateInputValue(date: string): string {
   const [year, month, day] = date.split('-');
   if (!year || !month || !day) return '';
@@ -126,9 +121,6 @@ export function toCreateEmployeeRequest(
   };
 }
 
-// The loaded employee with the form's values applied — what the edit page saves, and what
-// the local employee list is updated to once the save succeeds. Server-owned fields
-// (employeeId, status, dates) come from `current` unchanged.
 export function applyFormModel(
   model: EmployeeFormModel,
   current: Employee,
@@ -136,10 +128,6 @@ export function applyFormModel(
   return { ...current, ...toCreateEmployeeRequest(model) };
 }
 
-// True when the user has changed anything relative to `baseline` (the blank
-// form when adding, the loaded employee when editing). Comparing values —
-// rather than trusting a "touched" flag — means typing something and then
-// putting it back doesn't count as an unsaved change.
 export function isEmployeeFormDirty(
   model: EmployeeFormModel,
   baseline: EmployeeFormModel,

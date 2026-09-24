@@ -41,8 +41,6 @@ BEGIN
         SET @Message = 'Cost center updated successfully.';
     END TRY
     BEGIN CATCH
-        -- 2601/2627: a concurrent request took the code between the pre-check above and
-        -- this write; UQ_CostCenter_Code caught it, so answer the same 409 as the pre-check.
         IF ERROR_NUMBER() NOT IN (2601, 2627)
             THROW;
 

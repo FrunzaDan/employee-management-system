@@ -36,8 +36,6 @@ BEGIN
         SET @Result = 409;
         SET @Message = 'Email already exists.';
     END
-    -- Friendly 400s instead of letting Employee's FK_Employee_Office/Department/CostCenter
-    -- throw a raw 500 on an unknown guid, same reasoning as the Email/PhoneNumber checks above.
     ELSE IF @OfficeId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.Office WHERE OfficeId = @OfficeId)
     BEGIN
         SET @Result = 400;
@@ -58,11 +56,6 @@ BEGIN
         BEGIN TRY
             BEGIN TRANSACTION;
 
-            -- Both inserts must succeed together: Employee_Get/Employee_List INNER JOIN
-            -- to EmployeeAddress, so a employee row left without a matching address row would
-            -- silently disappear from every read despite existing in Employee.
-            -- EmployeeId, CreatedAt and LastInteractionAt come from the table's
-            -- defaults (NEWSEQUENTIALID() / SYSUTCDATETIME()); OUTPUT captures the new key.
             INSERT INTO dbo.Employee
             (
                 FirstName, LastName, Email, PhoneNumber, Gender, BirthDate, StatusCode,
@@ -95,8 +88,6 @@ BEGIN
             IF @@TRANCOUNT > 0
                 ROLLBACK TRANSACTION;
 
-            -- 2601/2627: a concurrent request took the value between the pre-check above and
-            -- this write; the UQ_ constraint caught it, so answer the same 409 as the pre-check.
             IF ERROR_NUMBER() NOT IN (2601, 2627)
                 THROW;
 
@@ -105,7 +96,5 @@ BEGIN
         END CATCH
     END
 
-    -- EmployeeId rides along on the usual (Result, Message) row so the API can return the
-    -- new employee's server-generated key; only meaningful when Result = 0.
     SELECT @Result AS Result, @Message AS Message, @EmployeeId AS EmployeeId;
 END

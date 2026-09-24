@@ -21,7 +21,6 @@ describe('EmployeeDetailsComponent', () => {
   let employee$: ReplaySubject<Employee>;
   let fixture: ComponentFixture<EmployeeDetailsComponent>;
 
-  // Emits the employee the page's rxResource streams, and waits for it to land.
   const loadEmployee = async (employee: Employee) => {
     employee$.next(employee);
     await fixture.whenStable();
@@ -59,8 +58,6 @@ describe('EmployeeDetailsComponent', () => {
     ...overrides,
   });
 
-  // routeParamId is what withComponentInputBinding() would bind to the `employeeId`
-  // input from the `:employeeId` route param; set it to null before createComponent() for the "no id" case.
   let routeParamId: string | null = 'employeeId-1';
 
   const createComponent = (): EmployeeDetailsComponent => {
@@ -77,10 +74,6 @@ describe('EmployeeDetailsComponent', () => {
     activationLoading = signal(false);
     loadSalaryHistory = vi.fn();
 
-    // EmployeeDetailsComponent resolves its dependencies via field-initializer
-    // inject() calls, so it needs TestBed provider tokens (not positional
-    // constructor args) plus an active injection context for the effect()
-    // call in its constructor.
     TestBed.configureTestingModule({
       providers: [
         {
@@ -118,7 +111,6 @@ describe('EmployeeDetailsComponent', () => {
       ],
     });
 
-    // RouterLink in the template needs the real Router; only stub navigate().
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
 
     fixture = TestBed.createComponent(EmployeeDetailsComponent);
@@ -291,7 +283,7 @@ describe('EmployeeDetailsComponent', () => {
       TestBed.flushEffects();
 
       expect(loadAuditLog).toHaveBeenCalledWith('employeeId-1');
-      expect(getEmployee).toHaveBeenCalledTimes(2); // the first load, then the refresh
+      expect(getEmployee).toHaveBeenCalledTimes(2);
     });
 
     it('does not reload on the initial false state (no prior true)', async () => {

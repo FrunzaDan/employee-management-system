@@ -5,9 +5,6 @@ import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
 
-// The three form cards (personal details + address + job information) shared by
-// create-employee and update-employee. The parent owns the form and its submission;
-// this only renders.
 @Component({
   selector: 'app-employee-form-fields',
   templateUrl: './employee-form-fields.component.html',
@@ -25,8 +22,6 @@ export class EmployeeFormFieldsComponent implements OnInit {
   protected readonly costCenters = this.costCenterService.costCenters;
 
   ngOnInit(): void {
-    // Small reference lists (see OfficeService et al.) — loaded once per form
-    // instance, not paginated/searched like the employee list is.
     this.officeService.loadOffices();
     this.departmentService.loadDepartments();
     this.costCenterService.loadCostCenters();

@@ -12,7 +12,6 @@ BEGIN
     DECLARE @OfficeId UNIQUEIDENTIFIER = NULL;
     DECLARE @Inserted TABLE (OfficeId UNIQUEIDENTIFIER);
 
-    -- OfficeId comes from the table's NEWSEQUENTIALID() default.
     INSERT INTO dbo.Office (Name, City, Country)
     OUTPUT inserted.OfficeId INTO @Inserted
     VALUES (@Name, @City, @Country);
@@ -22,6 +21,5 @@ BEGIN
     SET @Result = 0;
     SET @Message = 'Office created successfully.';
 
-    -- OfficeId: the new office's server-generated key; only meaningful when Result = 0.
     SELECT @Result AS Result, @Message AS Message, @OfficeId AS OfficeId;
 END

@@ -9,9 +9,6 @@ public class EmployeeGetting(IDbUtils dbUtils)
 {
     private const int MaxPageSize = 100;
 
-    // CSV export ignores paging (it's not a "current page" export) but still needs
-    // a hard cap so an unfiltered export on a very large table can't balloon the
-    // response — generous enough that no real local/demo dataset will ever hit it.
     private const int MaxExportRows = 5000;
 
     public async Task<ResponseModel<EmployeeModel>> GetEmployeeAsync(string? searchTerm,
@@ -45,10 +42,6 @@ public class EmployeeGetting(IDbUtils dbUtils)
         return await dbUtils.GetEmployeesAsync(request, cancellationToken);
     }
 
-    // Exports the full search/sort result (capped at MaxExportRows), not just one
-    // page — it reuses Employee_List via the same dbUtils.GetEmployees call the
-    // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
-    // filtering/sorting SQL stays in exactly one place.
     public async Task<ResponseModel<string>> GetEmployeesForExportAsync(ExportEmployeesRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -73,8 +66,6 @@ public class EmployeeGetting(IDbUtils dbUtils)
         return new ResponseModel<string>(200, $"{paged.Items.Count} employees exported.", csv);
     }
 
-    // The enums can only hold an undefined value if one was forced in (e.g. "?sortColumn=7"
-    // binds to (EmployeeSortColumn)7), so this is a backstop, not the primary check.
     private static string? ValidateAndNormalizeSortAndSearch(GetEmployeesRequest request)
     {
         if (!Enum.IsDefined(request.SortColumn))
@@ -113,9 +104,6 @@ public class EmployeeGetting(IDbUtils dbUtils)
         return await dbUtils.GetAllEmployeeAuditLogAsync(pageNumber, pageSize, cancellationToken);
     }
 
-    // Picks the one key Employee_Get should seek on, from the search term's shape: GUID
-    // (any format Guid.TryParse accepts — braces, upper case, no hyphens), then phone number, then
-    // email. Null when it's none of the three.
     private static EmployeeLookup? DetermineLookup(string searchTerm)
     {
         if (Guid.TryParse(searchTerm, out var employeeId))

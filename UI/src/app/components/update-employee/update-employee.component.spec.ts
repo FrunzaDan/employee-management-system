@@ -18,7 +18,6 @@ describe('UpdateEmployeeComponent', () => {
   let employee$: ReplaySubject<Employee>;
   let fixture: ComponentFixture<UpdateEmployeeComponent>;
 
-  // Emits the employee the page's rxResource streams, and waits for it to land.
   const loadEmployee = async (employee: Employee) => {
     employee$.next(employee);
     await fixture.whenStable();
@@ -54,7 +53,6 @@ describe('UpdateEmployeeComponent', () => {
     ...overrides,
   });
 
-  // `employeeId` is what withComponentInputBinding() binds from the `:employeeId` route param.
   const createComponent = (id: string | null = 'employeeId-1') => {
     fixture = TestBed.createComponent(UpdateEmployeeComponent);
     if (id) fixture.componentRef.setInput('employeeId', id);
@@ -80,8 +78,6 @@ describe('UpdateEmployeeComponent', () => {
             updateEmployee,
           },
         },
-        // EmployeeFormFieldsComponent loads these to populate the job-info selects —
-        // stubbed so the fixture doesn't need a real HttpClient in this suite.
         {
           provide: OfficeService,
           useValue: { offices: signal([]), loadOffices: vi.fn() },
@@ -96,7 +92,6 @@ describe('UpdateEmployeeComponent', () => {
         },
       ],
     });
-    // RouterLink in the template needs the real Router; only stub navigate().
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
   });
 
@@ -183,7 +178,7 @@ describe('UpdateEmployeeComponent', () => {
       expect(updateEmployee).toHaveBeenCalledWith(
         expect.objectContaining({
           employeeId: 'employeeId-1',
-          createdAt: '2026-01-01', // preserved from the original record, not in the form
+          createdAt: '2026-01-01',
           firstName: 'Updated',
           gender: 1,
         }),
@@ -292,8 +287,6 @@ describe('UpdateEmployeeComponent', () => {
     });
   });
 
-  // Local helper: the same mapping the component uses, to build a valid model
-  // without a loaded employee.
   function toModel(employee: Employee) {
     return {
       firstName: employee.firstName,

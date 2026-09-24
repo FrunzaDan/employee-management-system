@@ -4,10 +4,6 @@ using Microsoft.Extensions.Logging;
 
 namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
 
-// Writing an audit entry is best-effort: it always runs after the employee
-// mutation it's recording has already succeeded, so a DB hiccup while writing
-// the log must never turn an otherwise-successful request into a 500 — it's
-// swallowed and logged instead.
 public partial class EmployeeAuditLogger(IDbUtils dbUtils, ILogger<EmployeeAuditLogger> logger) : IEmployeeAuditLogger
 {
     public async Task LogAsync(Guid employeeId, string performedBy, AuditAction action, string? details = null,

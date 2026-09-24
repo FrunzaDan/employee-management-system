@@ -13,11 +13,6 @@ import { EmployeeSummary } from '../interfaces/employee-summary';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { NotificationService } from './notification.service';
 
-// Reference data (offices, departments, cost centers), not a growing operational
-// table — a flat, unpaginated list, unlike EmployeeService's paged state. The list
-// is an httpResource (like ProductService in the customer app): nothing is fetched
-// until loadOffices() is first called, and mutations reload it rather than patching
-// it locally, since the whole list is always small.
 @Injectable({
   providedIn: 'root',
 })
@@ -33,7 +28,6 @@ export class OfficeService {
     () => (this.requested() ? `${this.apiUrl}/all` : undefined),
   );
 
-  // hasValue() guards the read: value() throws while the resource is in error.
   readonly offices = computed(() =>
     this.officesResource.hasValue()
       ? (this.officesResource.value().data ?? [])
@@ -58,19 +52,12 @@ export class OfficeService {
     }
   }
 
-  /**
-   * Same list as {@link loadOffices}, but as a one-off Observable rather than
-   * this service's resource — for callers (e.g. bulk test-data generation) that
-   * need the list once, up front, without touching the page that's actually
-   * browsing/managing offices.
-   */
   fetchOffices(): Observable<Office[]> {
     return this.http
       .get<GenericResponse<Office[]>>(`${this.apiUrl}/all`)
       .pipe(map((response) => response.data ?? []));
   }
 
-  /** A single office by officeId — for the office details page, reached directly by URL. */
   getOffice(officeId: string): Observable<Office> {
     const params = new HttpParams().set('officeId', officeId);
     return this.http
@@ -83,7 +70,6 @@ export class OfficeService {
       );
   }
 
-  /** The employees currently assigned to this office (see Employee_ListByOffice). */
   getEmployees(officeId: string): Observable<EmployeeSummary[]> {
     const params = new HttpParams().set('officeId', officeId);
     return this.http

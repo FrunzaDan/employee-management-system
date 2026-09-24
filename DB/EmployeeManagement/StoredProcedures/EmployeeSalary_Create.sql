@@ -19,7 +19,6 @@ BEGIN
         RETURN;
     END
 
-    -- EmployeeSalaryId (IDENTITY) and CreatedAt (SYSUTCDATETIME()) come from the table.
     INSERT INTO dbo.EmployeeSalary (EmployeeId, GrossSalary, EffectiveDate)
     VALUES (@EmployeeId, @GrossSalary, @EffectiveDate);
 

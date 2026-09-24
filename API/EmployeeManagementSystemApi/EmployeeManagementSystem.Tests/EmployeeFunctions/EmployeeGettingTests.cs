@@ -55,8 +55,6 @@ public class EmployeeGettingTests
     }
 
     [Theory]
-    // Every GUID spelling resolves to the same value — braces and case no longer matter,
-    // since the key is compared as a UNIQUEIDENTIFIER, not as text.
     [InlineData("3fa85f64-5717-4562-b3fc-2c963f66afa6")]
     [InlineData("{3FA85F64-5717-4562-B3FC-2C963F66AFA6}")]
     [InlineData("3fa85f6457174562b3fc2c963f66afa6")]
@@ -127,7 +125,6 @@ public class EmployeeGettingTests
     [Fact]
     public async Task GetEmployeesAsync_RejectsAnUndefinedSortColumn_WithoutTouchingTheDb()
     {
-        // "?sortColumn=7" binds to (EmployeeSortColumn)7 — the enum alone doesn't stop it.
         var dbUtils = new Mock<IDbUtils>();
         var getting = new EmployeeGetting(dbUtils.Object);
         var request = new GetEmployeesRequest { SortColumn = (EmployeeSortColumn)7 };

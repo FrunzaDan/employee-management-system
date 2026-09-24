@@ -10,7 +10,6 @@ BEGIN
     DECLARE @DepartmentId UNIQUEIDENTIFIER = NULL;
     DECLARE @Inserted TABLE (DepartmentId UNIQUEIDENTIFIER);
 
-    -- DepartmentId comes from the table's NEWSEQUENTIALID() default.
     INSERT INTO dbo.Department (Name)
     OUTPUT inserted.DepartmentId INTO @Inserted
     VALUES (@Name);
@@ -20,6 +19,5 @@ BEGIN
     SET @Result = 0;
     SET @Message = 'Department created successfully.';
 
-    -- DepartmentId: the new department's server-generated key; only meaningful when Result = 0.
     SELECT @Result AS Result, @Message AS Message, @DepartmentId AS DepartmentId;
 END

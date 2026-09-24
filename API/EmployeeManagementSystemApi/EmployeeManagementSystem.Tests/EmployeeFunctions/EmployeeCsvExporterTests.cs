@@ -107,7 +107,6 @@ public class EmployeeCsvExporterTests
     {
         var csv = EmployeeCsvExporter.ToCsv([MakeEmployee(), MakeEmployee()]);
 
-        // header + 2 data rows + trailing blank line from the last row's \r\n
         Assert.Equal(4, csv.Split("\r\n").Length);
     }
 }

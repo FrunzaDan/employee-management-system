@@ -110,7 +110,7 @@ describe('EmployeeListComponent', () => {
       component.currentPage.set(3);
       loadEmployees.mockClear();
 
-      component.setSort('name'); // 'name' is already the default sort column
+      component.setSort('name');
 
       expect(component.sortColumn()).toBe('name');
       expect(component.sortDirection()).toBe('desc');
@@ -142,7 +142,7 @@ describe('EmployeeListComponent', () => {
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
-      totalItems.set(120); // 120 items / 50 per page = 3 pages
+      totalItems.set(120);
       loadEmployees.mockClear();
 
       component.goToPage(10);
@@ -169,7 +169,7 @@ describe('EmployeeListComponent', () => {
     it('does nothing when the target page equals the current page', () => {
       loadEmployees.mockClear();
 
-      component.goToPage(1); // already on page 1, totalPages() is 1 with 0 items
+      component.goToPage(1);
 
       expect(loadEmployees).not.toHaveBeenCalled();
     });
@@ -298,8 +298,6 @@ describe('EmployeeListComponent', () => {
       expect(deleteEmployee).toHaveBeenCalledWith('employeeId-1');
       expect(component.deleting()).toBe(false);
       expect(component.deleteError()).toBeNull();
-      // removeEmployeeLocally only drops the row locally; the component still
-      // re-fetches so totalItems/page count don't go stale.
       expect(loadEmployees).toHaveBeenCalledTimes(1);
     });
 

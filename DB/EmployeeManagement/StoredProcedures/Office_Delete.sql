@@ -17,7 +17,6 @@ BEGIN
         RETURN;
     END
 
-    -- Friendly pre-check instead of letting Employee's FK throw a raw 500.
     IF EXISTS (SELECT 1 FROM dbo.Employee WHERE OfficeId = @OfficeId)
     BEGIN
         SET @Result = 409;

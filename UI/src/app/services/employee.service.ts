@@ -39,10 +39,6 @@ export type ExportEmployeesParams = Omit<
 
 const DEFAULT_PAGE_SIZE = 10;
 
-// Only retry transient failures (no response reached the browser, or a 5xx from the
-// server) — a definitive 4xx (expired session, already-deactivated, unknown GUID) will
-// never succeed on retry, so retrying it just re-triggers side effects (e.g. the 401
-// interceptor's logout/redirect) 3 extra times for nothing. Backed off, not immediate.
 const TRANSIENT_ERROR_RETRY_CONFIG = {
   count: 3,
   delay: (error: unknown, retryCount: number) =>
@@ -52,10 +48,6 @@ const TRANSIENT_ERROR_RETRY_CONFIG = {
       : throwError(() => error),
 };
 
-// Every /api/employee call, in one service (like Imalo's ScholarService). It also holds
-// the loaded page of employees and keeps it in step with each successful update,
-// status change and delete. A single employee is read with getEmployee(), which the details
-// and edit pages key their own rxResource on.
 @Injectable({
   providedIn: 'root',
 })
@@ -65,15 +57,10 @@ export class EmployeeService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  // The requested page, search and sort. No request is made until loadEmployees() is
-  // first called (returning undefined idles the resource), and a new value cancels the
-  // request still in flight, so a slower stale page can't overwrite a newer one.
   private readonly listParams = signal<LoadEmployeesParams | undefined>(
     undefined,
   );
 
-  // Pagination, search, and sorting are all server-side: each change re-fetches just the
-  // requested page rather than filtering/sorting an already-loaded full list in memory.
   private readonly employeesResource = httpResource<
     GenericResponse<PagedResponse<Employee>>
   >(() => {
@@ -91,9 +78,6 @@ export class EmployeeService {
     };
   });
 
-  // The last page that loaded. A resource drops its value when its params change, so
-  // this keeps the current rows on screen while the next page, search or sort loads (and
-  // after a failed load). hasValue() guards the read: value() throws while in error.
   private readonly page = linkedSignal<
     PagedResponse<Employee> | undefined,
     PagedResponse<Employee> | undefined
@@ -125,7 +109,6 @@ export class EmployeeService {
       : null;
   });
 
-  // Deactivate/reactivate have their own in-flight/error state, separate from the list's.
   private readonly activationState = signal({
     loading: false,
     error: null as string | null,
@@ -138,11 +121,9 @@ export class EmployeeService {
   readonly exportError = signal<string | null>(null);
 
   loadEmployees(params: LoadEmployeesParams): void {
-    // A new object always counts as a change, so the same page is fetched again too.
     this.listParams.set({ ...params });
   }
 
-  // One employee by id, for the details and edit pages (each keys an rxResource on it).
   getEmployee(employeeId: string): Observable<Employee> {
     return this.http
       .get<GenericResponse<Employee>>(`${this.apiUrl}/get`, {
@@ -156,7 +137,6 @@ export class EmployeeService {
       );
   }
 
-  // On success, `data` is the new employee's server-generated ID.
   createEmployee(
     employee: CreateEmployeeRequest,
   ): Observable<GenericResponse<string>> {
@@ -165,11 +145,6 @@ export class EmployeeService {
     );
   }
 
-  /**
-   * Same endpoint as {@link createEmployee}, without the per-call success toast —
-   * for callers (e.g. bulk test-data generation) that show one summary
-   * notification instead of one per request.
-   */
   createEmployeeSilently(
     employee: CreateEmployeeRequest,
   ): Observable<GenericResponse<string>> {
@@ -179,8 +154,6 @@ export class EmployeeService {
     );
   }
 
-  // Takes the whole edited employee (to update the local list with once saved) but sends
-  // only the editable fields — the server-owned ones (status, dates) aren't part of an edit.
   updateEmployee(employee: Employee): Observable<GenericResponse<object>> {
     return this.http
       .patch<GenericResponse<object>>(
@@ -203,11 +176,6 @@ export class EmployeeService {
     );
   }
 
-  /**
-   * Same endpoint as {@link deleteEmployee}, without the per-call success toast —
-   * for bulk-delete callers that show one summary notification instead of one per
-   * employee.
-   */
   deleteEmployeeSilently(
     employeeId: string,
   ): Observable<GenericResponse<object>> {
@@ -226,11 +194,6 @@ export class EmployeeService {
     this.changeStatus(employeeId, 'reactivate', EmployeeStatus.Active);
   }
 
-  /**
-   * Same endpoint as {@link deactivateEmployee}, without the shared loading/error
-   * signal or the per-call success toast — for bulk-action callers that show one
-   * summary notification and track their own in-flight state instead.
-   */
   deactivateEmployeeSilently(
     employeeId: string,
   ): Observable<GenericResponse<object>> {
@@ -247,11 +210,6 @@ export class EmployeeService {
       );
   }
 
-  // Exports whatever the employee list is currently searching/sorted by, not
-  // just the current page (see EmployeeGetting.GetEmployeesForExportFunction) —
-  // the filename is generated client-side rather than read off the response's
-  // Content-Disposition header, since that header isn't exposed cross-origin
-  // by the API's current CORS policy.
   exportEmployees(params: ExportEmployeesParams): void {
     this.exportLoading.set(true);
     this.exportError.set(null);
@@ -274,9 +232,6 @@ export class EmployeeService {
           this.exportLoading.set(false);
           this.triggerDownload(blob, this.buildExportFilename());
         },
-        // error.error is a Blob here (responseType: 'blob' applies to error bodies
-        // too), not parsed JSON, so a 4xx/5xx gets the generic "failed" message
-        // rather than the server's specific one.
         error: (error: HttpErrorResponse) => {
           this.exportLoading.set(false);
           this.exportError.set(
@@ -300,8 +255,6 @@ export class EmployeeService {
       })
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
       .subscribe({
-        // A rejected change (e.g. 409 "already deactivated") arrives as an HTTP
-        // error with a Problem Details body, so reaching next() means it was done.
         next: () => {
           this.setStatusLocally(employeeId, status);
           this.activationState.set({ loading: false, error: null });
@@ -311,8 +264,6 @@ export class EmployeeService {
       });
   }
 
-  // Shows the new status in the loaded list straight away. A details page
-  // reloads its own copy once activationLoading() turns false.
   private setStatusLocally(employeeId: string, status: EmployeeStatus): void {
     const existingEmployee = this.employees().find(
       (c) => c.employeeId === employeeId,
@@ -321,8 +272,6 @@ export class EmployeeService {
       this.updateEmployeeLocally({ ...existingEmployee, status });
   }
 
-  // Edits the loaded list in place (no refetch), so it keeps in step with a
-  // change the API just confirmed.
   private updateEmployeeLocally(updatedEmployee: Employee): void {
     this.updateLoadedPage((items) =>
       items.map((c) =>

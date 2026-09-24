@@ -11,13 +11,7 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 [Authorize]
 public class EmployeeController(IEmployeeService employeeService) : ApiControllerBase
 {
-    // Every [Authorize]-gated request has a verified JWT with ClaimTypes.Name set to the
-    // employer's username (see JwtCreation.BuildTokenDescriptor) — never null/empty in practice.
     private string Username => User.Identity!.Name!;
-
-    // ID query parameters are typed Guid: a malformed value is rejected by model binding
-    // (400 ValidationProblemDetails, from [ApiController]), and a missing one binds
-    // to Guid.Empty, which the business logic rejects with its own 400.
 
     [HttpPost("create")]
     public async Task<ActionResult<ResponseModel<Guid?>>> CreateEmployee(
@@ -86,10 +80,6 @@ public class EmployeeController(IEmployeeService employeeService) : ApiControlle
         CancellationToken cancellationToken) =>
         Reply(await employeeService.CreateEmployeeSalaryAsync(request, Username, cancellationToken));
 
-    // Explicit role check (not just the class-level [Authorize]) on top of a destructive,
-    // untargeted action — wipes every audit row for every employee in one call. Today this
-    // is a no-op in practice (1801 is the only Employer.RoleCode that exists), but it stops a
-    // future second role from silently inheriting access to this action.
     [Authorize(Roles = "1801")]
     [HttpDelete("audit-log/all")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteAllEmployeeAuditLog(

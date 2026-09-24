@@ -1,5 +1,3 @@
--- Unpaginated, same reasoning as EmployeeSalary_ListByEmployee: bounded by how
--- many employees a single office realistically has, not a growing top-level list.
 CREATE PROCEDURE [dbo].[Employee_ListByOffice]
     @OfficeId UNIQUEIDENTIFIER
 AS

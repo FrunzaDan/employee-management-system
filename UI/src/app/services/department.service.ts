@@ -13,7 +13,6 @@ import { EmployeeSummary } from '../interfaces/employee-summary';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { NotificationService } from './notification.service';
 
-// Same shape as OfficeService.
 @Injectable({
   providedIn: 'root',
 })
@@ -29,7 +28,6 @@ export class DepartmentService {
     GenericResponse<Department[]>
   >(() => (this.requested() ? `${this.apiUrl}/all` : undefined));
 
-  // hasValue() guards the read: value() throws while the resource is in error.
   readonly departments = computed(() =>
     this.departmentsResource.hasValue()
       ? (this.departmentsResource.value().data ?? [])
@@ -54,14 +52,12 @@ export class DepartmentService {
     }
   }
 
-  /** See OfficeService.fetchOffices for why this exists alongside loadDepartments. */
   fetchDepartments(): Observable<Department[]> {
     return this.http
       .get<GenericResponse<Department[]>>(`${this.apiUrl}/all`)
       .pipe(map((response) => response.data ?? []));
   }
 
-  /** A single department by departmentId — for the department details page, reached directly by URL. */
   getDepartment(departmentId: string): Observable<Department> {
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http
@@ -74,7 +70,6 @@ export class DepartmentService {
       );
   }
 
-  /** The employees currently assigned to this department (see Employee_ListByDepartment). */
   getEmployees(departmentId: string): Observable<EmployeeSummary[]> {
     const params = new HttpParams().set('departmentId', departmentId);
     return this.http

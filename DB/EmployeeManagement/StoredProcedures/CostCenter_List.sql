@@ -4,10 +4,6 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    -- EmployeeCount/TotalGrossSalary are computed over every employee assigned to the
-    -- cost center regardless of status, same as Employee_ListByCostCenter's unfiltered
-    -- list. Each employee's current salary is its most recent EmployeeSalary
-    -- row, same OUTER APPLY pattern Employee_List uses.
     SELECT
         cc.CostCenterId,
         cc.Code,

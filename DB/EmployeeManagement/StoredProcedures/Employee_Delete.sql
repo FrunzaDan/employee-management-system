@@ -18,9 +18,6 @@ BEGIN
         SET @Message = 'Employee not found.';
     END
     ELSE IF NOT EXISTS (
-        -- 1903 (deactivated): the normal deactivate-then-delete lifecycle.
-        -- 1904 (test): fictitious demo data, exempt from that guardrail so it
-        -- can be deleted directly.
         SELECT 1
         FROM dbo.Employee
         WHERE EmployeeId = @EmployeeId AND StatusCode IN (1903, 1904)
@@ -31,21 +28,12 @@ BEGIN
     END
     ELSE
     BEGIN
-        -- Both deletes must succeed together: Employee_Get/Employee_List
-        -- INNER JOIN to EmployeeAddress, so a Employee row left behind without
-        -- its EmployeeAddress row (e.g. the second DELETE fails after the first
-        -- already committed) would silently disappear from every read despite
-        -- still existing — mirrors Employee_Create's TRY/CATCH for the same
-        -- two-table-consistency reason.
         BEGIN TRY
             BEGIN TRANSACTION;
 
             DELETE FROM dbo.EmployeeAddress
             WHERE EmployeeId = @EmployeeId;
 
-            -- No FK cascade on EmployeeSalary (deliberate, see the
-            -- table's definition) — deleted explicitly here, same reasoning as
-            -- EmployeeAddress above.
             DELETE FROM dbo.EmployeeSalary
             WHERE EmployeeId = @EmployeeId;
 

@@ -6,8 +6,6 @@ import { CostCenterService } from '../../../services/cost-center.service';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
 import { employeeStatusLabel } from '../../../utils/employee-status-label';
 
-// See OfficeDetailsComponent for why this page exists alongside the cost centers
-// list's inline "quickly view" expansion, and for how it loads.
 @Component({
   selector: 'app-cost-center-details',
   templateUrl: './cost-center-details.component.html',

@@ -1,7 +1,5 @@
 CREATE TABLE [dbo].[Office]
 (
-    -- Same reasoning as Employee.EmployeeId: a real UNIQUEIDENTIFIER, generated
-    -- sequentially here; Office_Create hands the new value back.
     [OfficeId] UNIQUEIDENTIFIER NOT NULL
         CONSTRAINT [DF_Office_OfficeId] DEFAULT NEWSEQUENTIALID(),
     [Name] NVARCHAR (100) NOT NULL,

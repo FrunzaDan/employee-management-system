@@ -22,8 +22,6 @@ export class SalaryHistoryService {
 
   private readonly employeeId = signal<string | undefined>(undefined);
 
-  // Same shape as AuditLogService: the request is a function of `employeeId`, so a
-  // new employeeId cancels the in-flight request, and nothing is fetched until one is set.
   private readonly salaryHistoryResource = httpResource<
     GenericResponse<Salary[]>
   >(() => {
@@ -32,7 +30,6 @@ export class SalaryHistoryService {
     return { url: this.apiUrl, params: { employeeId } };
   });
 
-  // hasValue() guards the read: value() throws while the resource is in error.
   readonly entries = computed(() =>
     this.salaryHistoryResource.hasValue()
       ? (this.salaryHistoryResource.value().data ?? [])
@@ -51,8 +48,6 @@ export class SalaryHistoryService {
 
   loadSalaryHistory(employeeId: string): void {
     if (this.employeeId() === employeeId) {
-      // Same employee (e.g. right after adding an entry) — the request itself
-      // hasn't changed, so ask for a fresh copy.
       this.salaryHistoryResource.reload();
     } else {
       this.employeeId.set(employeeId);
@@ -70,11 +65,6 @@ export class SalaryHistoryService {
     );
   }
 
-  /**
-   * Same endpoint as {@link createSalary}, without the per-call success toast or
-   * history reload — for bulk callers (test-data generation) adding many
-   * entries for employees whose history page isn't even open.
-   */
   createSalarySilently(
     entry: CreateSalaryRequest,
   ): Observable<GenericResponse<object>> {

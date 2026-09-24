@@ -69,7 +69,7 @@ public class EmployeeCreationTests
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var registration = new EmployeeCreation(dbUtils.Object, auditLogger.Object);
         var request = ValidRequest();
-        request.Email = new string('a', 250) + "@x.ro"; // 255 chars, one over NVARCHAR(254)
+        request.Email = new string('a', 250) + "@x.ro";
 
         var result = await registration.CreateEmployeeAsync(request, PerformedBy, TestContext.Current.CancellationToken);
 
@@ -115,7 +115,6 @@ public class EmployeeCreationTests
     [Fact]
     public async Task CreateEmployeeAsync_RejectsAnAddressWithAMissingField_WithoutTouchingTheDb()
     {
-        // Every EmployeeAddress column is NOT NULL, so this would otherwise be a 500 from the insert.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<IEmployeeAuditLogger>();
         var registration = new EmployeeCreation(dbUtils.Object, auditLogger.Object);
@@ -147,7 +146,7 @@ public class EmployeeCreationTests
     [Theory]
     [InlineData(null)]
     [InlineData(EmployeeStatus.Active)]
-    [InlineData(EmployeeStatus.Test)] // the About page's "add 50 test employees" bulk generator
+    [InlineData(EmployeeStatus.Test)]
     public async Task CreateEmployeeAsync_AcceptsNoStatusActiveOrTest(EmployeeStatus? status)
     {
         var dbUtils = new Mock<IDbUtils>();

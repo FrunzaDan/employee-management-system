@@ -13,7 +13,6 @@ import { EmployeeSummary } from '../interfaces/employee-summary';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { NotificationService } from './notification.service';
 
-// Same shape as OfficeService.
 @Injectable({
   providedIn: 'root',
 })
@@ -29,7 +28,6 @@ export class CostCenterService {
     GenericResponse<CostCenter[]>
   >(() => (this.requested() ? `${this.apiUrl}/all` : undefined));
 
-  // hasValue() guards the read: value() throws while the resource is in error.
   readonly costCenters = computed(() =>
     this.costCentersResource.hasValue()
       ? (this.costCentersResource.value().data ?? [])
@@ -54,14 +52,12 @@ export class CostCenterService {
     }
   }
 
-  /** See OfficeService.fetchOffices for why this exists alongside loadCostCenters. */
   fetchCostCenters(): Observable<CostCenter[]> {
     return this.http
       .get<GenericResponse<CostCenter[]>>(`${this.apiUrl}/all`)
       .pipe(map((response) => response.data ?? []));
   }
 
-  /** A single cost center by costCenterId — for the cost center details page, reached directly by URL. */
   getCostCenter(costCenterId: string): Observable<CostCenter> {
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http
@@ -74,7 +70,6 @@ export class CostCenterService {
       );
   }
 
-  /** The employees currently assigned to this cost center (see Employee_ListByCostCenter). */
   getEmployees(costCenterId: string): Observable<EmployeeSummary[]> {
     const params = new HttpParams().set('costCenterId', costCenterId);
     return this.http

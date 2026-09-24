@@ -11,7 +11,6 @@ import { employeeStatusLabel } from '../../utils/employee-status-label';
 
 type EmployeeSortColumn = 'name' | 'email' | 'phoneNumber';
 
-// How each sort column reads in the table caption.
 const SORT_LABELS: Record<EmployeeSortColumn, string> = {
   name: 'name',
   email: 'email',
@@ -35,15 +34,9 @@ export class EmployeeListComponent implements OnInit {
   readonly activationLoading = this.employeeService.activationLoading;
   readonly activationError = this.employeeService.activationError;
 
-  // Delete is a separate action from deactivate/reactivate, so it gets its own
-  // in-flight/error state rather than being folded into activationLoading/Error.
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
-  // Bulk-delete selection is scoped to the current page only — the checkboxes
-  // reference rows that actually exist in the browser, and selection is reset
-  // on every fetchEmployees() (page/search/sort change, or after the bulk
-  // action itself refreshes the page).
   readonly selectedEmployeeIds = signal<ReadonlySet<string>>(new Set());
   readonly bulkActionInProgress = signal(false);
 
@@ -55,8 +48,6 @@ export class EmployeeListComponent implements OnInit {
       ),
   );
 
-  // CSV export exports whatever the list is currently searching/sorted by,
-  // not just the current page — see EmployeeService.
   readonly exportLoading = this.employeeService.exportLoading;
   readonly exportError = this.employeeService.exportError;
 
@@ -64,10 +55,6 @@ export class EmployeeListComponent implements OnInit {
 
   readonly employeeStatusLabel = employeeStatusLabel;
 
-  // Search, sorting, and pagination are all server-side now: every change to
-  // any of these re-fetches just the relevant page from the API rather than
-  // filtering/sorting an already-loaded full list in memory (see
-  // EmployeeService.loadEmployees and Employee_List).
   readonly searchTerm = signal('');
   readonly sortColumn = signal<EmployeeSortColumn>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
@@ -80,8 +67,6 @@ export class EmployeeListComponent implements OnInit {
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );
 
-  // Spoken by the polite live region so a screen-reader user hears the outcome
-  // of a search / page change without hunting for it.
   readonly resultsAnnouncement = computed(() => {
     if (this.loading()) return 'Loading employees';
     const total = this.totalItems();
@@ -93,8 +78,6 @@ export class EmployeeListComponent implements OnInit {
       `Employees, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${SORT_LABELS[this.sortColumn()]} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
   );
 
-  // Debounced so typing doesn't fire an API call per keystroke — the search
-  // used to be a synchronous in-memory filter, but now it's a network call.
   private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   private static readonly SEARCH_DEBOUNCE_MS = 300;
 
@@ -103,9 +86,6 @@ export class EmployeeListComponent implements OnInit {
 
     clearTimeout(this.searchDebounceTimer);
     this.searchDebounceTimer = setTimeout(() => {
-      // A narrower search can make the current page go out of range (e.g.
-      // you're on page 3, then a search narrows results to one page) —
-      // snap back to page 1 on every new search term.
       this.currentPage.set(1);
       this.fetchEmployees();
     }, EmployeeListComponent.SEARCH_DEBOUNCE_MS);
@@ -118,7 +98,6 @@ export class EmployeeListComponent implements OnInit {
     this.fetchEmployees();
   }
 
-  // Exposed on the <th> so assistive tech announces the current sort.
   ariaSort(column: EmployeeSortColumn): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
@@ -184,9 +163,6 @@ export class EmployeeListComponent implements OnInit {
     this.employeeService.deleteEmployee(employeeId).subscribe({
       next: () => {
         this.deleting.set(false);
-        // removeEmployeeLocally() (called by EmployeeService) only
-        // drops the row from the in-memory page — totalItems/page count
-        // would go stale without a real re-fetch of the current page.
         this.fetchEmployees();
       },
       error: (error: HttpErrorResponse) => {
@@ -222,10 +198,6 @@ export class EmployeeListComponent implements OnInit {
     this.selectedEmployeeIds.set(next);
   }
 
-  // A employee must be Deactivated (or Test, which is exempt from that rule —
-  // see Employee_Delete) to be deleted directly; an Active one is only
-  // deactivated as part of this action, not deleted, same as the single-row
-  // buttons would require.
   async bulkDeleteSelected(): Promise<void> {
     const employeeIds = this.selectedEmployeeIds();
     const selected = this.employees().filter((c) =>

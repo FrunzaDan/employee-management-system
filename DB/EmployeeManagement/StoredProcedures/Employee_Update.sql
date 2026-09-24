@@ -34,9 +34,6 @@ BEGIN
         RETURN;
     END
 
-    -- Same duplicate pre-check Employee_Create does, excluding the row being edited
-    -- itself — without this, an edit that collides with another employee's Email/PhoneNumber
-    -- would throw a raw, unhandled UQ_ constraint violation instead of a clean 409.
     IF @Email IS NOT NULL AND EXISTS (
         SELECT 1 FROM dbo.Employee WHERE Email = @Email AND EmployeeId <> @EmployeeId
     )
@@ -59,7 +56,6 @@ BEGIN
         RETURN;
     END
 
-    -- Same friendly-400-before-FK reasoning as Employee_Create.
     IF @OfficeId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.Office WHERE OfficeId = @OfficeId)
     BEGIN
         SET @Result = 400;
@@ -87,10 +83,6 @@ BEGIN
         RETURN;
     END
 
-    -- Both updates must stay in sync, same reasoning as Employee_Create/Employee_Delete's
-    -- TRY/CATCH + transaction: Employee_Get/Employee_List INNER JOIN the two tables, so a
-    -- Employee update that commits while the paired EmployeeAddress update then fails would
-    -- leave the two tables inconsistent.
     BEGIN TRY
         BEGIN TRANSACTION;
 
@@ -109,9 +101,6 @@ BEGIN
             CostCenterId = ISNULL(@CostCenterId, CostCenterId)
         WHERE EmployeeId = @EmployeeId;
 
-        -- Only touch EmployeeAddress when the request actually supplied an address
-        -- field; otherwise every ISNULL(@param, column) would resolve to the
-        -- existing value and this would be a no-op write on every edit call.
         IF @Country IS NOT NULL OR @County IS NOT NULL OR @City IS NOT NULL
             OR @PostalCode IS NOT NULL OR @Street IS NOT NULL OR @StreetNumber IS NOT NULL
         BEGIN
@@ -135,8 +124,6 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
-        -- 2601/2627: a concurrent request took the value between the pre-check above and
-        -- this write; the UQ_ constraint caught it, so answer the same 409 as the pre-check.
         IF ERROR_NUMBER() NOT IN (2601, 2627)
             THROW;
 

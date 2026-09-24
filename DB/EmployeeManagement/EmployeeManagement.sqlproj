@@ -15,7 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\PostDeployment\PostDeployment.sql" />
-    <!-- Pulled into PostDeployment.sql via :r; must not also be compiled as schema objects. -->
     <None Include="Scripts\PostDeployment\Seed_Employer.sql" />
     <None Include="Scripts\PostDeployment\Seed_Office.sql" />
     <None Include="Scripts\PostDeployment\Seed_Department.sql" />

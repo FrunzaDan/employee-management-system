@@ -18,8 +18,6 @@ import {
 
 const TEST_EMPLOYEE_COUNT = 50;
 
-// "Latest test data": hire dates for generated test employees are spread
-// across this range, per the About page's bulk generator.
 const HIRE_DATE_RANGE_START_YEAR = 2018;
 const HIRE_DATE_RANGE_END_YEAR = 2025;
 
@@ -205,8 +203,6 @@ function randomGrossSalary(): number {
   );
 }
 
-// undefined (not '') when the list hasn't loaded/is empty, so the field is
-// simply omitted from the create request rather than sent as a bad ID.
 function pickId<T>(
   values: readonly T[],
   idOf: (value: T) => string,
@@ -246,19 +242,12 @@ export class AboutComponent {
     this.addingTestEmployees.set(true);
 
     try {
-      // Fetched once up front (not via the services' loadX()/signal state,
-      // which is for the admin CRUD pages) so every generated employee can
-      // pick a random, real office/department/cost-center employeeId — see
-      // OfficeService.fetchOffices.
       const [offices, departments, costCenters] = await Promise.all([
         firstValueFrom(this.officeService.fetchOffices()),
         firstValueFrom(this.departmentService.fetchDepartments()),
         firstValueFrom(this.costCenterService.fetchCostCenters()),
       ]);
 
-      // An index-based suffix (rather than pure randomness) guarantees no
-      // email/phoneNumber collisions within the batch itself, since both columns
-      // carry a unique constraint at the database level.
       const employees = Array.from(
         { length: TEST_EMPLOYEE_COUNT },
         (_, index) =>
@@ -294,10 +283,6 @@ export class AboutComponent {
     }
   }
 
-  // Best-effort: the employee was already created successfully (employeeId is the ID its
-  // registration returned), so a failure to add its salary shouldn't be reported as a failed
-  // employee — same "already succeeded, don't turn a follow-up failure into an error"
-  // reasoning as EmployeeAuditLogger.
   private async createRandomInitialSalary(
     employeeId: string,
     employee: CreateEmployeeRequest,
@@ -310,9 +295,7 @@ export class AboutComponent {
           effectiveDate: employee.hireDate!,
         }),
       );
-    } catch {
-      // Swallowed — see comment above.
-    }
+    } catch {}
   }
 
   private buildRandomEmployee(
