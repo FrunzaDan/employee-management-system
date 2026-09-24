@@ -3,6 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import {
@@ -51,9 +52,20 @@ describe('EmployeeService', () => {
     ...overrides,
   });
 
+  // The response is applied asynchronously, so wait for the app to settle
+  // after flushing before asserting on the signals.
+  const settle = () => TestBed.inject(ApplicationRef).whenStable();
+
+  // httpResource issues its request from an effect, so flush effects after
+  // calling loadEmployees() before expecting the HTTP call.
+  const load = (params: Parameters<EmployeeService['loadEmployees']>[0]) => {
+    service.loadEmployees(params);
+    TestBed.tick();
+  };
+
   // Loads one page holding `employees`, the way the list page fills the service.
-  const seedEmployees = (employees: Employee[]) => {
-    service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+  const seedEmployees = async (employees: Employee[]) => {
+    load({ pageNumber: 1, pageSize: 10 });
     httpMock
       .expectOne((r) => r.url === `${API_URL}/all`)
       .flush({
@@ -66,6 +78,7 @@ describe('EmployeeService', () => {
           items: employees,
         },
       });
+    await settle();
   };
 
   beforeEach(() => {
@@ -96,7 +109,7 @@ describe('EmployeeService', () => {
     });
 
     it('sends pageNumber, pageSize, sortColumn, and sortDirection as query params', () => {
-      service.loadEmployees({
+      load({
         pageNumber: 2,
         pageSize: 10,
         sortColumn: 'email',
@@ -114,7 +127,7 @@ describe('EmployeeService', () => {
     });
 
     it('defaults sortColumn to name and sortDirection to asc when not provided', () => {
-      service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+      load({ pageNumber: 1, pageSize: 10 });
 
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
       expect(req.request.params.get('sortColumn')).toBe('name');
@@ -124,7 +137,7 @@ describe('EmployeeService', () => {
     });
 
     it('includes searchTerm only when a non-empty one is provided', () => {
-      service.loadEmployees({ pageNumber: 1, pageSize: 10, searchTerm: 'dan' });
+      load({ pageNumber: 1, pageSize: 10, searchTerm: 'dan' });
 
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
       expect(req.request.params.get('searchTerm')).toBe('dan');
@@ -132,10 +145,10 @@ describe('EmployeeService', () => {
       req.flush(emptyPage(1));
     });
 
-    it('populates employees/totalItems/pageNumber/pageSize from a successful response', () => {
+    it('populates employees/totalItems/pageNumber/pageSize from a successful response', async () => {
       const employee = buildEmployee();
 
-      seedEmployees([employee]);
+      await seedEmployees([employee]);
 
       expect(service.employees()).toEqual([employee]);
       expect(service.totalItems()).toBe(1);
@@ -145,27 +158,153 @@ describe('EmployeeService', () => {
       expect(service.error()).toBeNull();
     });
 
-    it('sets loading true synchronously while the request is in flight', () => {
-      service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+    it('sets loading true synchronously while the request is in flight', async () => {
+      load({ pageNumber: 1, pageSize: 10 });
 
       expect(service.loading()).toBe(true);
 
       httpMock.expectOne((r) => r.url === `${API_URL}/all`).flush(emptyPage(1));
+      await settle();
 
       expect(service.loading()).toBe(false);
     });
 
-    it('sets a friendly message and clears loading on a network error (status 0)', () => {
-      service.loadEmployees({ pageNumber: 1, pageSize: 10 });
+    it('sets a friendly message and clears loading on a network error (status 0)', async () => {
+      load({ pageNumber: 1, pageSize: 10 });
 
       httpMock
         .expectOne((r) => r.url === `${API_URL}/all`)
         .error(new ProgressEvent('error'), { status: 0 });
+      await settle();
 
       expect(service.loading()).toBe(false);
       expect(service.error()).toBe(
         'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
       );
+    });
+  });
+
+  describe('loadEmployees (resource behaviour)', () => {
+    const pageOf = (employees: Employee[], pageNumber = 1) => ({
+      status: 200,
+      responseMessage: 'ok',
+      data: {
+        pageNumber,
+        pageSize: 10,
+        totalItems: employees.length,
+        items: employees,
+      },
+    });
+
+    it('makes no request until loadEmployees() is called', () => {
+      TestBed.tick();
+
+      httpMock.expectNone((r) => r.url === `${API_URL}/all`);
+      expect(service.employees()).toEqual([]);
+      expect(service.loading()).toBe(false);
+    });
+
+    it('keeps the loaded page on screen while the next page loads', async () => {
+      const first = buildEmployee();
+      await seedEmployees([first]);
+      // Read it, as the list page's template does.
+      expect(service.employees()).toEqual([first]);
+
+      load({ pageNumber: 2, pageSize: 10 });
+
+      expect(service.loading()).toBe(true);
+      expect(service.employees()).toEqual([first]);
+
+      const second = buildEmployee({ employeeId: 'employee-2' });
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/all`)
+        .flush(pageOf([second], 2));
+      await settle();
+
+      expect(service.employees()).toEqual([second]);
+      expect(service.pageNumber()).toBe(2);
+    });
+
+    it('cancels the request still in flight when a newer page is requested', async () => {
+      load({ pageNumber: 1, pageSize: 10 });
+      const stale = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
+
+      load({ pageNumber: 2, pageSize: 10 });
+
+      expect(stale.cancelled).toBe(true);
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/all`)
+        .flush(pageOf([], 2));
+      await settle();
+      expect(service.pageNumber()).toBe(2);
+    });
+
+    it('fetches the same page again when asked with the same params', async () => {
+      await seedEmployees([buildEmployee()]);
+
+      load({ pageNumber: 1, pageSize: 10 });
+
+      httpMock.expectOne((r) => r.url === `${API_URL}/all`).flush(pageOf([]));
+      await settle();
+      expect(service.employees()).toEqual([]);
+    });
+  });
+
+  describe('getEmployee', () => {
+    const select = async (employee: Employee) => {
+      service.getEmployee(employee.employeeId);
+      TestBed.tick();
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/get`);
+      expect(req.request.params.get('searchTerm')).toBe(employee.employeeId);
+      req.flush({ status: 200, responseMessage: 'ok', data: employee });
+      await settle();
+    };
+
+    it('loads the selected employee by id', async () => {
+      const employee = buildEmployee();
+
+      await select(employee);
+
+      expect(service.selectedEmployee()).toEqual(employee);
+      expect(service.selectedEmployeeLoading()).toBe(false);
+      expect(service.selectedEmployeeError()).toBeNull();
+    });
+
+    it('fetches again when asked for the employee already selected', async () => {
+      await select(buildEmployee());
+
+      await select(buildEmployee({ firstName: 'Fresh' }));
+
+      expect(service.selectedEmployee()?.firstName).toBe('Fresh');
+    });
+
+    it('names the failed load on a server error', async () => {
+      service.getEmployee('employee-1');
+      TestBed.tick();
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/get`)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+      await settle();
+
+      expect(service.selectedEmployee()).toBeNull();
+      expect(service.selectedEmployeeError()).toBe(
+        'Failed to load the employee (500). Please try again.',
+      );
+    });
+
+    it('deactivating the selected employee updates it even when no list is loaded', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      await select(buildEmployee());
+
+      service.deactivateEmployee('employee-1');
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush({ status: 200, responseMessage: 'ok' });
+
+      expect(service.selectedEmployee()?.status).toBe(
+        EmployeeStatus.Deactivated,
+      );
+      expect(service.activationError()).toBeNull();
     });
   });
 
@@ -259,8 +398,8 @@ describe('EmployeeService', () => {
       });
     });
 
-    it('updates the employee in the loaded list and notifies on success', () => {
-      seedEmployees([buildEmployee()]);
+    it('updates the employee in the loaded list and notifies on success', async () => {
+      await seedEmployees([buildEmployee()]);
       const updated = buildEmployee({ firstName: 'Updated' });
 
       service.updateEmployee(updated).subscribe();
@@ -275,9 +414,9 @@ describe('EmployeeService', () => {
       );
     });
 
-    it('does not touch the loaded list or notify when the request errors', () => {
+    it('does not touch the loaded list or notify when the request errors', async () => {
       const original = buildEmployee();
-      seedEmployees([original]);
+      await seedEmployees([original]);
 
       service
         .updateEmployee(buildEmployee({ firstName: 'Updated' }))
@@ -308,8 +447,8 @@ describe('EmployeeService', () => {
       });
     });
 
-    it('removes the employee from the loaded list and notifies on success', () => {
-      seedEmployees([buildEmployee()]);
+    it('removes the employee from the loaded list and notifies on success', async () => {
+      await seedEmployees([buildEmployee()]);
 
       service.deleteEmployee('employee-1').subscribe();
       httpMock
@@ -325,8 +464,8 @@ describe('EmployeeService', () => {
       );
     });
 
-    it('does not touch the loaded list or notify when the request errors', () => {
-      seedEmployees([buildEmployee()]);
+    it('does not touch the loaded list or notify when the request errors', async () => {
+      await seedEmployees([buildEmployee()]);
 
       service.deleteEmployee('employee-1').subscribe({ error: () => {} });
       httpMock
@@ -344,8 +483,8 @@ describe('EmployeeService', () => {
       expect(notificationShow).not.toHaveBeenCalled();
     });
 
-    it('deleteEmployeeSilently removes the employee from the loaded list, but never notifies', () => {
-      seedEmployees([buildEmployee()]);
+    it('deleteEmployeeSilently removes the employee from the loaded list, but never notifies', async () => {
+      await seedEmployees([buildEmployee()]);
 
       service.deleteEmployeeSilently('employee-1').subscribe();
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/delete`);
@@ -376,8 +515,8 @@ describe('EmployeeService', () => {
         .flush({ status: 200, responseMessage: 'ok' });
     });
 
-    it('deactivateEmployee marks the loaded employee Deactivated and notifies on success', () => {
-      seedEmployees([buildEmployee()]);
+    it('deactivateEmployee marks the loaded employee Deactivated and notifies on success', async () => {
+      await seedEmployees([buildEmployee()]);
 
       service.deactivateEmployee('employee-1');
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/deactivate`);
@@ -393,8 +532,10 @@ describe('EmployeeService', () => {
       expect(service.activationError()).toBeNull();
     });
 
-    it('reactivateEmployee marks the loaded employee Active and hits the reactivate endpoint', () => {
-      seedEmployees([buildEmployee({ status: EmployeeStatus.Deactivated })]);
+    it('reactivateEmployee marks the loaded employee Active and hits the reactivate endpoint', async () => {
+      await seedEmployees([
+        buildEmployee({ status: EmployeeStatus.Deactivated }),
+      ]);
 
       service.reactivateEmployee('employee-1');
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/reactivate`);
@@ -438,8 +579,8 @@ describe('EmployeeService', () => {
       // httpMock.verify() in afterEach confirms no retry request was made.
     });
 
-    it('retries once on a transient (5xx) failure and then succeeds', () => {
-      seedEmployees([buildEmployee()]);
+    it('retries once on a transient (5xx) failure and then succeeds', async () => {
+      await seedEmployees([buildEmployee()]);
       vi.useFakeTimers();
 
       service.deactivateEmployee('employee-1');

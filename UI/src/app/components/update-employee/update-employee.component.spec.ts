@@ -70,8 +70,8 @@ describe('UpdateEmployeeComponent', () => {
           provide: EmployeeService,
           useValue: {
             selectedEmployee: selectedEmployee,
-            loading: signal(false),
-            error: signal<string | null>(null),
+            selectedEmployeeLoading: signal(false),
+            selectedEmployeeError: signal<string | null>(null),
             getEmployee,
             updateEmployee,
           },

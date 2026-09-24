@@ -4,7 +4,6 @@ using EmployeeManagementSystem.BusinessLogic.OrgFunctions;
 using EmployeeManagementSystem.BusinessLogic.Services;
 using EmployeeManagementSystem.BusinessLogic.Services.Implementation;
 using EmployeeManagementSystem.DataAccess.DBConnection;
-using EmployeeManagementSystem.Domain.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EmployeeManagementSystem.BusinessLogic;
@@ -18,8 +17,8 @@ public static class BusinessLogicDependencyInjection
         services.AddScoped<IOfficeService, OfficeService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<ICostCenterService, CostCenterService>();
+        services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddSingleton<IDbUtils, DbUtils>();
-        services.AddSingleton<IAppSettingsConfig, AppSettingsConfig>();
         services.AddSingleton<JwtCreation>();
 
         services.AddScoped<IEmployeeAuditLogger, EmployeeAuditLogger>();

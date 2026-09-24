@@ -50,8 +50,8 @@ export class EmployeeDetailsComponent {
   ]);
 
   readonly employee = this.employeeService.selectedEmployee;
-  readonly isLoading = this.employeeService.loading;
-  readonly errorMessage = this.employeeService.error;
+  readonly isLoading = this.employeeService.selectedEmployeeLoading;
+  readonly errorMessage = this.employeeService.selectedEmployeeError;
 
   readonly EmployeeStatus = EmployeeStatus;
   readonly auditActionLabel = auditActionLabel;

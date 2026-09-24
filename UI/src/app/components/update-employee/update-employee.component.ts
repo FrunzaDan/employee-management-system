@@ -39,8 +39,8 @@ export class UpdateEmployeeComponent {
   readonly employeeId = input<string>();
 
   readonly employee = this.employeeService.selectedEmployee;
-  readonly isLoading = this.employeeService.loading;
-  readonly errorMessage = this.employeeService.error;
+  readonly isLoading = this.employeeService.selectedEmployeeLoading;
+  readonly errorMessage = this.employeeService.selectedEmployeeError;
 
   // The form model *is* the loaded employee, mapped: it re-derives whenever
   // employee() changes and stays writable for the user's edits — no effect +
