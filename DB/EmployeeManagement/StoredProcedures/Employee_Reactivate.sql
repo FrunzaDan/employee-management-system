@@ -17,10 +17,11 @@ BEGIN
         DECLARE @Now DATETIME2(3) = SYSUTCDATETIME();
 
         UPDATE dbo.Employee
-        SET 
+        SET
             LastInteractionAt = @Now,
-            StatusCode = 1901
-        WHERE EmployeeId = @EmployeeId AND StatusCode <> 1901;
+            StatusCode = ISNULL(StatusCodeBeforeDeactivation, 1901),
+            StatusCodeBeforeDeactivation = NULL
+        WHERE EmployeeId = @EmployeeId AND StatusCode = 1903;
 
         IF @@ROWCOUNT > 0
         BEGIN
@@ -30,7 +31,7 @@ BEGIN
         ELSE
         BEGIN
             SET @Result = 409;
-            SET @Message = 'Employee is already active.';
+            SET @Message = 'Employee is not deactivated.';
         END
     END
     ELSE

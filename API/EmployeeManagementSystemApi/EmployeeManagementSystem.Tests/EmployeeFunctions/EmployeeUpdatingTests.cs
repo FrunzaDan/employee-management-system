@@ -106,4 +106,33 @@ public class EmployeeUpdatingTests
         dbUtils.Verify(d => d.UpdateEmployeeAsync(request, It.IsAny<CancellationToken>()), Times.Once);
         auditLogger.Verify(a => a.LogAsync(ValidEmployeeId, PerformedBy, AuditAction.Edited, "Updated: email, phone number, birth date", It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    public static TheoryData<UpdateEmployeeRequest, string> BlankOrImpossibleUpdates => new()
+    {
+        { new UpdateEmployeeRequest { EmployeeId = ValidEmployeeId, FirstName = "   " }, "First name cannot be blank." },
+        { new UpdateEmployeeRequest { EmployeeId = ValidEmployeeId, LastName = "" }, "Last name cannot be blank." },
+        { new UpdateEmployeeRequest { EmployeeId = ValidEmployeeId, Email = "" }, "Invalid Email." },
+        { new UpdateEmployeeRequest { EmployeeId = ValidEmployeeId, PhoneNumber = "" }, "Invalid phone number." },
+        { new UpdateEmployeeRequest { EmployeeId = ValidEmployeeId, Address = new AddressRequest { City = " " } }, "City cannot be blank." },
+        {
+            new UpdateEmployeeRequest { EmployeeId = ValidEmployeeId, BirthDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1) },
+            "Birth date cannot be in the future."
+        }
+    };
+
+    [Theory]
+    [MemberData(nameof(BlankOrImpossibleUpdates))]
+    public async Task UpdateEmployeeAsync_RejectsBlankFieldsAndAFutureBirthDate_WithoutTouchingTheDb(
+        UpdateEmployeeRequest request, string expectedMessage)
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var auditLogger = new Mock<IEmployeeAuditLogger>();
+        var editing = new EmployeeUpdating(dbUtils.Object, auditLogger.Object);
+
+        var result = await editing.UpdateEmployeeAsync(request, PerformedBy, TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        Assert.Equal(expectedMessage, result.ResponseMessage);
+        dbUtils.Verify(d => d.UpdateEmployeeAsync(It.IsAny<UpdateEmployeeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

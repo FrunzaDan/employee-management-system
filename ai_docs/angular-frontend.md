@@ -64,7 +64,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
   - the list is an `httpResource`, reloaded after each mutation;
   - `getEmployees(id)` and `fetchX()` are one-off Observables;
   - the details pages use two `rxResource`s keyed on the route id.
-- **Retries:** deactivate and reactivate retry only on status 0 or ≥500, with backoff.
+- **Retries:** deactivate and reactivate retry only on status 0 or ≥500, with backoff. After a reactivate, the list re-reads that row from the server, because the restored status may be Test rather than Active.
 - **Employee list:**
   - search (debounced 300 ms), sort and paging all happen on the server;
   - page size is 50;

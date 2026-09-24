@@ -17,8 +17,9 @@ BEGIN
         DECLARE @Now DATETIME2(3) = SYSUTCDATETIME();
 
         UPDATE dbo.Employee
-        SET 
+        SET
             LastInteractionAt = @Now,
+            StatusCodeBeforeDeactivation = StatusCode,
             StatusCode = 1903
         WHERE EmployeeId = @EmployeeId AND StatusCode <> 1903;
 

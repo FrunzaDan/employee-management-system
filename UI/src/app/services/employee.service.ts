@@ -187,11 +187,11 @@ export class EmployeeService {
   }
 
   deactivateEmployee(employeeId: string): void {
-    this.changeStatus(employeeId, 'deactivate', EmployeeStatus.Deactivated);
+    this.changeStatus(employeeId, 'deactivate');
   }
 
   reactivateEmployee(employeeId: string): void {
-    this.changeStatus(employeeId, 'reactivate', EmployeeStatus.Active);
+    this.changeStatus(employeeId, 'reactivate');
   }
 
   deactivateEmployeeSilently(
@@ -234,9 +234,7 @@ export class EmployeeService {
         },
         error: (error: HttpErrorResponse) => {
           this.exportLoading.set(false);
-          this.exportError.set(
-            extractErrorMessage(error, 'Failed to export employees'),
-          );
+          void this.setExportError(error);
         },
       });
   }
@@ -244,7 +242,6 @@ export class EmployeeService {
   private changeStatus(
     employeeId: string,
     action: 'deactivate' | 'reactivate',
-    status: EmployeeStatus,
   ): void {
     this.activationState.set({ loading: true, error: null });
     const params = new HttpParams().set('employeeId', employeeId);
@@ -256,7 +253,11 @@ export class EmployeeService {
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
       .subscribe({
         next: () => {
-          this.setStatusLocally(employeeId, status);
+          if (action === 'deactivate') {
+            this.setStatusLocally(employeeId, EmployeeStatus.Deactivated);
+          } else {
+            this.refreshEmployeeLocally(employeeId);
+          }
           this.activationState.set({ loading: false, error: null });
           this.notificationService.show(`Employee ${action}d successfully.`);
         },
@@ -270,6 +271,15 @@ export class EmployeeService {
     );
     if (existingEmployee)
       this.updateEmployeeLocally({ ...existingEmployee, status });
+  }
+
+  private refreshEmployeeLocally(employeeId: string): void {
+    if (!this.employees().some((item) => item.employeeId === employeeId))
+      return;
+    this.getEmployee(employeeId).subscribe({
+      next: (employee) => this.updateEmployeeLocally(employee),
+      error: () => this.setStatusLocally(employeeId, EmployeeStatus.Active),
+    });
   }
 
   private updateEmployeeLocally(updatedEmployee: Employee): void {
@@ -288,6 +298,25 @@ export class EmployeeService {
 
   private updateLoadedPage(update: (items: Employee[]) => Employee[]): void {
     this.page.update((page) => page && { ...page, items: update(page.items) });
+  }
+
+  private async setExportError(error: HttpErrorResponse): Promise<void> {
+    const body =
+      error.error instanceof Blob
+        ? await readJsonBlob(error.error)
+        : error.error;
+    this.exportError.set(
+      extractErrorMessage(
+        new HttpErrorResponse({
+          error: body,
+          headers: error.headers,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url ?? undefined,
+        }),
+        'Failed to export employees',
+      ),
+    );
   }
 
   private buildExportFilename(): string {
@@ -327,4 +356,12 @@ function toUpdateEmployeeRequest(employee: Employee): UpdateEmployeeRequest {
     costCenterId: employee.costCenterId ?? undefined,
     address: employee.address,
   };
+}
+
+async function readJsonBlob(blob: Blob): Promise<unknown> {
+  try {
+    return JSON.parse(await blob.text());
+  } catch {
+    return null;
+  }
 }

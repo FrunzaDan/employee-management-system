@@ -39,6 +39,8 @@ public class OfficeFunctions(IDbUtils dbUtils)
     {
         if (request.OfficeId == Guid.Empty)
             return new ResponseModel<object>(400, "A valid office ID is required.");
+        if (request.Name is not null && string.IsNullOrWhiteSpace(request.Name))
+            return new ResponseModel<object>(400, "Office name cannot be blank.");
         if (request.Name?.Length > FieldLengthConstants.OfficeName)
             return new ResponseModel<object>(400, "Office name is too long.");
         if (request.City?.Length > FieldLengthConstants.City)

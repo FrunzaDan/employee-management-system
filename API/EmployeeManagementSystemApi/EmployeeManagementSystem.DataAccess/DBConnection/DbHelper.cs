@@ -113,16 +113,13 @@ public static class DbHelper
     public static async Task<ResponseModel<PagedResponse<EmployeeModel>>> HandleResponseWithPagedEmployeesAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
+        await reader.ReadAsync().ConfigureAwait(false);
+        var totalItems = reader.GetInt32("TotalCount");
+
         var items = new List<EmployeeModel>();
-        var totalItems = 0;
-
+        await reader.NextResultAsync().ConfigureAwait(false);
         while (await reader.ReadAsync().ConfigureAwait(false))
-        {
-            if (items.Count == 0)
-                totalItems = reader.GetInt32("TotalCount");
-
             items.Add(MapEmployeeFromReader(reader));
-        }
 
         return new ResponseModel<PagedResponse<EmployeeModel>>(200,
             $"{items.Count} employees found (page {pageNumber}).",

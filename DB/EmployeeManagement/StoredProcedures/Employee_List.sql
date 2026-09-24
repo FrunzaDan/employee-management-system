@@ -12,6 +12,19 @@ BEGIN
     DECLARE @EscapedSearchTerm NVARCHAR(508) =
         REPLACE(REPLACE(REPLACE(@SearchTerm, '\', '\\'), '%', '\%'), '_', '\_');
 
+    SELECT COUNT(*) AS TotalCount
+    FROM
+        dbo.Employee AS e
+    INNER JOIN
+        dbo.EmployeeAddress AS a
+        ON e.EmployeeId = a.EmployeeId
+    WHERE
+        @SearchTerm IS NULL
+        OR e.FirstName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR e.LastName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR e.Email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR e.PhoneNumber LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\';
+
     SELECT
         e.EmployeeId,
         e.FirstName,
@@ -36,8 +49,7 @@ BEGIN
         d.Name AS DepartmentName,
         cc.CostCenterId,
         cc.Name AS CostCenterName,
-        s.GrossSalary AS CurrentGrossSalary,
-        COUNT(*) OVER() AS TotalCount
+        s.GrossSalary AS CurrentGrossSalary
     FROM
         dbo.Employee AS e
     INNER JOIN
@@ -49,7 +61,7 @@ BEGIN
     OUTER APPLY (
         SELECT TOP 1 GrossSalary
         FROM dbo.EmployeeSalary
-        WHERE EmployeeId = e.EmployeeId
+        WHERE EmployeeId = e.EmployeeId AND EffectiveDate <= CAST(SYSUTCDATETIME() AS DATE)
         ORDER BY EffectiveDate DESC, CreatedAt DESC
     ) AS s
     WHERE
@@ -66,7 +78,8 @@ BEGIN
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'asc' THEN e.Email END ASC,
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'desc' THEN e.Email END DESC,
         CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'asc' THEN e.PhoneNumber END ASC,
-        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'desc' THEN e.PhoneNumber END DESC
+        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'desc' THEN e.PhoneNumber END DESC,
+        e.EmployeeId
     OFFSET (@PageNumber - 1) * @PageSize ROWS
     FETCH NEXT @PageSize ROWS ONLY;
 END

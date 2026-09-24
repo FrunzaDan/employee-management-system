@@ -19,7 +19,7 @@ public class EmployeeGetting(IDbUtils dbUtils)
 
         var lookup = DetermineLookup(searchTerm.Trim());
         if (lookup is null)
-            return new ResponseModel<EmployeeModel>(404,
+            return new ResponseModel<EmployeeModel>(400,
                 "No valid search variable was provided! It must be a employee ID, phone number, or email.");
 
         return await dbUtils.GetEmployeeAsync(lookup, cancellationToken);
@@ -61,6 +61,10 @@ public class EmployeeGetting(IDbUtils dbUtils)
         var response = await dbUtils.GetEmployeesAsync(pagedRequest, cancellationToken);
         if (response is not { Status: 200, Data: { } paged })
             return new ResponseModel<string>(response.Status, response.ResponseMessage);
+
+        if (paged.TotalItems > MaxExportRows)
+            return new ResponseModel<string>(400,
+                $"{paged.TotalItems} employees match, but an export is limited to {MaxExportRows}. Narrow the search and try again.");
 
         var csv = EmployeeCsvExporter.ToCsv(paged.Items);
         return new ResponseModel<string>(200, $"{paged.Items.Count} employees exported.", csv);

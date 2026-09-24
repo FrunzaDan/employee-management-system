@@ -35,6 +35,8 @@ public class DepartmentFunctions(IDbUtils dbUtils)
     {
         if (request.DepartmentId == Guid.Empty)
             return new ResponseModel<object>(400, "A valid department ID is required.");
+        if (request.Name is not null && string.IsNullOrWhiteSpace(request.Name))
+            return new ResponseModel<object>(400, "Department name cannot be blank.");
         if (request.Name?.Length > FieldLengthConstants.DepartmentName)
             return new ResponseModel<object>(400, "Department name is too long.");
 

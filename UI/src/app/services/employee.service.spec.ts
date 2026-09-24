@@ -489,7 +489,7 @@ describe('EmployeeService', () => {
       expect(service.activationError()).toBeNull();
     });
 
-    it('reactivateEmployee marks the loaded employee Active and hits the reactivate endpoint', async () => {
+    it('reactivateEmployee reloads the employee row so a Test record stays Test', async () => {
       await seedEmployees([
         buildEmployee({ status: EmployeeStatus.Deactivated }),
       ]);
@@ -499,7 +499,14 @@ describe('EmployeeService', () => {
       expect(req.request.method).toBe('PATCH');
       req.flush({ status: 200, responseMessage: 'ok' });
 
-      expect(service.employees()[0].status).toBe(EmployeeStatus.Active);
+      const reload = httpMock.expectOne((r) => r.url === `${API_URL}/get`);
+      expect(reload.request.params.get('searchTerm')).toBe('employee-1');
+      reload.flush({
+        status: 200,
+        data: buildEmployee({ status: EmployeeStatus.Test }),
+      });
+
+      expect(service.employees()[0].status).toBe(EmployeeStatus.Test);
       expect(notificationShow).toHaveBeenCalledWith(
         'Employee reactivated successfully.',
       );
@@ -631,7 +638,7 @@ describe('EmployeeService', () => {
       );
     });
 
-    it('names the failed export on a server error (status 500)', () => {
+    it('names the failed export on a server error (status 500)', async () => {
       service.exportEmployees({});
 
       httpMock
@@ -642,8 +649,27 @@ describe('EmployeeService', () => {
         });
 
       expect(service.exportLoading()).toBe(false);
-      expect(service.exportError()).toBe(
-        'Failed to export employees (500). Please try again.',
+      await vi.waitFor(() =>
+        expect(service.exportError()).toBe(
+          'Failed to export employees (500). Please try again.',
+        ),
+      );
+    });
+
+    it('shows the server detail from a problem body delivered as a blob', async () => {
+      service.exportEmployees({});
+
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/export`)
+        .flush(
+          new Blob([
+            JSON.stringify({ status: 400, detail: 'Narrow the search.' }),
+          ]),
+          { status: 400, statusText: 'Bad Request' },
+        );
+
+      await vi.waitFor(() =>
+        expect(service.exportError()).toBe('Narrow the search.'),
       );
     });
   });

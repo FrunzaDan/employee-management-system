@@ -15,7 +15,7 @@ BEGIN
     OUTER APPLY (
         SELECT TOP 1 GrossSalary
         FROM dbo.EmployeeSalary
-        WHERE EmployeeId = e.EmployeeId
+        WHERE EmployeeId = e.EmployeeId AND EffectiveDate <= CAST(SYSUTCDATETIME() AS DATE)
         ORDER BY EffectiveDate DESC, CreatedAt DESC
     ) AS s
     GROUP BY cc.CostCenterId, cc.Code, cc.Name

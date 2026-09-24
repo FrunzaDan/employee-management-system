@@ -11,6 +11,7 @@ CREATE TABLE [dbo].[Employee]
     [BirthDate] DATE NULL,
     [StatusCode] SMALLINT NOT NULL
         CONSTRAINT [DF_Employee_StatusCode] DEFAULT 1901,
+    [StatusCodeBeforeDeactivation] SMALLINT NULL,
     [CreatedAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_Employee_CreatedAt] DEFAULT SYSUTCDATETIME(),
     [LastInteractionAt] DATETIME2 (3) NOT NULL
@@ -24,6 +25,8 @@ CREATE TABLE [dbo].[Employee]
     CONSTRAINT [UQ_Employee_PhoneNumber] UNIQUE ([PhoneNumber]),
     CONSTRAINT [CK_Employee_Gender] CHECK ([Gender] IN (0, 1, 2)),
     CONSTRAINT [CK_Employee_StatusCode] CHECK ([StatusCode] IN (1901, 1903, 1904)),
+    CONSTRAINT [CK_Employee_StatusCodeBeforeDeactivation]
+        CHECK ([StatusCodeBeforeDeactivation] IN (1901, 1904)),
     CONSTRAINT [FK_Employee_Office]
         FOREIGN KEY ([OfficeId]) REFERENCES [dbo].[Office] ([OfficeId]),
     CONSTRAINT [FK_Employee_Department]

@@ -37,6 +37,8 @@ public class CostCenterFunctions(IDbUtils dbUtils)
     {
         if (request.CostCenterId == Guid.Empty)
             return new ResponseModel<object>(400, "A valid cost center ID is required.");
+        if (request.Code is not null && string.IsNullOrWhiteSpace(request.Code))
+            return new ResponseModel<object>(400, "Cost center code cannot be blank.");
         if (request.Code?.Length > FieldLengthConstants.CostCenterCode)
             return new ResponseModel<object>(400, "Cost center code is too long.");
         if (request.Name?.Length > FieldLengthConstants.CostCenterName)

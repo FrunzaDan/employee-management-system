@@ -1,4 +1,4 @@
-import { pattern, required, schema } from '@angular/forms/signals';
+import { pattern, required, schema, validate } from '@angular/forms/signals';
 import { environment } from '../../../environments/environment';
 import {
   CreateEmployeeRequest,
@@ -44,9 +44,20 @@ export const emptyEmployeeForm = (): EmployeeFormModel => ({
   costCenterId: '',
 });
 
+const NOT_BLANK = /\S/;
+
+function todayDateOnly(): string {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
+}
+
 export const employeeFormSchema = schema<EmployeeFormModel>((p) => {
   required(p.firstName, { message: 'First name is required' });
+  pattern(p.firstName, NOT_BLANK, { message: 'First name is required' });
   required(p.lastName, { message: 'Last name is required' });
+  pattern(p.lastName, NOT_BLANK, { message: 'Last name is required' });
   required(p.email, { message: 'Email is required' });
   pattern(p.email, new RegExp(environment.emailRegex), {
     message: 'The email should be a valid one',
@@ -57,12 +68,23 @@ export const employeeFormSchema = schema<EmployeeFormModel>((p) => {
   });
   required(p.gender, { message: 'Gender is required' });
   required(p.birthDate, { message: 'Birth date is required' });
+  validate(p.birthDate, ({ value }) =>
+    value() > todayDateOnly()
+      ? { kind: 'futureDate', message: 'Birth date cannot be in the future' }
+      : undefined,
+  );
   required(p.country, { message: 'Country is required' });
+  pattern(p.country, NOT_BLANK, { message: 'Country is required' });
   required(p.county, { message: 'County is required' });
+  pattern(p.county, NOT_BLANK, { message: 'County is required' });
   required(p.city, { message: 'City is required' });
+  pattern(p.city, NOT_BLANK, { message: 'City is required' });
   required(p.street, { message: 'Street is required' });
+  pattern(p.street, NOT_BLANK, { message: 'Street is required' });
   required(p.streetNumber, { message: 'Street number is required' });
+  pattern(p.streetNumber, NOT_BLANK, { message: 'Street number is required' });
   required(p.postalCode, { message: 'Postal code is required' });
+  pattern(p.postalCode, NOT_BLANK, { message: 'Postal code is required' });
   required(p.hireDate, { message: 'Hire date is required' });
   required(p.officeId, { message: 'Office is required' });
   required(p.departmentId, { message: 'Department is required' });

@@ -50,7 +50,7 @@ public class EmployeeGettingTests
 
         var result = await getting.GetEmployeeAsync("not-a-valid-search-term", TestContext.Current.CancellationToken);
 
-        Assert.Equal(404, result.Status);
+        Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetEmployeeAsync(It.IsAny<EmployeeLookup>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -247,6 +247,22 @@ public class EmployeeGettingTests
         Assert.Equal(200, result.Status);
         Assert.Contains("Dan", result.Data);
         Assert.Contains("Frunza", result.Data);
+    }
+
+    [Fact]
+    public async Task GetEmployeesForExportAsync_RejectsAResultLargerThanTheExportCap()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.Setup(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResponseModel<PagedResponse<EmployeeModel>>(200, "Success!",
+                new PagedResponse<EmployeeModel>([MakeEmployee()], 5001, 1, 5000)));
+        var getting = new EmployeeGetting(dbUtils.Object);
+
+        var result = await getting.GetEmployeesForExportAsync(new ExportEmployeesRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        Assert.Contains("limited to 5000", result.ResponseMessage);
+        Assert.Null(result.Data);
     }
 
     [Fact]
