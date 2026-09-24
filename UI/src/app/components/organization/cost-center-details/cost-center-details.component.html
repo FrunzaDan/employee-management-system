@@ -83,7 +83,7 @@
             </thead>
             <tbody>
               @for (employee of employees(); track employee.employeeId) {
-                <tr>
+                <tr animate.enter="row-enter" [style.--row-index]="$index">
                   <td class="align-middle text-center">
                     <a
                       class="plain-Links hoverItem"

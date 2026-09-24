@@ -107,7 +107,7 @@
           </thead>
           <tbody>
             @for (costCenter of costCenters(); track costCenter.costCenterId) {
-              <tr>
+              <tr animate.enter="row-enter" [style.--row-index]="$index">
                 <td class="align-middle text-center">
                   <a
                     class="plain-Links hoverItem"

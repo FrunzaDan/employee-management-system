@@ -96,7 +96,7 @@
           </thead>
           <tbody>
             @for (department of departments(); track department.departmentId) {
-              <tr>
+              <tr animate.enter="row-enter" [style.--row-index]="$index">
                 <td class="align-middle text-center">
                   <a
                     class="plain-Links hoverItem"
