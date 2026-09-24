@@ -1,10 +1,11 @@
 CREATE TABLE [dbo].[Employee]
 (
-    -- UNIQUEIDENTIFIER (16 bytes), not NVARCHAR(50) (72 bytes for a 36-char GUID): this key is
-    -- the clustered index, so every nonclustered index below — and every FK pointing here —
-    -- carries a copy of it. Generated here, by NEWSEQUENTIALID(), rather than by the API: each
-    -- new key sorts after the previous one, so inserts append to the end of the clustered index
-    -- instead of splitting random pages. Employee_Create hands the new value back.
+    -- A real 16-byte UNIQUEIDENTIFIER (not the textual form in an NVARCHAR): a quarter of the
+    -- size in this table and in every table/index that references it, compared by value (so
+    -- case and {braces} don't matter), and impossible to store malformed. Generated here, by
+    -- NEWSEQUENTIALID(), rather than by the API: each new key sorts after the previous one, so
+    -- inserts append to the end of the clustered index instead of splitting random pages the
+    -- way a random Guid.NewGuid() key does. Employee_Create hands the new value back.
     [EmployeeId] UNIQUEIDENTIFIER NOT NULL
         CONSTRAINT [DF_Employee_EmployeeId] DEFAULT NEWSEQUENTIALID(),
     [FirstName] NVARCHAR (100) NOT NULL,
@@ -27,9 +28,9 @@ CREATE TABLE [dbo].[Employee]
     -- 1901 = active, 1903 = deactivated, 1904 = test (see ai_docs/database.md).
     [StatusCode] SMALLINT NOT NULL
         CONSTRAINT [DF_Employee_StatusCode] DEFAULT 1901,
-    -- UTC. DATETIME2(3) (millisecond precision, 7 bytes) instead of DATETIME (8 bytes, 1/300s
-    -- rounding) — and never a string: the old NVARCHAR columns silently stored GETDATE()'s
-    -- default 'Sep 22 2026 12:53PM' text, which loses seconds and doesn't sort chronologically.
+    -- UTC (SYSUTCDATETIME), not server-local GETDATE(): the API marks every timestamp it
+    -- reads as UTC, and the UI converts it to the viewer's own time zone. Millisecond
+    -- precision (3), the same in every table, so events in one second still order correctly.
     [CreatedAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_Employee_CreatedAt] DEFAULT SYSUTCDATETIME(),
     [LastInteractionAt] DATETIME2 (3) NOT NULL
@@ -51,9 +52,12 @@ CREATE TABLE [dbo].[Employee]
     -- No ON DELETE CASCADE: deleting an office/department/cost-center while an employee
     -- still references it should be blocked (see <Entity>_Delete's friendly pre-check), not
     -- silently null out the employee's assignment.
-    CONSTRAINT [FK_Employee_Office] FOREIGN KEY ([OfficeId]) REFERENCES [dbo].[Office] ([OfficeId]),
-    CONSTRAINT [FK_Employee_Department] FOREIGN KEY ([DepartmentId]) REFERENCES [dbo].[Department] ([DepartmentId]),
-    CONSTRAINT [FK_Employee_CostCenter] FOREIGN KEY ([CostCenterId]) REFERENCES [dbo].[CostCenter] ([CostCenterId])
+    CONSTRAINT [FK_Employee_Office]
+        FOREIGN KEY ([OfficeId]) REFERENCES [dbo].[Office] ([OfficeId]),
+    CONSTRAINT [FK_Employee_Department]
+        FOREIGN KEY ([DepartmentId]) REFERENCES [dbo].[Department] ([DepartmentId]),
+    CONSTRAINT [FK_Employee_CostCenter]
+        FOREIGN KEY ([CostCenterId]) REFERENCES [dbo].[CostCenter] ([CostCenterId])
 );
 GO
 
