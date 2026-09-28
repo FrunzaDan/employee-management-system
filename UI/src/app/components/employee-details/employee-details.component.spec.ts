@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { ReplaySubject, of, throwError } from 'rxjs';
@@ -8,6 +8,7 @@ import { EmployeeService } from '../../services/employee.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
+import { AuditLogEntry } from '../../interfaces/audit-log-entry';
 import { EmployeeDetailsComponent } from './employee-details.component';
 
 describe('EmployeeDetailsComponent', () => {
@@ -294,6 +295,62 @@ describe('EmployeeDetailsComponent', () => {
       TestBed.flushEffects();
 
       expect(loadAuditLog).not.toHaveBeenCalled();
+    });
+  });
+  describe('audit trail preview', () => {
+    const buildAuditLog = (count: number): AuditLogEntry[] =>
+      Array.from({ length: count }, (_, i) => ({
+        employeeAuditLogId: count - i,
+        employeeId: 'employee-1',
+        performedBy: 'admin',
+        actionType: 'Edited',
+        details: `change #${count - i}.`,
+        occurredAt: '2026-01-01T00:00:00Z',
+      }));
+
+    const setAuditLog = (entries: AuditLogEntry[]) =>
+      (
+        TestBed.inject(AuditLogService).entries as WritableSignal<
+          AuditLogEntry[]
+        >
+      ).set(entries);
+
+    it('shows only the latest 10 actions followed by "…", which reveals the rest', async () => {
+      createComponent();
+      setAuditLog(buildAuditLog(12));
+      await loadEmployee(buildEmployee());
+
+      const items = () =>
+        fixture.nativeElement.querySelectorAll('.audit-list li.audit-item');
+      const more = () =>
+        fixture.nativeElement.querySelector('.audit-more-button');
+
+      expect(items().length).toBe(11);
+      expect(more().textContent.trim()).toBe('…');
+      expect(more().getAttribute('aria-label')).toBe('Show 2 older actions');
+      expect(fixture.nativeElement.textContent).toContain('change #3.');
+      expect(fixture.nativeElement.textContent).not.toContain('change #2.');
+
+      more().click();
+      await fixture.whenStable();
+
+      expect(items().length).toBe(12);
+      expect(more()).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('change #1.');
+    });
+
+    it('shows no "…" when there are 10 actions or fewer', async () => {
+      createComponent();
+      setAuditLog(buildAuditLog(10));
+      await loadEmployee(buildEmployee());
+
+      expect(
+        fixture.nativeElement.querySelectorAll('.audit-list li.audit-item')
+          .length,
+      ).toBe(10);
+      expect(
+        fixture.nativeElement.querySelector('.audit-more-button'),
+      ).toBeNull();
     });
   });
 });

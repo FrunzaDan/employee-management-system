@@ -205,7 +205,10 @@
                 <p class="text-muted mb-0">No recorded actions yet.</p>
               } @else {
                 <ul class="audit-list">
-                  @for (entry of auditLog(); track entry.employeeAuditLogId) {
+                  @for (
+                    entry of visibleAuditLog();
+                    track entry.employeeAuditLogId
+                  ) {
                     <li class="audit-item">
                       <div class="audit-action">
                         {{ auditActionLabel(entry.actionType) }}
@@ -217,6 +220,23 @@
                       @if (entry.details) {
                         <div class="audit-details">{{ entry.details }}</div>
                       }
+                    </li>
+                  }
+                  @if (hiddenAuditLogCount() > 0) {
+                    <li class="audit-item audit-more">
+                      <button
+                        type="button"
+                        class="audit-more-button"
+                        [attr.aria-label]="
+                          'Show ' + hiddenAuditLogCount() + ' older actions'
+                        "
+                        [title]="
+                          'Show ' + hiddenAuditLogCount() + ' older actions'
+                        "
+                        (click)="showAllAuditLog.set(true)"
+                      >
+                        …
+                      </button>
                     </li>
                   }
                 </ul>

@@ -42,7 +42,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 |---|---|
 | `/login` | `user-login` |
 | `/employees` (`/` redirects here) | `home` → `employee-list` |
-| `/employees/:employeeId` | `employee-details` (record, job info, salary history, audit trail) |
+| `/employees/:employeeId` | `employee-details` (record, job info, salary history, audit trail — latest 10, then "…" to show the rest) |
 | `/create-employee`, `/employees/update/:employeeId` | `create-employee`, `update-employee` |
 | `/offices`, `/departments`, `/cost-centers` | admin pages: a table with one inline add/edit form and "Quickly view employees", which expands the shared `employee-list` filtered to that row |
 | `/offices/:officeId`, `/departments/:departmentId`, `/cost-centers/:costCenterId` | details page with a full employees table |
