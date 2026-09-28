@@ -1,0 +1,157 @@
+:host {
+  display: block;
+}
+
+.scatter-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid rgba(19, 59, 54, 0.15);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--spectrumColor1);
+  font: inherit;
+  font-size: 0.8rem;
+  transition:
+    opacity var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.legend-chip.off {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+@media (hover: hover) {
+  .legend-chip:hover {
+    background-color: rgba(3, 120, 116, 0.06);
+  }
+}
+
+.swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+}
+
+.chip-count {
+  color: var(--mutedText);
+}
+
+.chart-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.scatter-chart {
+  display: block;
+  width: 100%;
+  min-width: 420px;
+  height: auto;
+  overflow: visible;
+}
+
+.gridline {
+  stroke: rgba(19, 59, 54, 0.1);
+  stroke-dasharray: 3 4;
+}
+
+.gridline.baseline {
+  stroke: rgba(19, 59, 54, 0.25);
+  stroke-dasharray: none;
+}
+
+.tick-label {
+  font-size: 11px;
+  fill: var(--mutedText);
+}
+
+.axis-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  fill: var(--spectrumColor1);
+}
+
+.trend-line {
+  stroke: var(--spectrumColor1);
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  opacity: 0.55;
+  animation: fade-in 0.8s ease 1s backwards;
+}
+
+.dot {
+  fill-opacity: 0.78;
+  stroke: #fff;
+  stroke-width: 1.5;
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dot-pop 0.5s var(--ease-spring) backwards;
+  animation-delay: calc(min(var(--i), 60) * 12ms + 150ms);
+  transition:
+    transform var(--duration-fast) var(--ease-spring),
+    fill-opacity var(--duration-fast) ease;
+}
+
+.dot.active {
+  fill-opacity: 1;
+  transform: scale(1.5);
+}
+
+.chart-tooltip {
+  pointer-events: none;
+  animation: fade-in var(--duration-fast) ease;
+}
+
+.chart-tooltip rect {
+  fill: var(--spectrumColor1);
+  filter: drop-shadow(0 6px 12px rgba(19, 59, 54, 0.3));
+}
+
+.chart-tooltip-label {
+  font-size: 10.5px;
+  fill: rgba(255, 255, 255, 0.75);
+}
+
+.chart-tooltip-value {
+  font-size: 13px;
+  font-weight: 600;
+  fill: #fff;
+}
+
+.trend-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  color: var(--spectrumColor1);
+  font-size: 0.85rem;
+}
+
+.trend-key {
+  width: 1.5rem;
+  border-top: 2px dashed var(--spectrumColor1);
+  opacity: 0.6;
+}
+
+@keyframes dot-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}

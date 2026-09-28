@@ -19,7 +19,7 @@ public class EmployeeGettingTests
         PhoneNumber = "123456789",
         Gender = Gender.Male,
         Status = EmployeeStatus.Active,
-        CreatedAt = DateTime.UtcNow,
+        AccountCreatedAt = DateTime.UtcNow,
         LastInteractionAt = DateTime.UtcNow,
         Address = new AddressModel
         {
@@ -334,5 +334,19 @@ public class EmployeeGettingTests
 
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.GetAllEmployeeAuditLogAsync(1, 10, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetEmployeeInsightsAsync_ReturnsWhateverTheDbLayerReturns()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var expected = new ResponseModel<EmployeeInsightsModel>(200, "Employee insights retrieved.",
+            new EmployeeInsightsModel { Employees = [] });
+        dbUtils.Setup(d => d.GetEmployeeInsightsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        var getting = new EmployeeGetting(dbUtils.Object);
+
+        var result = await getting.GetEmployeeInsightsAsync(TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
     }
 }

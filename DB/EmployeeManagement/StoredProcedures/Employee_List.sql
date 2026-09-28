@@ -34,7 +34,7 @@ BEGIN
         e.Gender,
         e.BirthDate,
         e.StatusCode,
-        e.CreatedAt,
+        e.AccountCreatedAt,
         e.LastInteractionAt,
         a.Country,
         a.County,

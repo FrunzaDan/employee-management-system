@@ -16,6 +16,7 @@ public interface IDbUtils
     Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLogAsync(Guid employeeId, CancellationToken cancellationToken = default);
     Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLogAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<ResponseModel<object>> DeleteAllEmployeeAuditLogAsync(CancellationToken cancellationToken = default);
+    Task<ResponseModel<EmployeeInsightsModel>> GetEmployeeInsightsAsync(CancellationToken cancellationToken = default);
 
     Task<ResponseModel<object>> CreateEmployeeSalaryAsync(CreateSalaryRequest salary, CancellationToken cancellationToken = default);
     Task<ResponseModel<IReadOnlyList<SalaryModel>>> GetEmployeeSalaryHistoryAsync(Guid employeeId, CancellationToken cancellationToken = default);

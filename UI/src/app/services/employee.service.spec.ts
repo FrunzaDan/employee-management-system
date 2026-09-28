@@ -31,7 +31,7 @@ describe('EmployeeService', () => {
     email: 'dan@example.com',
     gender: Gender.Male,
     status: EmployeeStatus.Active,
-    createdAt: '2026-01-01',
+    accountCreatedAt: '2026-01-01',
     lastInteractionAt: '2026-01-01',
     birthDate: '1990-01-01',
     address: {
@@ -339,7 +339,7 @@ describe('EmployeeService', () => {
       expect(req.request.method).toBe('PATCH');
       const {
         status,
-        createdAt,
+        accountCreatedAt,
         lastInteractionAt,
         officeName,
         departmentName,

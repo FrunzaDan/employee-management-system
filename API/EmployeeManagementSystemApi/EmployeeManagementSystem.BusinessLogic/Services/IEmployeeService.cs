@@ -14,6 +14,8 @@ public interface IEmployeeService
 
     Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLogAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
+    Task<ResponseModel<EmployeeInsightsModel>> GetEmployeeInsightsAsync(CancellationToken cancellationToken = default);
+
     Task<ResponseModel<Guid?>> CreateEmployeeAsync(CreateEmployeeRequest request, string performedBy, CancellationToken cancellationToken = default);
 
     Task<ResponseModel<object>> UpdateEmployeeAsync(UpdateEmployeeRequest request, string performedBy, CancellationToken cancellationToken = default);

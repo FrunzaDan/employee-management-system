@@ -1,0 +1,347 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Charts</h1>
+      <p class="page-subtitle">
+        Who works here, how the team was built, and how pay is spread.
+      </p>
+    </div>
+  </div>
+
+  @if (loading() && employees().length === 0) {
+    <div class="app-card loading-state" role="status">
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading workforce insights…
+    </div>
+  } @else if (loadError(); as error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  } @else if (employees().length === 0) {
+    <div class="app-card empty-state">
+      No employees yet. Add some (or generate test employees on the About page)
+      to see the charts come alive.
+    </div>
+  } @else {
+    <div class="d-flex flex-column gap-4">
+      <section class="insights-hero" aria-labelledby="hero-title">
+        <h2 id="hero-title" class="hero-title">At a glance</h2>
+        <div class="kpi-grid">
+          <app-kpi-tile
+            label="Headcount"
+            [value]="headcount()"
+            [trend]="headcountTrend()"
+            [caption]="headcountCaption()"
+          />
+          <app-kpi-tile
+            label="Monthly payroll"
+            [value]="monthlyPayroll()"
+            [valueFormatter]="formatRon"
+            [caption]="payrollCaption()"
+          />
+          <app-kpi-tile
+            label="Median salary"
+            [value]="medianSalary()"
+            [valueFormatter]="formatRon"
+            [caption]="averageSalaryCaption()"
+          />
+          <app-kpi-tile
+            label="Average tenure"
+            [value]="averageTenure()"
+            [valueFormatter]="formatYears"
+            [caption]="tenureCaption()"
+          />
+          <app-kpi-tile
+            label="Average age"
+            [value]="averageAge()"
+            [valueFormatter]="formatAge"
+            caption="years"
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Workforce</h2>
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="card app-card chart-card">
+              <div class="card-body">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="card-title">Hires over time</h3>
+                    <p class="chart-caption">
+                      Every employee by hire date, including those who have
+                      since left.
+                    </p>
+                  </div>
+                  <div
+                    class="range-toggle"
+                    role="group"
+                    aria-label="Time range"
+                  >
+                    <button
+                      type="button"
+                      [class.active]="hiresRange() === 'monthly'"
+                      [attr.aria-pressed]="hiresRange() === 'monthly'"
+                      (click)="setHiresRange('monthly')"
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      [class.active]="hiresRange() === 'yearly'"
+                      [attr.aria-pressed]="hiresRange() === 'yearly'"
+                      (click)="setHiresRange('yearly')"
+                    >
+                      Yearly
+                    </button>
+                  </div>
+                </div>
+                <app-time-series-chart
+                  [points]="hiresPoints()"
+                  variant="bar"
+                  ariaLabel="Hires over time"
+                  emptyMessage="No hire dates yet."
+                />
+                @if (busiestHiringYear(); as peak) {
+                  <p class="chart-insight">
+                    Busiest year: <strong>{{ peak.label }}</strong
+                    >, with {{ peak.value }} hires.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="card app-card chart-card">
+              <div class="card-body">
+                <h3 class="card-title">How today's team was built</h3>
+                <p class="chart-caption">
+                  Current employees by the end of each year, counted from their
+                  hire date. Employees without a hire date are left out.
+                </p>
+                <app-time-series-chart
+                  [points]="headcountGrowthPoints()"
+                  variant="line"
+                  color="var(--chartColor3)"
+                  ariaLabel="Current employees by hire year, cumulative"
+                  emptyMessage="No hire dates yet."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Employee status</h3>
+                <p class="chart-caption">
+                  Active, test and deactivated records.
+                </p>
+                <app-donut-chart
+                  [slices]="statusSlices()"
+                  centerCaption="employees"
+                  ariaLabel="Employee status"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Gender</h3>
+                <p class="chart-caption">Current employees, as declared.</p>
+                <app-donut-chart
+                  [slices]="genderSlices()"
+                  centerCaption="employees"
+                  ariaLabel="Current employees by gender"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Age groups</h3>
+                <p class="chart-caption">
+                  Current employees with a birth date on file.
+                </p>
+                <app-time-series-chart
+                  [points]="ageDistribution()"
+                  [viewWidth]="480"
+                  variant="bar"
+                  color="var(--chartColor6)"
+                  ariaLabel="Current employees by age group"
+                  emptyMessage="No birth dates yet."
+                />
+                @if (largestAgeGroup(); as group) {
+                  <p class="chart-insight">
+                    Largest group: <strong>{{ group.label }}</strong
+                    >.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Years of service</h3>
+                <p class="chart-caption">
+                  How long current employees have been here.
+                </p>
+                <app-time-series-chart
+                  [points]="tenureDistribution()"
+                  [viewWidth]="480"
+                  variant="bar"
+                  color="var(--chartColor5)"
+                  ariaLabel="Current employees by years of service"
+                />
+                @if (veteranShare() !== null) {
+                  <p class="chart-insight">
+                    <strong>{{ veteranShare() }}%</strong> have been here for 6
+                    years or more.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Headcount by department</h3>
+                <p class="chart-caption">Current employees per department.</p>
+                <app-ranked-bar-chart
+                  [items]="headcountByDepartment()"
+                  ariaLabel="Headcount by department"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Headcount by office</h3>
+                <p class="chart-caption">Current employees per office.</p>
+                <app-ranked-bar-chart
+                  [items]="headcountByOffice()"
+                  color="var(--chartColor3)"
+                  ariaLabel="Headcount by office"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Pay</h2>
+        <div class="row g-4">
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Salary distribution</h3>
+                <p class="chart-caption">
+                  Current monthly gross salary, in RON.
+                </p>
+                <app-time-series-chart
+                  [points]="salaryDistribution()"
+                  [viewWidth]="480"
+                  variant="bar"
+                  color="var(--chartColor2)"
+                  ariaLabel="Employees by salary range"
+                  emptyMessage="No salaries yet."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Payroll by department</h3>
+                <p class="chart-caption">
+                  Each department's share of the monthly payroll.
+                </p>
+                <app-donut-chart
+                  [slices]="payrollByDepartment()"
+                  [valueFormatter]="formatRon"
+                  centerCaption="per month"
+                  ariaLabel="Payroll by department"
+                  emptyMessage="No salaries yet."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Average salary by department</h3>
+                <p class="chart-caption">
+                  Mean current gross salary per department.
+                </p>
+                <app-ranked-bar-chart
+                  [items]="averagePayByDepartment()"
+                  [valueFormatter]="formatRon"
+                  color="var(--chartColor2)"
+                  ariaLabel="Average salary by department"
+                  emptyMessage="No salaries yet."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Average salary by gender</h3>
+                <p class="chart-caption">
+                  Mean current gross salary, as a first check for a pay gap.
+                </p>
+                <app-ranked-bar-chart
+                  [items]="averagePayByGender()"
+                  [valueFormatter]="formatRon"
+                  color="var(--chartColor4)"
+                  ariaLabel="Average salary by gender"
+                  emptyMessage="No salaries yet."
+                />
+                @if (genderPayGap(); as gap) {
+                  <p class="chart-insight">{{ gap }}</p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="card app-card chart-card">
+              <div class="card-body">
+                <h3 class="card-title">Pay vs. years of service</h3>
+                <p class="chart-caption">
+                  One dot per current employee, coloured by department. Click a
+                  department to hide or show it; the dashed line is the trend.
+                </p>
+                <app-scatter-chart
+                  [points]="payVsTenure()"
+                  [xFormatter]="formatYears"
+                  [yFormatter]="formatRon"
+                  xLabel="Years of service"
+                  yLabel="Monthly gross salary (RON)"
+                  ariaLabel="Salary against years of service, by department"
+                  emptyMessage="No employees with both a hire date and a salary yet."
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
+</div>

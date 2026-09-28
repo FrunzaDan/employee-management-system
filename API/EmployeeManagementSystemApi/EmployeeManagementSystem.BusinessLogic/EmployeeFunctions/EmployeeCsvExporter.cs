@@ -11,7 +11,8 @@ public static class EmployeeCsvExporter
     private static readonly string[] Header =
     [
         "Employee ID", "First Name", "Last Name", "Email", "Phone Number", "Gender", "Birth Date", "Status",
-        "Created At", "Last Interaction At", "Country", "County", "City", "Postal Code", "Street", "Street Number"
+        "Hire Date", "Account Created At", "Last Interaction At", "Country", "County", "City", "Postal Code",
+        "Street", "Street Number"
     ];
 
     public static string ToCsv(IEnumerable<EmployeeModel> employees)
@@ -32,7 +33,8 @@ public static class EmployeeCsvExporter
                 GenderLabel(employee.Gender),
                 employee.BirthDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 StatusLabel(employee.Status),
-                employee.CreatedAt.ToString("u", CultureInfo.InvariantCulture),
+                employee.HireDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                employee.AccountCreatedAt.ToString("u", CultureInfo.InvariantCulture),
                 employee.LastInteractionAt.ToString("u", CultureInfo.InvariantCulture),
                 employee.Address.Country,
                 employee.Address.County,

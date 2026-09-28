@@ -162,6 +162,17 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<AuditLogEntry>>(200, $"{items.Count} audit log entries found.", items);
     }
 
+    public static async Task<ResponseModel<EmployeeInsightsModel>> HandleResponseWithEmployeeInsightsAsync(
+        SqlDataReader reader)
+    {
+        var employees = new List<EmployeeProfileModel>();
+        while (await reader.ReadAsync().ConfigureAwait(false))
+            employees.Add(MapEmployeeProfileFromReader(reader));
+
+        return new ResponseModel<EmployeeInsightsModel>(200, "Employee insights retrieved.",
+            new EmployeeInsightsModel { Employees = employees });
+    }
+
     public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogListAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
@@ -291,7 +302,7 @@ public static class DbHelper
         Gender = (Gender)reader.GetByte("Gender"),
         BirthDate = reader.GetNullableDateOnly("BirthDate"),
         Status = (EmployeeStatus)reader.GetInt16("StatusCode"),
-        CreatedAt = reader.GetUtcDateTime("CreatedAt"),
+        AccountCreatedAt = reader.GetUtcDateTime("AccountCreatedAt"),
         LastInteractionAt = reader.GetUtcDateTime("LastInteractionAt"),
         Address = new AddressModel
         {
@@ -371,5 +382,16 @@ public static class DbHelper
         ActionType = Enum.Parse<AuditAction>(reader.GetString("ActionType")),
         Details = reader.GetNullableString("Details"),
         OccurredAt = reader.GetUtcDateTime("OccurredAt")
+    };
+
+    private static EmployeeProfileModel MapEmployeeProfileFromReader(SqlDataReader reader) => new()
+    {
+        Status = (EmployeeStatus)reader.GetInt16("StatusCode"),
+        Gender = (Gender)reader.GetByte("Gender"),
+        BirthDate = reader.GetNullableDateOnly("BirthDate"),
+        HireDate = reader.GetNullableDateOnly("HireDate"),
+        DepartmentName = reader.GetNullableString("DepartmentName"),
+        OfficeName = reader.GetNullableString("OfficeName"),
+        CurrentGrossSalary = reader.GetNullableDecimal("CurrentGrossSalary")
     };
 }

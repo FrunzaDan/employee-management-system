@@ -138,7 +138,7 @@ describe('AboutComponent', () => {
       expect(component.addingTestEmployees()).toBe(false);
     });
 
-    it('gives every generated employee a hire date between 2018 and 2025', async () => {
+    it('gives every generated employee a hire date between 1 Jan 2005 and 1 Dec 2025', async () => {
       const component = createComponent();
 
       await component.createTestEmployees();
@@ -149,9 +149,8 @@ describe('AboutComponent', () => {
       expect(hireDates).toHaveLength(50);
       for (const hireDate of hireDates) {
         expect(hireDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-        const year = Number(hireDate.slice(0, 4));
-        expect(year).toBeGreaterThanOrEqual(2018);
-        expect(year).toBeLessThanOrEqual(2025);
+        expect(hireDate >= '2005-01-01').toBe(true);
+        expect(hireDate <= '2025-12-01').toBe(true);
       }
     });
 

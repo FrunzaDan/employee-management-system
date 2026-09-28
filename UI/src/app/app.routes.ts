@@ -125,6 +125,15 @@ export const routes: Routes = [
     title: 'Cost center details',
   },
   {
+    path: 'charts',
+    loadComponent: () =>
+      import('./components/charts/charts.component').then(
+        (m) => m.ChartsComponent,
+      ),
+    canActivate: [authGuard],
+    title: 'Charts',
+  },
+  {
     path: '**',
     loadComponent: () =>
       import('./components/page-not-found/page-not-found.component').then(

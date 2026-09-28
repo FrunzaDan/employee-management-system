@@ -4,6 +4,14 @@
   --spectrumColor3: #00917c;
   --spectrumColor4: #a5f0c5;
   --dangerColor1: #a45a82;
+  --chartColor1: #037874;
+  --chartColor2: #f0a202;
+  --chartColor3: #4c6fd1;
+  --chartColor4: #e5566b;
+  --chartColor5: #2bb3a3;
+  --chartColor6: #8e6cc4;
+  --chartColor7: #d9773a;
+  --chartColor8: #5c7080;
   --secondaryColor: #007a68;
   --mutedText: #5a6268;
   --focusColor: #133b36;
@@ -616,5 +624,75 @@ main [tabindex='-1']:focus {
   .detail-row {
     grid-template-columns: 1fr;
     gap: 0.1rem;
+  }
+}
+
+.ranked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ranked-row {
+  display: grid;
+  grid-template-columns: 132px 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.ranked-label {
+  font-size: 0.85rem;
+  color: var(--spectrumColor1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranked-track {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background-color: rgba(19, 59, 54, 0.08);
+  overflow: hidden;
+}
+
+.ranked-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--ranked-color, var(--spectrumColor2)),
+    color-mix(in srgb, var(--ranked-color, var(--spectrumColor2)) 55%, #fff)
+  );
+  transform-origin: left center;
+  animation: ranked-fill-grow 0.9s var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 12) * 60ms + 100ms);
+}
+
+@keyframes ranked-fill-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.ranked-value {
+  font-size: 0.82rem;
+  color: var(--mutedText);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ranked-empty {
+  color: var(--mutedText);
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .ranked-row {
+    grid-template-columns: 92px 1fr auto;
   }
 }

@@ -48,6 +48,10 @@ public class EmployeeService(
         int pageSize, CancellationToken cancellationToken = default) =>
         await employeeGetting.GetAllEmployeeAuditLogAsync(pageNumber, pageSize, cancellationToken);
 
+    public async Task<ResponseModel<EmployeeInsightsModel>> GetEmployeeInsightsAsync(
+        CancellationToken cancellationToken = default) =>
+        await employeeGetting.GetEmployeeInsightsAsync(cancellationToken);
+
     public async Task<ResponseModel<object>> DeleteAllEmployeeAuditLogAsync(
         CancellationToken cancellationToken = default) =>
         await employeeDeletion.DeleteAllEmployeeAuditLogAsync(cancellationToken);

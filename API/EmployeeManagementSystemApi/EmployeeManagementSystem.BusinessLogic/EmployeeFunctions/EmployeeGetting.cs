@@ -108,6 +108,10 @@ public class EmployeeGetting(IDbUtils dbUtils)
         return await dbUtils.GetAllEmployeeAuditLogAsync(pageNumber, pageSize, cancellationToken);
     }
 
+    public async Task<ResponseModel<EmployeeInsightsModel>> GetEmployeeInsightsAsync(
+        CancellationToken cancellationToken = default) =>
+        await dbUtils.GetEmployeeInsightsAsync(cancellationToken);
+
     private static EmployeeLookup? DetermineLookup(string searchTerm)
     {
         if (Guid.TryParse(searchTerm, out var employeeId))

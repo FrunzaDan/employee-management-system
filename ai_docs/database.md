@@ -27,7 +27,7 @@ The `EmployeeManagement` SQL Server database, as an SSDT project under `DB/Emplo
   - `BirthDate` and `HireDate` (`DATE`);
   - `StatusCode` (`SMALLINT`, default 1901);
   - nullable FKs `OfficeId`, `DepartmentId`, `CostCenterId`, each indexed;
-  - `CreatedAt`, `LastInteractionAt`.
+  - `AccountCreatedAt` (when the row was created here; `HireDate` is when they were actually hired), `LastInteractionAt`.
 - **`EmployeeAddress`:** one row per employee. `EmployeeId` is both the primary key and the foreign key. Every column is `NOT NULL`.
 - **`Employer`:**
   - `Username` is the primary key;
@@ -52,6 +52,7 @@ The `EmployeeManagement` SQL Server database, as an SSDT project under `DB/Emplo
 - **Employee create/update:** check that the office, department and cost center exist first, and return `400` if one doesn't.
 - **`{Office,Department,CostCenter}_List`:** unpaginated. They add `EmployeeCount` and `TotalGrossSalary`.
 - **`<Org>_Delete`:** returns `409` while any employee still references the row.
+- **`Report_GetEmployeeInsights`:** feeds the charts page with one row per employee and no names or contact details: `StatusCode`, `Gender`, `BirthDate`, `HireDate`, `DepartmentName`, `OfficeName` and `CurrentGrossSalary` (the same current-salary rule as above). The UI does the grouping.
 - **`Employee_ListByOffice`/`ByDepartment`/`ByCostCenter`:** the employees assigned to one office, department or cost center.
 - **`EmployeeAuditLog_List`:** paged. The total is a separate first result set, so an empty page still reports the right total.
 

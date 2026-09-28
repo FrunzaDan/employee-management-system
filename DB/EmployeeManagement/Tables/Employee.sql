@@ -12,8 +12,8 @@ CREATE TABLE [dbo].[Employee]
     [StatusCode] SMALLINT NOT NULL
         CONSTRAINT [DF_Employee_StatusCode] DEFAULT 1901,
     [StatusCodeBeforeDeactivation] SMALLINT NULL,
-    [CreatedAt] DATETIME2 (3) NOT NULL
-        CONSTRAINT [DF_Employee_CreatedAt] DEFAULT SYSUTCDATETIME(),
+    [AccountCreatedAt] DATETIME2 (3) NOT NULL
+        CONSTRAINT [DF_Employee_AccountCreatedAt] DEFAULT SYSUTCDATETIME(),
     [LastInteractionAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_Employee_LastInteractionAt] DEFAULT SYSUTCDATETIME(),
     [HireDate] DATE NULL,

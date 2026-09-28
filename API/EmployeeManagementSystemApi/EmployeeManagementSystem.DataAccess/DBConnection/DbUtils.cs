@@ -134,6 +134,13 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             DbHelper.HandleResponseWithAuditLogListAsync,
             cancellationToken);
 
+    public Task<ResponseModel<EmployeeInsightsModel>> GetEmployeeInsightsAsync(CancellationToken cancellationToken = default) =>
+        ExecuteStoredProcedureAsync(
+            "dbo.Report_GetEmployeeInsights",
+            null,
+            DbHelper.HandleResponseWithEmployeeInsightsAsync,
+            cancellationToken);
+
     public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLogAsync(int pageNumber,
         int pageSize, CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(

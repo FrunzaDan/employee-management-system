@@ -29,7 +29,7 @@ describe('EmployeeListComponent', () => {
     email: 'dan@example.com',
     gender: 1,
     status: EmployeeStatus.Active,
-    createdAt: '2026-01-01',
+    accountCreatedAt: '2026-01-01',
     lastInteractionAt: '2026-01-01',
     birthDate: '1990-01-01',
     address: {

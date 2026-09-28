@@ -14,7 +14,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
   - the shared helpers (`notification`, `confirm-dialog`, `api-logger`, `health`, `unsaved-changes.guard`).
 - `src/app/components/` — one folder per page or widget. `organization/` holds the admin and details pages for offices, departments and cost centers.
 - `src/app/interfaces/` — mirrors of the API's JSON.
-- `src/app/utils/extract-error-message.ts`, `audit-action-label.ts`, `employee-status-label.ts`.
+- `src/app/utils/extract-error-message.ts`, `audit-action-label.ts`, `employee-status-label.ts`, `chart-scale.ts`, `chart-stats.ts`, `chart-geometry.ts` (chart helpers, shared with the customer and Imalo apps).
 - `src/app/pipes/ron.pipe.ts`, `src/styles.css`.
 
 ## How it works
@@ -47,6 +47,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 | `/offices`, `/departments`, `/cost-centers` | admin pages: a table with one inline add/edit form and "Quickly view employees" |
 | `/offices/:officeId`, `/departments/:departmentId`, `/cost-centers/:costCenterId` | details page with a full employees table |
 | `/audit-log` | `global-audit-log` |
+| `/charts` | `charts` |
 | `/about` | `about` (API-logging toggle, test-employee generator) |
 | `**` | `page-not-found` |
 
@@ -71,6 +72,15 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
   - bulk actions deactivate the active employees and delete the rest, one call each.
 - **CSV export:** uses the list's current search and sort, requests a `blob` and downloads it client-side.
 - **Health banner:** `HealthService` polls `/health` every 15 s, in the browser only. `App` shows an "API is not running" card when it fails.
+### Charts (`/charts`)
+
+- Same building blocks as the customer app: hand-built inline SVG, no chart library, pure transforms in `charts/charts-data.ts` and the shared `utils/chart-stats.ts` (both with specs).
+- **Data:** `EmployeeInsightsService` loads `GET /api/employee/insights`, one anonymous row per employee (status, gender, birth date, hire date, department, office, current salary). `loadInsights()` reloads on every visit.
+- **Who counts:** status is charted for everyone. Hires over time also includes deactivated employees. Every other chart and KPI uses the **current workforce** (not deactivated). Missing departments and offices show as "Unassigned"; employees without a salary are left out of the pay charts, and the payroll KPI says how many.
+- **Layout:** an "At a glance" band (headcount with a sparkline, monthly payroll, median salary, average tenure, average age), then "Workforce" (hires over time with a monthly/yearly toggle, "how today's team was built", status and gender donuts, age groups, years of service, headcount by department and office) and "Pay" (salary histogram, payroll share by department, average salary by department and by gender with a pay-gap sentence, pay vs. years of service).
+- **Pay vs. years of service** (`scatter-chart`, employee only): one dot per salaried employee with a hire date, coloured by department. The legend chips toggle departments, and the dashed least-squares trend line is re-fitted to what's visible and summarised in words. The axes run to the first round step above the data (`axisScale`).
+- Components, colours, tooltips and motion are the same as in the customer app; see its `angular-frontend.md` "Charts" section.
+
 - **Test-employee generator** (About page): creates 50 employees with random job info. For each one it takes the returned `employeeId` and adds a first salary silently; a failed salary is ignored.
 
 ### Forms (Signal Forms)
@@ -100,7 +110,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 
 ### Styling and accessibility
 
-- Bootstrap plus `styles.css` tokens (`--spectrumColor1..4`, `--dangerColor1`), and the Jost font.
+- Bootstrap plus `styles.css` tokens (`--spectrumColor1..4`, `--dangerColor1`, and `--chartColor1..8` for charts), and the Jost font.
 - Shared classes: `.page`, `.page-header`, `.app-card`, `.table-themed`, `.sort-button`, `.loading-state`, `.empty-state`.
 - Motion (same in all three apps; tokens `--duration-*` and `--ease-*`, rules in the Motion section of `styles.css`):
   - cards (`.app-card`) rise in on appearance; sibling cards follow a beat apart;
@@ -130,4 +140,4 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - `linkedSignal` is lazy: it only remembers a page that something has read.
 - `value()` throws while a resource is in error. Guard reads with `hasValue()`.
 - SSR runs HTTP through Node's `fetch`, which has its own TLS trust. See [build-and-run](build-and-run.md).
-- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together. `utils/chart-scale.ts` (axis math: `niceMax`, `formatTick`) is identical in the customer and Imalo apps; the employee app has no charts.
+- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together. `utils/chart-scale.ts` (axis math: `niceMax`, `formatTick`) is identical in all three apps. All three apps also share, file for file, `utils/chart-stats.ts` (banding, month/year series, histogram, ranking), `utils/chart-geometry.ts` (monotone smooth curves), the chart components `time-series-chart`, `donut-chart`, `kpi-tile`, `ranked-bar-chart` and the `.ranked-*` rules in `styles.css`; the customer and employee apps also share `charts.component.css` and the `--chartColor1..8` values. Change them together.

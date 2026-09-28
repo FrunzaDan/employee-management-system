@@ -14,7 +14,7 @@ public sealed record EmployeeModel
 
     public required EmployeeStatus Status { get; init; }
 
-    public required DateTime CreatedAt { get; init; }
+    public required DateTime AccountCreatedAt { get; init; }
 
     public required DateTime LastInteractionAt { get; init; }
 

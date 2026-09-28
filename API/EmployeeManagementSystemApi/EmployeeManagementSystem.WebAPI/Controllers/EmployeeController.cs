@@ -50,6 +50,11 @@ public class EmployeeController(IEmployeeService employeeService) : ApiControlle
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) =>
         Reply(await employeeService.GetAllEmployeeAuditLogAsync(pageNumber, pageSize, cancellationToken));
 
+    [HttpGet("insights")]
+    public async Task<ActionResult<ResponseModel<EmployeeInsightsModel>>> GetEmployeeInsights(
+        CancellationToken cancellationToken) =>
+        Reply(await employeeService.GetEmployeeInsightsAsync(cancellationToken));
+
     [HttpPatch("update")]
     public async Task<ActionResult<ResponseModel<object>>> UpdateEmployee([FromBody] UpdateEmployeeRequest request,
         CancellationToken cancellationToken) =>

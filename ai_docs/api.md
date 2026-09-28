@@ -90,6 +90,7 @@ Other settings:
   - Employees: `POST /create`, `GET /get?searchTerm=`, `GET /all` (paged, search, sort), `GET /export` (CSV), `PATCH /update`, `PATCH /deactivate`, `PATCH /reactivate`, `DELETE /delete`.
   - Audit log: `GET /audit-log?employeeId=`, `GET /audit-log/all`, `DELETE /audit-log/all` (role `1801`).
   - Salary history: `GET /salary-history?employeeId=`, `POST /salary-history`.
+  - Charts: `GET /insights` (one anonymous row per employee: status, gender, birth date, hire date, department, office, current salary).
 - **`/api/office`, `/api/department`, `/api/cost-center`:** `GET /all`, `GET /get`, `POST /create`, `PATCH /update`, `DELETE /delete`, `GET /employees?<entity>Id=`.
 - **`GET /health`:** liveness only, no auth.
 - **Creates:** return the new GUID as `data`. Other mutations return no `data`.

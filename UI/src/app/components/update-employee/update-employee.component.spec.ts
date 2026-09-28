@@ -31,7 +31,7 @@ describe('UpdateEmployeeComponent', () => {
     email: 'dan@example.com',
     gender: 1,
     status: 1901,
-    createdAt: '2026-01-01',
+    accountCreatedAt: '2026-01-01',
     lastInteractionAt: '2026-01-01',
     birthDate: '1990-01-01',
     address: {
@@ -169,7 +169,10 @@ describe('UpdateEmployeeComponent', () => {
     it('merges the form values onto the loaded employee and saves', async () => {
       const component = createComponent();
       await loadEmployee(
-        buildEmployee({ employeeId: 'employeeId-1', createdAt: '2026-01-01' }),
+        buildEmployee({
+          employeeId: 'employeeId-1',
+          accountCreatedAt: '2026-01-01',
+        }),
       );
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
@@ -178,7 +181,7 @@ describe('UpdateEmployeeComponent', () => {
       expect(updateEmployee).toHaveBeenCalledWith(
         expect.objectContaining({
           employeeId: 'employeeId-1',
-          createdAt: '2026-01-01',
+          accountCreatedAt: '2026-01-01',
           firstName: 'Updated',
           gender: 1,
         }),

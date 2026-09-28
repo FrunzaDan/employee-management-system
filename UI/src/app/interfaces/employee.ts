@@ -29,7 +29,7 @@ export interface Employee {
   email: string;
   gender: Gender;
   status: EmployeeStatus;
-  createdAt: IsoDateTime;
+  accountCreatedAt: IsoDateTime;
   lastInteractionAt: IsoDateTime;
   birthDate: IsoDate | null;
   address: Address;

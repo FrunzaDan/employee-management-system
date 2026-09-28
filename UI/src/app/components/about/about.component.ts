@@ -18,8 +18,8 @@ import {
 
 const TEST_EMPLOYEE_COUNT = 50;
 
-const HIRE_DATE_RANGE_START_YEAR = 2018;
-const HIRE_DATE_RANGE_END_YEAR = 2025;
+const HIRE_DATE_RANGE_START = new Date(2005, 0, 1);
+const HIRE_DATE_RANGE_END = new Date(2025, 11, 1);
 
 const MIN_GROSS_SALARY = 3000;
 const MAX_GROSS_SALARY = 12000;
@@ -188,8 +188,8 @@ function randomBirthDate(): string {
 }
 
 function randomHireDate(): string {
-  const start = new Date(HIRE_DATE_RANGE_START_YEAR, 0, 1).getTime();
-  const end = new Date(HIRE_DATE_RANGE_END_YEAR, 11, 31).getTime();
+  const start = HIRE_DATE_RANGE_START.getTime();
+  const end = HIRE_DATE_RANGE_END.getTime();
   const date = new Date(start + Math.random() * (end - start));
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');

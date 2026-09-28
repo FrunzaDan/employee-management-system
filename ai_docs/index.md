@@ -30,6 +30,7 @@ A learning full-stack CRUD app: an employer logs in and manages employee records
   - per-employee and global audit logs;
   - job info and append-only salary history;
   - admin pages for offices, departments and cost centers;
+  - a charts dashboard (KPIs, workforce, pay);
   - a test-data generator.
 
 ## Documented Concepts
