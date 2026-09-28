@@ -7,8 +7,13 @@ import {
   genderSlices,
   headcountBy,
   hireCounts,
+  annualPayGrowth,
+  medianSalaryByYear,
+  payGrowthBy,
   payrollBy,
   payVsTenure,
+  raises,
+  raisesPerYear,
   salaried,
   statusSlices,
   tenureDistribution,
@@ -27,6 +32,7 @@ const buildEmployee = (
   departmentName: 'Engineering',
   officeName: 'HQ',
   currentGrossSalary: 8000,
+  salaryHistory: [],
   ...overrides,
 });
 
@@ -175,5 +181,104 @@ describe('payVsTenure', () => {
     expect(points[0].y).toBe(5000);
     expect(points[0].group).toBe('Unassigned');
     expect(points[0].x).toBeCloseTo(10, 1);
+  });
+});
+
+const history = (...entries: [string, number][]) =>
+  entries.map(([effectiveDate, grossSalary]) => ({
+    effectiveDate,
+    grossSalary,
+  }));
+
+describe('raises and raisesPerYear', () => {
+  it('counts each salary increase once, by the date it took effect', () => {
+    const employees = [
+      buildEmployee({
+        salaryHistory: history(
+          ['2020-01-01', 4000],
+          ['2021-03-01', 5000],
+          ['2023-06-01', 4500],
+          ['2023-09-01', 4950],
+        ),
+      }),
+      buildEmployee({ salaryHistory: history(['2021-05-01', 6000]) }),
+    ];
+
+    expect(raises(employees)).toEqual([
+      { effectiveDate: '2021-03-01', percent: 25 },
+      { effectiveDate: '2023-09-01', percent: expect.closeTo(10, 5) },
+    ]);
+    expect(raisesPerYear(employees).map((p) => [p.label, p.value])).toEqual([
+      ['2021', 1],
+      ['2022', 0],
+      ['2023', 1],
+    ]);
+  });
+});
+
+describe('medianSalaryByYear', () => {
+  it('takes the median of the salaries in effect at the end of each year', () => {
+    const employees = [
+      buildEmployee({
+        salaryHistory: history(['2024-02-01', 4000], ['2025-12-31', 5000]),
+      }),
+      buildEmployee({ salaryHistory: history(['2025-06-01', 7000]) }),
+      buildEmployee({ salaryHistory: [] }),
+    ];
+
+    expect(
+      medianSalaryByYear(employees, TODAY).map((p) => [p.label, p.value]),
+    ).toEqual([
+      ['2024', 4000],
+      ['2025', 6000],
+      ['2026', 6000],
+    ]);
+  });
+
+  it('is empty without any salary history', () => {
+    expect(medianSalaryByYear([buildEmployee()], TODAY)).toEqual([]);
+  });
+});
+
+describe('annualPayGrowth and payGrowthBy', () => {
+  it('compounds growth from the first salary to today', () => {
+    expect(
+      annualPayGrowth(
+        history(['2024-09-28', 4000], ['2025-01-01', 4840]),
+        TODAY,
+      ),
+    ).toBeCloseTo(10, 1);
+  });
+
+  it('counts a never-raised employee as 0% and skips anyone here under a year', () => {
+    expect(annualPayGrowth(history(['2020-01-01', 5000]), TODAY)).toBe(0);
+    expect(annualPayGrowth(history(['2026-01-01', 5000]), TODAY)).toBeNull();
+    expect(annualPayGrowth([], TODAY)).toBeNull();
+  });
+
+  it('averages the growth per group, fastest first', () => {
+    const employees = [
+      buildEmployee({
+        departmentName: 'Sales',
+        salaryHistory: history(['2024-09-28', 4000], ['2025-01-01', 4840]),
+      }),
+      buildEmployee({
+        departmentName: 'Sales',
+        salaryHistory: history(['2020-01-01', 5000]),
+      }),
+      buildEmployee({
+        departmentName: 'Engineering',
+        salaryHistory: history(['2024-09-28', 4000], ['2025-01-01', 4400]),
+      }),
+      buildEmployee({
+        departmentName: 'HR',
+        salaryHistory: history(['2026-06-01', 4000]),
+      }),
+    ];
+
+    expect(payGrowthBy(employees, (e) => e.departmentName!, TODAY)).toEqual([
+      { label: 'Sales', value: 5 },
+      { label: 'Engineering', value: 4.9 },
+    ]);
   });
 });

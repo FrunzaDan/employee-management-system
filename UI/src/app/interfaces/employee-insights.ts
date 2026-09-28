@@ -9,6 +9,13 @@ export interface EmployeeProfile {
   departmentName: string | null;
   officeName: string | null;
   currentGrossSalary: number | null;
+  // Oldest first, one entry per date, nothing dated in the future.
+  salaryHistory: SalaryPoint[];
+}
+
+export interface SalaryPoint {
+  effectiveDate: IsoDate;
+  grossSalary: number;
 }
 
 export interface EmployeeInsights {

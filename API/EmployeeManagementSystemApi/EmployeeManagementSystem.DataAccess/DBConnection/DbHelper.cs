@@ -165,9 +165,30 @@ public static class DbHelper
     public static async Task<ResponseModel<EmployeeInsightsModel>> HandleResponseWithEmployeeInsightsAsync(
         SqlDataReader reader)
     {
-        var employees = new List<EmployeeProfileModel>();
+        var rows = new List<(Guid EmployeeId, EmployeeProfileModel Profile)>();
         while (await reader.ReadAsync().ConfigureAwait(false))
-            employees.Add(MapEmployeeProfileFromReader(reader));
+            rows.Add((reader.GetGuid("EmployeeId"), MapEmployeeProfileFromReader(reader)));
+
+        // The id only joins the salary history to its employee; it isn't sent to the UI.
+        var histories = new Dictionary<Guid, List<SalaryPointModel>>();
+        await reader.NextResultAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+        {
+            var employeeId = reader.GetGuid("EmployeeId");
+            if (!histories.TryGetValue(employeeId, out var history))
+                histories[employeeId] = history = [];
+            history.Add(new SalaryPointModel
+            {
+                EffectiveDate = reader.GetDateOnly("EffectiveDate"),
+                GrossSalary = reader.GetDecimal("GrossSalary")
+            });
+        }
+
+        var employees = rows
+            .Select(row => histories.TryGetValue(row.EmployeeId, out var history)
+                ? row.Profile with { SalaryHistory = history }
+                : row.Profile)
+            .ToList();
 
         return new ResponseModel<EmployeeInsightsModel>(200, "Employee insights retrieved.",
             new EmployeeInsightsModel { Employees = employees });

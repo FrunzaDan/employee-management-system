@@ -4,7 +4,10 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
+    DECLARE @Today DATE = CAST(SYSUTCDATETIME() AS DATE);
+
     SELECT
+        e.EmployeeId,
         e.StatusCode,
         e.Gender,
         e.BirthDate,
@@ -19,7 +22,24 @@ BEGIN
     OUTER APPLY (
         SELECT TOP 1 GrossSalary
         FROM dbo.EmployeeSalary
-        WHERE EmployeeId = e.EmployeeId AND EffectiveDate <= CAST(SYSUTCDATETIME() AS DATE)
+        WHERE EmployeeId = e.EmployeeId AND EffectiveDate <= @Today
         ORDER BY EffectiveDate DESC, CreatedAt DESC
     ) AS s;
+
+    -- Salary history as it took effect: one row per employee and date (the latest entry wins), none in the future.
+    SELECT
+        h.EmployeeId,
+        h.EffectiveDate,
+        h.GrossSalary
+    FROM (
+        SELECT
+            EmployeeId,
+            EffectiveDate,
+            GrossSalary,
+            ROW_NUMBER() OVER (PARTITION BY EmployeeId, EffectiveDate ORDER BY CreatedAt DESC) AS RowNumber
+        FROM dbo.EmployeeSalary
+        WHERE EffectiveDate <= @Today
+    ) AS h
+    WHERE h.RowNumber = 1
+    ORDER BY h.EmployeeId, h.EffectiveDate;
 END

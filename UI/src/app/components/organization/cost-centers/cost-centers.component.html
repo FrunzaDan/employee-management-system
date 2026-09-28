@@ -98,17 +98,17 @@
           </caption>
           <thead>
             <tr>
-              <th scope="col" class="text-center">Code</th>
-              <th scope="col" class="text-center">Name</th>
-              <th scope="col" class="text-center">Employees</th>
-              <th scope="col" class="text-center">Total gross salary</th>
-              <th scope="col" class="w-25 text-center">Actions</th>
+              <th scope="col">Code</th>
+              <th scope="col">Name</th>
+              <th scope="col" class="text-end">Employees</th>
+              <th scope="col" class="text-end">Total gross salary</th>
+              <th scope="col" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             @for (costCenter of costCenters(); track costCenter.costCenterId) {
               <tr animate.enter="row-enter" [style.--row-index]="$index">
-                <td class="align-middle text-center">
+                <td class="align-middle">
                   <a
                     class="plain-Links hoverItem"
                     [routerLink]="['/cost-centers', costCenter.costCenterId]"
@@ -116,16 +116,16 @@
                     {{ costCenter.code }}
                   </a>
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle">
                   {{ costCenter.name || '—' }}
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle text-end">
                   {{ costCenter.employeeCount }}
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle text-end">
                   {{ costCenter.totalGrossSalary | ron }}
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle text-end">
                   <div
                     class="btn-group"
                     role="group"

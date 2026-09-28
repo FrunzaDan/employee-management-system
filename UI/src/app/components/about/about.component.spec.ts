@@ -8,7 +8,8 @@ import { OfficeService } from '../../services/office.service';
 import { DepartmentService } from '../../services/department.service';
 import { CostCenterService } from '../../services/cost-center.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
-import { AboutComponent } from './about.component';
+import { CreateSalaryRequest } from '../../interfaces/salary';
+import { AboutComponent, randomSalaryHistory } from './about.component';
 
 describe('AboutComponent', () => {
   let createEmployeeSilently: ReturnType<typeof vi.fn>;
@@ -165,17 +166,36 @@ describe('AboutComponent', () => {
       expect(employee.costCenterId).toBe(costCenter.costCenterId);
     });
 
-    it('adds an initial salary entry for every successfully created employee', async () => {
+    it('adds a salary history of 2 to 6 entries for every created employee', async () => {
       const component = createComponent();
+      let n = 0;
+      createEmployeeSilently.mockImplementation(() =>
+        of({ status: 200, responseMessage: 'ok', data: `employee-${n++}` }),
+      );
 
       await component.createTestEmployees();
 
-      expect(createSalarySilently).toHaveBeenCalledTimes(50);
-      const entry = createSalarySilently.mock.calls[0][0];
-      expect(entry.employeeId).toBe('employee-1');
-      expect(entry.grossSalary).toBeGreaterThanOrEqual(3000);
-      expect(entry.grossSalary).toBeLessThanOrEqual(12000);
-      expect(entry.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      const hireDates = createEmployeeSilently.mock.calls.map(
+        ([employee]) => employee.hireDate,
+      );
+      const byEmployee = new Map<string, CreateSalaryRequest[]>();
+      for (const [entry] of createSalarySilently.mock.calls as [
+        CreateSalaryRequest,
+      ][]) {
+        byEmployee.set(entry.employeeId, [
+          ...(byEmployee.get(entry.employeeId) ?? []),
+          entry,
+        ]);
+      }
+      expect(byEmployee.size).toBe(50);
+      for (const [employeeId, entries] of byEmployee) {
+        expect(entries.length).toBeGreaterThanOrEqual(2);
+        expect(entries.length).toBeLessThanOrEqual(6);
+        const index = Number(employeeId.split('-')[1]);
+        expect(entries[0].effectiveDate).toBe(hireDates[index]);
+        expect(entries[0].grossSalary).toBeGreaterThanOrEqual(3000);
+        expect(entries[0].grossSalary).toBeLessThanOrEqual(9000);
+      }
     });
 
     it('does not add a salary entry for an employee that failed to register', async () => {
@@ -183,21 +203,51 @@ describe('AboutComponent', () => {
       let n = 0;
       createEmployeeSilently.mockImplementation(() => {
         if (n++ === 0) return throwError(() => new Error('400'));
-        return of({ status: 200, responseMessage: 'ok', data: 'employee-1' });
+        return of({
+          status: 200,
+          responseMessage: 'ok',
+          data: `employee-${n}`,
+        });
       });
 
       await component.createTestEmployees();
 
-      expect(createSalarySilently).toHaveBeenCalledTimes(49);
+      const employeeIds = new Set(
+        createSalarySilently.mock.calls.map(([entry]) => entry.employeeId),
+      );
+      expect(employeeIds.size).toBe(49);
     });
 
-    it('still reports success even if adding the initial salary fails', async () => {
+    it('still reports success even if adding a salary entry fails', async () => {
       const component = createComponent();
       createSalarySilently.mockReturnValue(throwError(() => new Error('500')));
 
       await component.createTestEmployees();
 
       expect(show).toHaveBeenCalledWith('Added 50 test employees.', 'success');
+    });
+  });
+
+  describe('randomSalaryHistory', () => {
+    const today = new Date(2026, 8, 28);
+
+    it('starts on the hire date and only raises pay, never past today', () => {
+      for (let i = 0; i < 200; i++) {
+        const history = randomSalaryHistory('2025-11-30', today);
+
+        expect(history.length).toBeGreaterThanOrEqual(2);
+        expect(history.length).toBeLessThanOrEqual(6);
+        expect(history[0].effectiveDate).toBe('2025-11-30');
+        for (let j = 1; j < history.length; j++) {
+          expect(history[j].effectiveDate > history[j - 1].effectiveDate).toBe(
+            true,
+          );
+          expect(history[j].effectiveDate <= '2026-09-28').toBe(true);
+          const raise = history[j].grossSalary / history[j - 1].grossSalary;
+          expect(raise).toBeGreaterThan(1);
+          expect(raise).toBeLessThan(1.16);
+        }
+      }
     });
   });
 });

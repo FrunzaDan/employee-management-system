@@ -20,4 +20,13 @@ public sealed record EmployeeProfileModel
     public string? OfficeName { get; init; }
 
     public decimal? CurrentGrossSalary { get; init; }
+
+    public IReadOnlyList<SalaryPointModel> SalaryHistory { get; init; } = [];
+}
+
+public sealed record SalaryPointModel
+{
+    public required DateOnly EffectiveDate { get; init; }
+
+    public required decimal GrossSalary { get; init; }
 }

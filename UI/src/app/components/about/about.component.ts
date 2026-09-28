@@ -21,8 +21,12 @@ const TEST_EMPLOYEE_COUNT = 50;
 const HIRE_DATE_RANGE_START = new Date(2005, 0, 1);
 const HIRE_DATE_RANGE_END = new Date(2025, 11, 1);
 
-const MIN_GROSS_SALARY = 3000;
-const MAX_GROSS_SALARY = 12000;
+const MIN_STARTING_SALARY = 3000;
+const MAX_STARTING_SALARY = 9000;
+const MIN_SALARY_ENTRIES = 2;
+const MAX_SALARY_ENTRIES = 6;
+const MIN_RAISE = 0.03;
+const MAX_RAISE = 0.15;
 
 const FIRST_NAMES = [
   'Andrei',
@@ -178,29 +182,61 @@ function randomDigits(length: number): string {
   return digits;
 }
 
-function randomBirthDate(): string {
-  const start = new Date(1950, 0, 1).getTime();
-  const end = new Date(2005, 11, 31).getTime();
-  const date = new Date(start + Math.random() * (end - start));
+function toIsoDate(date: Date): string {
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function randomBirthDate(): string {
+  const start = new Date(1950, 0, 1).getTime();
+  const end = new Date(2005, 11, 31).getTime();
+  return toIsoDate(new Date(start + Math.random() * (end - start)));
 }
 
 function randomHireDate(): string {
   const start = HIRE_DATE_RANGE_START.getTime();
   const end = HIRE_DATE_RANGE_END.getTime();
-  const date = new Date(start + Math.random() * (end - start));
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
+  return toIsoDate(new Date(start + Math.random() * (end - start)));
 }
 
-function randomGrossSalary(): number {
-  return (
-    Math.floor(Math.random() * (MAX_GROSS_SALARY - MIN_GROSS_SALARY + 1)) +
-    MIN_GROSS_SALARY
+function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function roundToTen(value: number): number {
+  return Math.round(value / 10) * 10;
+}
+
+// A starting salary on the hire date, then raises on random later dates up to
+// today, so every entry has already taken effect.
+export function randomSalaryHistory(
+  hireDate: string,
+  today: Date,
+): { grossSalary: number; effectiveDate: string }[] {
+  const start = new Date(`${hireDate}T00:00:00`).getTime() + 86_400_000;
+  const end = today.getTime();
+  const raiseCount = randomInt(MIN_SALARY_ENTRIES, MAX_SALARY_ENTRIES) - 1;
+  const raiseDates = [
+    ...new Set(
+      Array.from({ length: raiseCount }, () =>
+        toIsoDate(new Date(start + Math.random() * Math.max(end - start, 0))),
+      ),
+    ),
+  ]
+    .filter((date) => date > hireDate)
+    .sort();
+
+  let grossSalary = roundToTen(
+    randomInt(MIN_STARTING_SALARY, MAX_STARTING_SALARY),
   );
+  const history = [{ grossSalary, effectiveDate: hireDate }];
+  for (const effectiveDate of raiseDates) {
+    const raise = MIN_RAISE + Math.random() * (MAX_RAISE - MIN_RAISE);
+    grossSalary = roundToTen(grossSalary * (1 + raise));
+    history.push({ grossSalary, effectiveDate });
+  }
+  return history;
 }
 
 function pickId<T>(
@@ -269,7 +305,7 @@ export class AboutComponent {
         }
         added++;
         if (employeeId)
-          await this.createRandomInitialSalary(employeeId, employee);
+          await this.createRandomSalaryHistory(employeeId, employee);
       }
 
       const problems = failed > 0 ? [`${failed} failed`] : [];
@@ -283,19 +319,23 @@ export class AboutComponent {
     }
   }
 
-  private async createRandomInitialSalary(
+  private async createRandomSalaryHistory(
     employeeId: string,
     employee: CreateEmployeeRequest,
   ): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.salaryHistoryService.createSalarySilently({
-          employeeId,
-          grossSalary: randomGrossSalary(),
-          effectiveDate: employee.hireDate!,
-        }),
-      );
-    } catch {}
+    const history = randomSalaryHistory(employee.hireDate!, new Date());
+    await Promise.all(
+      history.map(async (entry) => {
+        try {
+          await firstValueFrom(
+            this.salaryHistoryService.createSalarySilently({
+              employeeId,
+              ...entry,
+            }),
+          );
+        } catch {}
+      }),
+    );
   }
 
   private buildRandomEmployee(

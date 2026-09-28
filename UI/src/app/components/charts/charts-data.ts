@@ -1,5 +1,9 @@
 import { EmployeeStatus, Gender } from '../../interfaces/employee';
-import { EmployeeProfile } from '../../interfaces/employee-insights';
+import {
+  EmployeeProfile,
+  SalaryPoint,
+} from '../../interfaces/employee-insights';
+import { IsoDate } from '../../interfaces/iso-date';
 import { employeeStatusLabel } from '../../utils/employee-status-label';
 import {
   AGE_BANDS,
@@ -8,11 +12,13 @@ import {
   countIntoBands,
   fractionalYearsBetween,
   LabelValue,
+  median,
   MonthlyCount,
   rankTotals,
   TENURE_BANDS,
   totalsByLabel,
   wholeYearsBetween,
+  yearlyToPoints,
 } from '../../utils/chart-stats';
 import { ScatterPoint } from './scatter-chart/scatter-chart.component';
 
@@ -30,7 +36,15 @@ const GENDER_LABELS: ReadonlyArray<[Gender, string]> = [
   [Gender.NotDeclared, 'Not declared'],
 ];
 
+// Growth over less than a year says little and annualises to wild numbers.
+const MIN_GROWTH_YEARS = 1;
+
 type Salaried = EmployeeProfile & { currentGrossSalary: number };
+
+export interface Raise {
+  effectiveDate: IsoDate;
+  percent: number;
+}
 
 export function currentWorkforce(
   employees: EmployeeProfile[],
@@ -151,4 +165,94 @@ export function payVsTenure(
       y: e.currentGrossSalary,
       group: e.departmentName ?? UNASSIGNED,
     }));
+}
+
+export function raises(employees: EmployeeProfile[]): Raise[] {
+  return employees.flatMap(({ salaryHistory }) =>
+    salaryHistory
+      .slice(1)
+      .map((entry, index) => ({
+        effectiveDate: entry.effectiveDate,
+        percent:
+          (entry.grossSalary / salaryHistory[index].grossSalary - 1) * 100,
+      }))
+      .filter((raise) => raise.percent > 0),
+  );
+}
+
+export function raisesPerYear(employees: EmployeeProfile[]): ChartPoint[] {
+  return yearlyToPoints(
+    countByMonth(raises(employees).map((raise) => raise.effectiveDate)),
+  );
+}
+
+function salaryOn(history: SalaryPoint[], isoDate: IsoDate): number | null {
+  let salary: number | null = null;
+  for (const entry of history) {
+    if (entry.effectiveDate > isoDate) break;
+    salary = entry.grossSalary;
+  }
+  return salary;
+}
+
+// The median of the salaries in effect at the end of each year, from the
+// first salary on record to this year.
+export function medianSalaryByYear(
+  employees: EmployeeProfile[],
+  today: Date,
+): ChartPoint[] {
+  const firstDates = employees
+    .filter((e) => e.salaryHistory.length > 0)
+    .map((e) => e.salaryHistory[0].effectiveDate);
+  if (firstDates.length === 0) return [];
+
+  const firstYear = Math.min(...firstDates.map((d) => Number(d.slice(0, 4))));
+  const points: ChartPoint[] = [];
+  for (let year = firstYear; year <= today.getFullYear(); year++) {
+    const salaries = employees
+      .map((e) => salaryOn(e.salaryHistory, `${year}-12-31`))
+      .filter((salary) => salary !== null);
+    const key = year.toString();
+    points.push({ key, label: key, value: Math.round(median(salaries) ?? 0) });
+  }
+  return points;
+}
+
+// Compound yearly growth from the first salary to today's, so a raise long
+// ago counts for less than a recent one. Employees never raised count as 0%.
+export function annualPayGrowth(
+  history: SalaryPoint[],
+  today: Date,
+): number | null {
+  if (history.length === 0) return null;
+  const years = fractionalYearsBetween(history[0].effectiveDate, today);
+  if (years < MIN_GROWTH_YEARS) return null;
+  const ratio =
+    history[history.length - 1].grossSalary / history[0].grossSalary;
+  return (Math.pow(ratio, 1 / years) - 1) * 100;
+}
+
+export function payGrowthBy(
+  employees: EmployeeProfile[],
+  labelFn: (employee: EmployeeProfile) => string,
+  today: Date,
+): LabelValue[] {
+  const growth = employees
+    .map((e) => ({ e, growth: annualPayGrowth(e.salaryHistory, today) }))
+    .filter(
+      (row): row is { e: EmployeeProfile; growth: number } =>
+        row.growth !== null,
+    );
+  const totals = totalsByLabel(
+    growth,
+    (row) => labelFn(row.e),
+    (row) => row.growth,
+  );
+  const counts = totalsByLabel(growth, (row) => labelFn(row.e));
+  return [...totals.entries()]
+    .map(([label, total]) => ({
+      label,
+      value: Math.round((total / counts.get(label)!) * 10) / 10,
+    }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
 }

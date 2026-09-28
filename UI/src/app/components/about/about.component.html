@@ -324,12 +324,13 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             fictitious employees through the same
             <code>POST /api/employee/create</code> endpoint the
             <em>Add employee</em> form uses — each with a randomly generated
-            name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), and
-            a home address. Every one of them is created with the
-            <code>Test</code> status (<code>1904</code>) rather than
-            <code>Active</code>, so they're clearly distinguishable from real
-            employees everywhere the status is shown. It exists purely so
-            there's enough data to try out search, sorting, and pagination
+            name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), a
+            home address, and a salary history of 2 to 6 entries (a starting
+            salary on the hire date, then raises up to today). Every one of them
+            is created with the <code>Test</code> status (<code>1904</code>)
+            rather than <code>Active</code>, so they're clearly distinguishable
+            from real employees everywhere the status is shown. It exists purely
+            so there's enough data to try out search, sorting, and pagination
             locally; like an active employee, a test employee can still be
             deactivated and deleted afterwards.
           </p>

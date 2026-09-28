@@ -75,13 +75,14 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 ### Charts (`/charts`)
 
 - Same building blocks as the customer app: hand-built inline SVG, no chart library, pure transforms in `charts/charts-data.ts` and the shared `utils/chart-stats.ts` (both with specs).
-- **Data:** `EmployeeInsightsService` loads `GET /api/employee/insights`, one anonymous row per employee (status, gender, birth date, hire date, department, office, current salary). `loadInsights()` reloads on every visit.
-- **Who counts:** status is charted for everyone. Hires over time also includes deactivated employees. Every other chart and KPI uses the **current workforce** (not deactivated). Missing departments and offices show as "Unassigned"; employees without a salary are left out of the pay charts, and the payroll KPI says how many.
-- **Layout:** an "At a glance" band (headcount with a sparkline, monthly payroll, median salary, average tenure, average age), then "Workforce" (hires over time with a monthly/yearly toggle, "how today's team was built", status and gender donuts, age groups, years of service, headcount by department and office) and "Pay" (salary histogram, payroll share by department, average salary by department and by gender with a pay-gap sentence, pay vs. years of service).
+- **Data:** `EmployeeInsightsService` loads `GET /api/employee/insights`, one anonymous row per employee (status, gender, birth date, hire date, department, office, current salary, and `salaryHistory`: the salary entries in effect so far, oldest first). `loadInsights()` reloads on every visit.
+- **Who counts:** status is charted for everyone. Hires over time and raises per year also include deactivated employees. Every other chart and KPI uses the **current workforce** (not deactivated). Missing departments and offices show as "Unassigned"; employees without a salary are left out of the pay charts, and the payroll KPI says how many.
+- **Layout:** an "At a glance" band (headcount with a sparkline, monthly payroll, median salary with a year-by-year sparkline, median raise with the count in the past year, average tenure, average age), then "Workforce" (hires over time with a monthly/yearly toggle, "how today's team was built", status and gender donuts, age groups, years of service, headcount by department and office) and "Pay" (salary histogram, payroll share by department, average salary by department and by gender with a pay-gap sentence, pay vs. years of service) and "Salary growth" (median salary year by year, raises per year, yearly pay growth by department).
+- **Salary growth:** a raise is any entry higher than the one before it; cuts are ignored. "Median salary, year by year" uses the salary in effect on 31 December of each year (today for this year). Yearly pay growth is compound growth from the first salary to today, averaged per department; employees never raised count as 0%, and anyone with under a year since their first salary is left out.
 - **Pay vs. years of service** (`scatter-chart`, employee only): one dot per salaried employee with a hire date, coloured by department. The legend chips toggle departments, and the dashed least-squares trend line is re-fitted to what's visible and summarised in words. The axes run to the first round step above the data (`axisScale`).
 - Components, colours, tooltips and motion are the same as in the customer app; see its `angular-frontend.md` "Charts" section.
 
-- **Test-employee generator** (About page): creates 50 employees with random job info. For each one it takes the returned `employeeId` and adds a first salary silently; a failed salary is ignored.
+- **Test-employee generator** (About page): creates 50 employees with random job info. For each one it takes the returned `employeeId` and silently adds a salary history of 2–6 entries (`randomSalaryHistory`): a starting salary of 3,000–9,000 RON on the hire date, then raises of 3–15% on random dates up to today, so all of them have taken effect. A failed salary entry is ignored.
 
 ### Forms (Signal Forms)
 
@@ -112,6 +113,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 
 - Bootstrap plus `styles.css` tokens (`--spectrumColor1..4`, `--dangerColor1`, and `--chartColor1..8` for charts), and the Jost font.
 - Shared classes: `.page`, `.page-header`, `.app-card`, `.table-themed`, `.sort-button`, `.loading-state`, `.empty-state`.
+- Table alignment (all three apps): text columns left, counts and money right (`text-end`), actions right; only checkbox and status-badge columns are centered. Names, phone numbers and dates get `text-nowrap`, so rows stay one line when the table scrolls sideways.
 - Motion (same in all three apps; tokens `--duration-*` and `--ease-*`, rules in the Motion section of `styles.css`):
   - cards (`.app-card`) rise in on appearance; sibling cards follow a beat apart;
   - table body rows carry `animate.enter="row-enter"` and `[style.--row-index]="$index"`, so added rows fade in staggered and re-sorted rows keep still;

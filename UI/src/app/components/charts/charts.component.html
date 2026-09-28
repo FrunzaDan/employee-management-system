@@ -44,7 +44,14 @@
             label="Median salary"
             [value]="medianSalary()"
             [valueFormatter]="formatRon"
+            [trend]="medianSalaryTrend()"
             [caption]="averageSalaryCaption()"
+          />
+          <app-kpi-tile
+            label="Median raise"
+            [value]="medianRaise()"
+            [valueFormatter]="formatPercent"
+            [caption]="medianRaiseCaption()"
           />
           <app-kpi-tile
             label="Average tenure"
@@ -337,6 +344,95 @@
                   ariaLabel="Salary against years of service, by department"
                   emptyMessage="No employees with both a hire date and a salary yet."
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Salary growth</h2>
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="card app-card chart-card">
+              <div class="card-body">
+                <h3 class="card-title">Median salary, year by year</h3>
+                <p class="chart-caption">
+                  Current employees' monthly gross salary as it stood at the end
+                  of each year, from their salary history.
+                </p>
+                <app-time-series-chart
+                  [points]="medianSalaryByYear()"
+                  variant="line"
+                  color="var(--chartColor2)"
+                  [valueFormatter]="formatRon"
+                  ariaLabel="Median salary by year"
+                  emptyMessage="No salary history yet."
+                />
+                @if (medianSalaryGrowth(); as growth) {
+                  <p class="chart-insight">
+                    Median salary
+                    <strong
+                      >{{ growth.up ? 'up' : 'down' }}
+                      {{
+                        growth.change < 0 ? -growth.change : growth.change
+                      }}%</strong
+                    >
+                    since {{ growth.since }}.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Raises per year</h3>
+                <p class="chart-caption">
+                  Every salary increase by the date it took effect, including
+                  employees who have since left.
+                </p>
+                <app-time-series-chart
+                  [points]="raisesPerYear()"
+                  [viewWidth]="480"
+                  variant="bar"
+                  color="var(--chartColor5)"
+                  ariaLabel="Raises per year"
+                  emptyMessage="No raises yet."
+                />
+                @if (busiestRaiseYear(); as peak) {
+                  <p class="chart-insight">
+                    Most raises: <strong>{{ peak.label }}</strong
+                    >, with {{ peak.value }}.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Yearly pay growth by department</h3>
+                <p class="chart-caption">
+                  How fast pay grows each year, from starting salary to today,
+                  averaged per department. Employees here under a year are left
+                  out.
+                </p>
+                <app-ranked-bar-chart
+                  [items]="payGrowthByDepartment()"
+                  [valueFormatter]="formatPercent"
+                  color="var(--chartColor3)"
+                  ariaLabel="Average yearly pay growth by department"
+                  emptyMessage="No salary history yet."
+                />
+                @if (payGrowthByDepartment()[0]; as fastest) {
+                  <p class="chart-insight">
+                    Fastest: <strong>{{ fastest.label }}</strong
+                    >, {{ formatPercent(fastest.value) }} a year.
+                  </p>
+                }
               </div>
             </div>
           </div>

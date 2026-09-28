@@ -54,6 +54,10 @@ describe('EmployeeInsightsService', () => {
           departmentName: 'Engineering',
           officeName: 'HQ',
           currentGrossSalary: 8000,
+          salaryHistory: [
+            { effectiveDate: '2012-05-20', grossSalary: 6000 },
+            { effectiveDate: '2020-01-01', grossSalary: 8000 },
+          ],
         },
       ],
     };

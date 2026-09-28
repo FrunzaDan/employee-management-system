@@ -24,8 +24,12 @@ import {
   genderSlices,
   headcountBy,
   hireCounts,
+  medianSalaryByYear,
+  payGrowthBy,
   payrollBy,
   payVsTenure,
+  raises,
+  raisesPerYear,
   salaried,
   statusSlices,
   tenureDistribution,
@@ -34,6 +38,7 @@ import {
 
 const TOP_GROUP_COUNT = 8;
 const PAYROLL_SLICE_COUNT = 5;
+const GROWTH_LOOKBACK_YEARS = 5;
 
 export type TimeRange = 'monthly' | 'yearly';
 
@@ -199,10 +204,50 @@ export class ChartsComponent {
     payVsTenure(this.workforce(), this.today),
   );
 
+  // Salary growth
+  readonly medianSalaryByYear = computed(() =>
+    medianSalaryByYear(this.workforce(), this.today),
+  );
+  readonly medianSalaryTrend = computed(() =>
+    this.medianSalaryByYear().map((p) => p.value),
+  );
+  readonly medianSalaryGrowth = computed(() => {
+    const points = this.medianSalaryByYear();
+    if (points.length < 2) return null;
+    const from = points[Math.max(points.length - 1 - GROWTH_LOOKBACK_YEARS, 0)];
+    const to = points[points.length - 1];
+    if (from.value === 0) return null;
+    const change = Math.round((to.value / from.value - 1) * 100);
+    return { change, since: from.label, up: change >= 0 };
+  });
+  private readonly allRaises = computed(() => raises(this.employees()));
+  readonly medianRaise = computed(() =>
+    median(this.allRaises().map((raise) => raise.percent)),
+  );
+  readonly medianRaiseCaption = computed(() => {
+    const yearAgo = new Date(this.today);
+    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+    const since = yearAgo.toISOString().slice(0, 10);
+    const recent = this.allRaises().filter(
+      (raise) => raise.effectiveDate > since,
+    ).length;
+    return `${recent} in the past year`;
+  });
+  readonly raisesPerYear = computed(() => raisesPerYear(this.employees()));
+  readonly busiestRaiseYear = computed(() => peakOf(this.raisesPerYear()));
+  readonly payGrowthByDepartment = computed(() =>
+    payGrowthBy(
+      this.workforce(),
+      (e) => e.departmentName ?? 'Unassigned',
+      this.today,
+    ),
+  );
+
   readonly formatRon = (value: number): string =>
     this.ron.transform(value, '1.0-0');
   readonly formatYears = (value: number): string => `${value.toFixed(1)} yrs`;
   readonly formatAge = (value: number): string => `${Math.round(value)}`;
+  readonly formatPercent = (value: number): string => `${value.toFixed(1)}%`;
 
   constructor() {
     this.insightsService.loadInsights();

@@ -78,15 +78,15 @@
             </caption>
             <thead>
               <tr>
-                <th scope="col" class="text-center">Name</th>
-                <th scope="col" class="text-center">Email</th>
-                <th scope="col" class="text-center">Status</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody>
               @for (employee of employees(); track employee.employeeId) {
                 <tr animate.enter="row-enter" [style.--row-index]="$index">
-                  <td class="align-middle text-center">
+                  <td class="align-middle">
                     <a
                       class="plain-Links hoverItem"
                       [routerLink]="['/employees', employee.employeeId]"
@@ -94,8 +94,8 @@
                       {{ employee.firstName }} {{ employee.lastName }}
                     </a>
                   </td>
-                  <td class="align-middle text-center">{{ employee.email }}</td>
-                  <td class="align-middle text-center">
+                  <td class="align-middle">{{ employee.email }}</td>
+                  <td class="align-middle">
                     {{ employeeStatusLabel(employee.status) }}
                   </td>
                 </tr>
