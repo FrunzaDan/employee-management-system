@@ -89,9 +89,9 @@
           <thead>
             <tr>
               <th scope="col">Name</th>
-              <th scope="col" class="text-end">Employees</th>
-              <th scope="col" class="text-end">Total gross salary</th>
-              <th scope="col" class="text-end">Actions</th>
+              <th scope="col">Employees</th>
+              <th scope="col">Total gross salary</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -105,13 +105,13 @@
                     {{ department.name }}
                   </a>
                 </td>
-                <td class="align-middle text-end">
+                <td class="align-middle">
                   {{ department.employeeCount }}
                 </td>
-                <td class="align-middle text-end">
+                <td class="align-middle">
                   {{ department.totalGrossSalary | ron }}
                 </td>
-                <td class="align-middle text-end">
+                <td class="align-middle">
                   <div
                     class="btn-group"
                     role="group"

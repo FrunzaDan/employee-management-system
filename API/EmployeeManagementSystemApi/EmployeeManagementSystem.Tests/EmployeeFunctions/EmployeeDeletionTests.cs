@@ -43,4 +43,19 @@ public class EmployeeDeletionTests
         auditLogger.Verify(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
+
+    [Fact]
+    public async Task DeleteEmployeeAsync_RejectsAnEmptyEmployeeId_WithoutTouchingTheDb()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var auditLogger = new Mock<IEmployeeAuditLogger>();
+        var deletion = new EmployeeDeletion(dbUtils.Object, auditLogger.Object);
+
+        var result = await deletion.DeleteEmployeeAsync(Guid.Empty, PerformedBy, TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        dbUtils.Verify(d => d.DeleteEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        auditLogger.Verify(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }

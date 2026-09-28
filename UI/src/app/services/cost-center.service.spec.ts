@@ -6,23 +6,24 @@ import {
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { Office } from '../interfaces/office';
+import { CostCenter } from '../interfaces/cost-center';
 import { NotificationService } from './notification.service';
-import { OfficeService } from './office.service';
+import { CostCenterService } from './cost-center.service';
 
-describe('OfficeService', () => {
-  let service: OfficeService;
+describe('CostCenterService', () => {
+  let service: CostCenterService;
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.apiUrl}/api/office`;
+  const API_URL = `${environment.apiUrl}/api/cost-center`;
   const ALL_URL = `${API_URL}/all`;
 
-  const buildOffice = (overrides: Partial<Office> = {}): Office => ({
-    officeId: 'office-1',
-    name: 'Head office',
-    city: 'Bucharest',
-    country: 'Romania',
+  const buildCostCenter = (
+    overrides: Partial<CostCenter> = {},
+  ): CostCenter => ({
+    costCenterId: 'cost-center-1',
+    code: 'CC-100',
+    name: 'Engineering',
     employeeCount: 3,
     totalGrossSalary: 21000,
     ...overrides,
@@ -38,7 +39,7 @@ describe('OfficeService', () => {
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });
-    service = TestBed.inject(OfficeService);
+    service = TestBed.inject(CostCenterService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -49,28 +50,28 @@ describe('OfficeService', () => {
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
   const load = () => {
-    service.loadOffices();
+    service.loadCostCenters();
     TestBed.tick();
   };
 
-  it('makes no request until loadOffices() is called', () => {
+  it('makes no request until loadCostCenters() is called', () => {
     TestBed.tick();
 
     httpMock.expectNone(ALL_URL);
-    expect(service.offices()).toEqual([]);
+    expect(service.costCenters()).toEqual([]);
     expect(service.loading()).toBe(false);
   });
 
-  it('populates offices from a successful response', async () => {
-    const office = buildOffice();
+  it('populates cost centers from a successful response', async () => {
+    const costCenter = buildCostCenter();
 
     load();
     httpMock
       .expectOne(ALL_URL)
-      .flush({ status: 200, responseMessage: 'ok', data: [office] });
+      .flush({ status: 200, responseMessage: 'ok', data: [costCenter] });
     await settle();
 
-    expect(service.offices()).toEqual([office]);
+    expect(service.costCenters()).toEqual([costCenter]);
     expect(service.error()).toBeNull();
   });
 
@@ -84,7 +85,7 @@ describe('OfficeService', () => {
       );
     await settle();
 
-    expect(service.offices()).toEqual([]);
+    expect(service.costCenters()).toEqual([]);
     expect(service.error()).toBe('The database is unavailable.');
   });
 
@@ -96,7 +97,7 @@ describe('OfficeService', () => {
     await settle();
 
     expect(service.error()).toBe(
-      'Failed to load offices (503). Please try again.',
+      'Failed to load cost centers (503). Please try again.',
     );
   });
 
@@ -107,77 +108,83 @@ describe('OfficeService', () => {
       .flush({ status: 200, responseMessage: 'ok', data: [] });
     await settle();
 
-    service.createOffice({ name: 'Branch' }).subscribe();
+    service.createCostCenter({ code: 'CC-200' }).subscribe();
     const create = httpMock.expectOne(`${API_URL}/create`);
     expect(create.request.method).toBe('POST');
-    expect(create.request.body).toEqual({ name: 'Branch' });
+    expect(create.request.body).toEqual({ code: 'CC-200' });
     create.flush({ status: 201, responseMessage: 'Created' });
     TestBed.tick();
 
     httpMock.expectOne(ALL_URL).flush({
       status: 200,
       responseMessage: 'ok',
-      data: [buildOffice({ name: 'Branch' })],
+      data: [buildCostCenter({ code: 'CC-200' })],
     });
     await settle();
 
-    expect(notificationShow).toHaveBeenCalledWith('Office added successfully.');
-    expect(service.offices().map((o) => o.name)).toEqual(['Branch']);
+    expect(notificationShow).toHaveBeenCalledWith(
+      'Cost center added successfully.',
+    );
+    expect(service.costCenters().map((o) => o.code)).toEqual(['CC-200']);
   });
 
-  it('fetchOffices returns the list as a value, without touching the resource signals', () => {
-    const office = buildOffice();
-    let result: Office[] | undefined;
+  it('fetchCostCenters returns the list as a value, without touching the resource signals', () => {
+    const costCenter = buildCostCenter();
+    let result: CostCenter[] | undefined;
 
-    service.fetchOffices().subscribe((offices) => (result = offices));
+    service
+      .fetchCostCenters()
+      .subscribe((costCenters) => (result = costCenters));
     httpMock
       .expectOne(ALL_URL)
-      .flush({ status: 200, responseMessage: 'ok', data: [office] });
+      .flush({ status: 200, responseMessage: 'ok', data: [costCenter] });
 
-    expect(result).toEqual([office]);
-    expect(service.offices()).toEqual([]);
+    expect(result).toEqual([costCenter]);
+    expect(service.costCenters()).toEqual([]);
   });
 
-  it('getOffice and getEmployees send the id as a query parameter', () => {
-    let office: Office | undefined;
+  it('getCostCenter and getEmployees send the id as a query parameter', () => {
+    let item: CostCenter | undefined;
     let employees: unknown[] | undefined;
 
-    service.getOffice('office-1').subscribe((o) => (office = o));
-    const get = httpMock.expectOne(`${API_URL}/get?officeId=office-1`);
-    get.flush({ status: 200, responseMessage: 'ok', data: buildOffice() });
+    service.getCostCenter('cost-center-1').subscribe((o) => (item = o));
+    const get = httpMock.expectOne(`${API_URL}/get?costCenterId=cost-center-1`);
+    get.flush({ status: 200, responseMessage: 'ok', data: buildCostCenter() });
 
-    service.getEmployees('office-1').subscribe((e) => (employees = e));
+    service.getEmployees('cost-center-1').subscribe((e) => (employees = e));
     httpMock
-      .expectOne(`${API_URL}/employees?officeId=office-1`)
+      .expectOne(`${API_URL}/employees?costCenterId=cost-center-1`)
       .flush({ status: 200, responseMessage: 'ok', data: null });
 
-    expect(office).toEqual(buildOffice());
+    expect(item).toEqual(buildCostCenter());
     expect(employees).toEqual([]);
   });
 
-  it('getOffice errors when the response has no office', () => {
+  it('getCostCenter errors when the response has no cost center', () => {
     let error: Error | undefined;
 
-    service.getOffice('missing').subscribe({ error: (e) => (error = e) });
+    service.getCostCenter('missing').subscribe({ error: (e) => (error = e) });
     httpMock
-      .expectOne(`${API_URL}/get?officeId=missing`)
+      .expectOne(`${API_URL}/get?costCenterId=missing`)
       .flush({ status: 200, responseMessage: 'ok', data: null });
 
-    expect(error?.message).toBe('Office not found.');
+    expect(error?.message).toBe('Cost center not found.');
   });
 
-  it('updateOffice sends a PATCH, confirms with a toast and reloads the list', async () => {
+  it('updateCostCenter sends a PATCH, confirms with a toast and reloads the list', async () => {
     load();
     httpMock
       .expectOne(ALL_URL)
       .flush({ status: 200, responseMessage: 'ok', data: [] });
     await settle();
 
-    service.updateOffice({ officeId: 'office-1', name: 'Renamed' }).subscribe();
+    service
+      .updateCostCenter({ costCenterId: 'cost-center-1', name: 'Renamed' })
+      .subscribe();
     const update = httpMock.expectOne(`${API_URL}/update`);
     expect(update.request.method).toBe('PATCH');
     expect(update.request.body).toEqual({
-      officeId: 'office-1',
+      costCenterId: 'cost-center-1',
       name: 'Renamed',
     });
     update.flush({ status: 200, responseMessage: 'ok' });
@@ -189,19 +196,21 @@ describe('OfficeService', () => {
     await settle();
 
     expect(notificationShow).toHaveBeenCalledWith(
-      'Office updated successfully.',
+      'Cost center updated successfully.',
     );
   });
 
-  it('deleteOffice sends a DELETE with the id, confirms with a toast and reloads the list', async () => {
+  it('deleteCostCenter sends a DELETE with the id, confirms with a toast and reloads the list', async () => {
     load();
     httpMock
       .expectOne(ALL_URL)
-      .flush({ status: 200, responseMessage: 'ok', data: [buildOffice()] });
+      .flush({ status: 200, responseMessage: 'ok', data: [buildCostCenter()] });
     await settle();
 
-    service.deleteOffice('office-1').subscribe();
-    const remove = httpMock.expectOne(`${API_URL}/delete?officeId=office-1`);
+    service.deleteCostCenter('cost-center-1').subscribe();
+    const remove = httpMock.expectOne(
+      `${API_URL}/delete?costCenterId=cost-center-1`,
+    );
     expect(remove.request.method).toBe('DELETE');
     remove.flush({ status: 200, responseMessage: 'ok' });
     TestBed.tick();
@@ -212,17 +221,19 @@ describe('OfficeService', () => {
     await settle();
 
     expect(notificationShow).toHaveBeenCalledWith(
-      'Office deleted successfully.',
+      'Cost center deleted successfully.',
     );
-    expect(service.offices()).toEqual([]);
+    expect(service.costCenters()).toEqual([]);
   });
 
   it('does not toast or reload when a delete fails', () => {
-    service.deleteOffice('office-1').subscribe({ error: () => undefined });
+    service
+      .deleteCostCenter('cost-center-1')
+      .subscribe({ error: () => undefined });
     httpMock
-      .expectOne(`${API_URL}/delete?officeId=office-1`)
+      .expectOne(`${API_URL}/delete?costCenterId=cost-center-1`)
       .flush(
-        { status: 409, detail: 'Office still has employees.' },
+        { status: 409, detail: 'Cost center still has employees.' },
         { status: 409, statusText: 'Conflict' },
       );
     TestBed.tick();
