@@ -30,6 +30,9 @@ export interface LoadEmployeesParams {
   searchTerm?: string;
   sortColumn?: 'name' | 'email' | 'phoneNumber';
   sortDirection?: 'asc' | 'desc';
+  officeId?: string;
+  departmentId?: string;
+  costCenterId?: string;
 }
 
 export type ExportEmployeesParams = Omit<
@@ -74,6 +77,7 @@ export class EmployeeService {
         sortColumn: params.sortColumn ?? 'name',
         sortDirection: params.sortDirection ?? 'asc',
         ...(params.searchTerm ? { searchTerm: params.searchTerm } : {}),
+        ...orgFilterParams(params),
       },
     };
   });
@@ -221,6 +225,9 @@ export class EmployeeService {
     if (params.searchTerm) {
       httpParams = httpParams.set('searchTerm', params.searchTerm);
     }
+    for (const [key, value] of Object.entries(orgFilterParams(params))) {
+      httpParams = httpParams.set(key, value);
+    }
 
     this.http
       .get(`${this.apiUrl}/export`, {
@@ -339,6 +346,16 @@ export class EmployeeService {
       error: extractErrorMessage(error, 'Failed to update the employee status'),
     });
   }
+}
+
+function orgFilterParams(
+  params: ExportEmployeesParams,
+): Record<string, string> {
+  return {
+    ...(params.officeId ? { officeId: params.officeId } : {}),
+    ...(params.departmentId ? { departmentId: params.departmentId } : {}),
+    ...(params.costCenterId ? { costCenterId: params.costCenterId } : {}),
+  };
 }
 
 function toUpdateEmployeeRequest(employee: Employee): UpdateEmployeeRequest {

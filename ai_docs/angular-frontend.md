@@ -44,7 +44,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 | `/employees` (`/` redirects here) | `home` → `employee-list` |
 | `/employees/:employeeId` | `employee-details` (record, job info, salary history, audit trail) |
 | `/create-employee`, `/employees/update/:employeeId` | `create-employee`, `update-employee` |
-| `/offices`, `/departments`, `/cost-centers` | admin pages: a table with one inline add/edit form and "Quickly view employees" |
+| `/offices`, `/departments`, `/cost-centers` | admin pages: a table with one inline add/edit form and "Quickly view employees", which expands the shared `employee-list` filtered to that row |
 | `/offices/:officeId`, `/departments/:departmentId`, `/cost-centers/:costCenterId` | details page with a full employees table |
 | `/audit-log` | `global-audit-log` |
 | `/charts` | `charts` |
@@ -69,7 +69,8 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - **Employee list:**
   - search (debounced 300 ms), sort and paging all happen on the server;
   - page size is 50;
-  - bulk actions deactivate the active employees and delete the rest, one call each.
+  - bulk actions deactivate the active employees and delete the rest, one call each;
+  - reused, filtered, on the org admin and details pages through the `officeId`, `departmentId` and `costCenterId` inputs (plus `emptyMessage`). It lists `EmployeeService` in its own `providers`, so every list has its own page state.
 - **CSV export:** uses the list's current search and sort, requests a `blob` and downloads it client-side.
 - **Health banner:** `HealthService` polls `/health` every 15 s, in the browser only. `App` shows an "API is not running" card when it fails.
 ### Charts (`/charts`)

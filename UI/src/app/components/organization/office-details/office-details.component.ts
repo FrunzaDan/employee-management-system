@@ -4,13 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { OfficeService } from '../../../services/office.service';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
-import { employeeStatusLabel } from '../../../utils/employee-status-label';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 
 @Component({
   selector: 'app-office-details',
   templateUrl: './office-details.component.html',
   styleUrl: './office-details.component.css',
-  imports: [RouterLink],
+  imports: [RouterLink, EmployeeListComponent],
 })
 export class OfficeDetailsComponent {
   private readonly officeService = inject(OfficeService);
@@ -50,6 +50,4 @@ export class OfficeDetailsComponent {
         )
       : null;
   });
-
-  readonly employeeStatusLabel = employeeStatusLabel;
 }

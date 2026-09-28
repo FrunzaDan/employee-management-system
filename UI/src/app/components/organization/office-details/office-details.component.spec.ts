@@ -1,4 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component, input } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -6,7 +8,14 @@ import { Office } from '../../../interfaces/office';
 import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { EmployeeStatus } from '../../../interfaces/employee';
 import { OfficeService } from '../../../services/office.service';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 import { OfficeDetailsComponent } from './office-details.component';
+
+@Component({ selector: 'app-employee-list', template: '' })
+class EmployeeListStub {
+  readonly officeId = input<string>();
+  readonly emptyMessage = input<string>();
+}
 
 describe('OfficeDetailsComponent', () => {
   let getOffice: ReturnType<typeof vi.fn>;
@@ -39,6 +48,10 @@ describe('OfficeDetailsComponent', () => {
         },
       ],
     });
+    TestBed.overrideComponent(OfficeDetailsComponent, {
+      remove: { imports: [EmployeeListComponent] },
+      add: { imports: [EmployeeListStub] },
+    });
     const fixture = TestBed.createComponent(OfficeDetailsComponent);
     fixture.componentRef.setInput('officeId', officeId);
     await fixture.whenStable();
@@ -59,7 +72,8 @@ describe('OfficeDetailsComponent', () => {
     expect(component.office()).toEqual(office);
     expect(component.employees()).toEqual([employee]);
     expect(component.loadError()).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Ana');
+    const list = fixture.debugElement.query(By.directive(EmployeeListStub));
+    expect(list.componentInstance.officeId()).toBe('office-1');
   });
 
   it('says so, without calling the API, when no id is given', async () => {

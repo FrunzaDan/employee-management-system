@@ -1,4 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component, input } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -6,7 +8,14 @@ import { CostCenter } from '../../../interfaces/cost-center';
 import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { EmployeeStatus } from '../../../interfaces/employee';
 import { CostCenterService } from '../../../services/cost-center.service';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 import { CostCenterDetailsComponent } from './cost-center-details.component';
+
+@Component({ selector: 'app-employee-list', template: '' })
+class EmployeeListStub {
+  readonly costCenterId = input<string>();
+  readonly emptyMessage = input<string>();
+}
 
 describe('CostCenterDetailsComponent', () => {
   let getCostCenter: ReturnType<typeof vi.fn>;
@@ -38,6 +47,10 @@ describe('CostCenterDetailsComponent', () => {
         },
       ],
     });
+    TestBed.overrideComponent(CostCenterDetailsComponent, {
+      remove: { imports: [EmployeeListComponent] },
+      add: { imports: [EmployeeListStub] },
+    });
     const fixture = TestBed.createComponent(CostCenterDetailsComponent);
     fixture.componentRef.setInput('costCenterId', costCenterId);
     await fixture.whenStable();
@@ -58,7 +71,8 @@ describe('CostCenterDetailsComponent', () => {
     expect(component.costCenter()).toEqual(costCenter);
     expect(component.employees()).toEqual([employee]);
     expect(component.loadError()).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Ana');
+    const list = fixture.debugElement.query(By.directive(EmployeeListStub));
+    expect(list.componentInstance.costCenterId()).toBe('cost-center-1');
   });
 
   it('says so, without calling the API, when no id is given', async () => {

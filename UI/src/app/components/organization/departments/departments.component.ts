@@ -5,10 +5,9 @@ import { firstValueFrom } from 'rxjs';
 import { DepartmentService } from '../../../services/department.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { Department } from '../../../interfaces/department';
-import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
-import { employeeStatusLabel } from '../../../utils/employee-status-label';
 import { RonPipe } from '../../../pipes/ron.pipe';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 
 interface DepartmentDraft {
   departmentId: string | null;
@@ -19,7 +18,7 @@ interface DepartmentDraft {
   selector: 'app-departments',
   templateUrl: './departments.component.html',
   styleUrl: './departments.component.css',
-  imports: [RonPipe, RouterLink],
+  imports: [RonPipe, RouterLink, EmployeeListComponent],
 })
 export class DepartmentsComponent implements OnInit {
   private readonly departmentService = inject(DepartmentService);
@@ -35,11 +34,6 @@ export class DepartmentsComponent implements OnInit {
   readonly deleteError = signal<string | null>(null);
 
   readonly expandedDepartmentId = signal<string | null>(null);
-  readonly expandedEmployees = signal<EmployeeSummary[]>([]);
-  readonly expandedEmployeesLoading = signal(false);
-  readonly expandedEmployeesError = signal<string | null>(null);
-
-  readonly employeeStatusLabel = employeeStatusLabel;
 
   ngOnInit(): void {
     this.departmentService.loadDepartments();
@@ -126,27 +120,8 @@ export class DepartmentsComponent implements OnInit {
   }
 
   toggleEmployees(department: Department): void {
-    if (this.expandedDepartmentId() === department.departmentId) {
-      this.expandedDepartmentId.set(null);
-      return;
-    }
-
-    this.expandedDepartmentId.set(department.departmentId);
-    this.expandedEmployees.set([]);
-    this.expandedEmployeesError.set(null);
-    this.expandedEmployeesLoading.set(true);
-
-    this.departmentService.getEmployees(department.departmentId).subscribe({
-      next: (employees) => {
-        this.expandedEmployees.set(employees);
-        this.expandedEmployeesLoading.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.expandedEmployeesError.set(
-          extractErrorMessage(error, 'Failed to load employees'),
-        );
-        this.expandedEmployeesLoading.set(false);
-      },
-    });
+    this.expandedDepartmentId.update((id) =>
+      id === department.departmentId ? null : department.departmentId,
+    );
   }
 }

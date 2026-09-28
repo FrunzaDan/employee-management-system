@@ -178,41 +178,11 @@
               </tr>
               @if (expandedOfficeId() === office.officeId) {
                 <tr animate.enter="reveal-enter" animate.leave="reveal-leave">
-                  <td colspan="6" class="bg-body-tertiary">
-                    @if (expandedEmployeesLoading()) {
-                      <span
-                        class="spinner-border spinner-border-sm me-2"
-                        aria-hidden="true"
-                      ></span
-                      >Loading employees…
-                    } @else if (expandedEmployeesError(); as error) {
-                      <span class="text-danger">{{ error }}</span>
-                    } @else if (expandedEmployees().length === 0) {
-                      <span class="text-muted"
-                        >No employees assigned to this office.</span
-                      >
-                    } @else {
-                      <ul class="list-unstyled mb-0">
-                        @for (
-                          employee of expandedEmployees();
-                          track employee.employeeId
-                        ) {
-                          <li>
-                            <a
-                              class="plain-Links hoverItem"
-                              [routerLink]="['/employees', employee.employeeId]"
-                            >
-                              {{ employee.firstName }} {{ employee.lastName }}
-                            </a>
-                            <span class="text-muted">
-                              — {{ employee.email }} ({{
-                                employeeStatusLabel(employee.status)
-                              }})</span
-                            >
-                          </li>
-                        }
-                      </ul>
-                    }
+                  <td colspan="6" class="bg-body-tertiary p-3">
+                    <app-employee-list
+                      [officeId]="office.officeId"
+                      emptyMessage="No employees assigned to this office."
+                    />
                   </td>
                 </tr>
               }

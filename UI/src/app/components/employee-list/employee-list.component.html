@@ -71,7 +71,7 @@
       @if (searchTerm()) {
         No employees match "{{ searchTerm() }}".
       } @else {
-        No employees yet.
+        {{ emptyMessage() }}
       }
     </div>
   }

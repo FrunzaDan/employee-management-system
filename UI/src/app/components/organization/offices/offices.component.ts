@@ -5,10 +5,9 @@ import { firstValueFrom } from 'rxjs';
 import { OfficeService } from '../../../services/office.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { Office } from '../../../interfaces/office';
-import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
-import { employeeStatusLabel } from '../../../utils/employee-status-label';
 import { RonPipe } from '../../../pipes/ron.pipe';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 
 interface OfficeDraft {
   officeId: string | null;
@@ -21,7 +20,7 @@ interface OfficeDraft {
   selector: 'app-offices',
   templateUrl: './offices.component.html',
   styleUrl: './offices.component.css',
-  imports: [RonPipe, RouterLink],
+  imports: [RonPipe, RouterLink, EmployeeListComponent],
 })
 export class OfficesComponent implements OnInit {
   private readonly officeService = inject(OfficeService);
@@ -37,11 +36,6 @@ export class OfficesComponent implements OnInit {
   readonly deleteError = signal<string | null>(null);
 
   readonly expandedOfficeId = signal<string | null>(null);
-  readonly expandedEmployees = signal<EmployeeSummary[]>([]);
-  readonly expandedEmployeesLoading = signal(false);
-  readonly expandedEmployeesError = signal<string | null>(null);
-
-  readonly employeeStatusLabel = employeeStatusLabel;
 
   ngOnInit(): void {
     this.officeService.loadOffices();
@@ -129,27 +123,8 @@ export class OfficesComponent implements OnInit {
   }
 
   toggleEmployees(office: Office): void {
-    if (this.expandedOfficeId() === office.officeId) {
-      this.expandedOfficeId.set(null);
-      return;
-    }
-
-    this.expandedOfficeId.set(office.officeId);
-    this.expandedEmployees.set([]);
-    this.expandedEmployeesError.set(null);
-    this.expandedEmployeesLoading.set(true);
-
-    this.officeService.getEmployees(office.officeId).subscribe({
-      next: (employees) => {
-        this.expandedEmployees.set(employees);
-        this.expandedEmployeesLoading.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.expandedEmployeesError.set(
-          extractErrorMessage(error, 'Failed to load employees'),
-        );
-        this.expandedEmployeesLoading.set(false);
-      },
-    });
+    this.expandedOfficeId.update((id) =>
+      id === office.officeId ? null : office.officeId,
+    );
   }
 }

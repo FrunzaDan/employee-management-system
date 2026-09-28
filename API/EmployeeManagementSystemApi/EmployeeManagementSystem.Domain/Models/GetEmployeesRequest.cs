@@ -11,6 +11,12 @@ public class GetEmployeesRequest
     public EmployeeSortColumn SortColumn { get; set; } = EmployeeSortColumn.Name;
 
     public SortDirection SortDirection { get; set; } = SortDirection.Asc;
+
+    public Guid? OfficeId { get; set; }
+
+    public Guid? DepartmentId { get; set; }
+
+    public Guid? CostCenterId { get; set; }
 }
 
 public class ExportEmployeesRequest
@@ -20,4 +26,10 @@ public class ExportEmployeesRequest
     public EmployeeSortColumn SortColumn { get; set; } = EmployeeSortColumn.Name;
 
     public SortDirection SortDirection { get; set; } = SortDirection.Asc;
+
+    public Guid? OfficeId { get; set; }
+
+    public Guid? DepartmentId { get; set; }
+
+    public Guid? CostCenterId { get; set; }
 }

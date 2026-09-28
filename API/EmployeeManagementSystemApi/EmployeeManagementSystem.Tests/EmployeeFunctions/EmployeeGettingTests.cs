@@ -234,6 +234,28 @@ public class EmployeeGettingTests
     }
 
     [Fact]
+    public async Task GetEmployeesForExportAsync_PassesTheOrgFiltersThrough()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        GetEmployeesRequest? captured = null;
+        dbUtils.Setup(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<GetEmployeesRequest, CancellationToken>((r, _) => captured = r)
+            .ReturnsAsync(new ResponseModel<PagedResponse<EmployeeModel>>(200, "Success!",
+                new PagedResponse<EmployeeModel>([], 0, 1, 5000)));
+        var getting = new EmployeeGetting(dbUtils.Object);
+        var request = new ExportEmployeesRequest
+        {
+            OfficeId = Guid.NewGuid(), DepartmentId = Guid.NewGuid(), CostCenterId = Guid.NewGuid()
+        };
+
+        await getting.GetEmployeesForExportAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(request.OfficeId, captured!.OfficeId);
+        Assert.Equal(request.DepartmentId, captured.DepartmentId);
+        Assert.Equal(request.CostCenterId, captured.CostCenterId);
+    }
+
+    [Fact]
     public async Task GetEmployeesForExportAsync_ReturnsCsvBuiltFromTheDbLayersPagedItems()
     {
         var dbUtils = new Mock<IDbUtils>();

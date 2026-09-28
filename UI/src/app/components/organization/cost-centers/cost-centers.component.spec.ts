@@ -3,8 +3,6 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { CostCenter } from '../../../interfaces/cost-center';
-import { EmployeeSummary } from '../../../interfaces/employee-summary';
-import { EmployeeStatus } from '../../../interfaces/employee';
 import { CostCenterService } from '../../../services/cost-center.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { CostCentersComponent } from './cost-centers.component';
@@ -14,7 +12,6 @@ describe('CostCentersComponent', () => {
   let createCostCenter: ReturnType<typeof vi.fn>;
   let updateCostCenter: ReturnType<typeof vi.fn>;
   let deleteCostCenter: ReturnType<typeof vi.fn>;
-  let getEmployees: ReturnType<typeof vi.fn>;
   let confirm: ReturnType<typeof vi.fn>;
 
   const costCenter: CostCenter = {
@@ -23,14 +20,6 @@ describe('CostCentersComponent', () => {
     name: null,
     employeeCount: 2,
     totalGrossSalary: 12000,
-  };
-
-  const employee: EmployeeSummary = {
-    employeeId: 'employee-1',
-    firstName: 'Ana',
-    lastName: 'Pop',
-    email: 'ana@example.com',
-    status: EmployeeStatus.Active,
   };
 
   const conflict = new HttpErrorResponse({
@@ -49,7 +38,6 @@ describe('CostCentersComponent', () => {
     deleteCostCenter = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
-    getEmployees = vi.fn().mockReturnValue(of([employee]));
     confirm = vi.fn().mockResolvedValue(true);
 
     TestBed.configureTestingModule({
@@ -64,7 +52,6 @@ describe('CostCentersComponent', () => {
             createCostCenter,
             updateCostCenter,
             deleteCostCenter,
-            getEmployees,
           },
         },
         { provide: ConfirmDialogService, useValue: { confirm } },
@@ -187,38 +174,21 @@ describe('CostCentersComponent', () => {
   });
 
   describe('toggleEmployees', () => {
-    it('expands the cost center and lists its employees', () => {
+    it('expands the cost center to show its employees', () => {
       const component = createComponent();
 
       component.toggleEmployees(costCenter);
 
-      expect(getEmployees).toHaveBeenCalledWith('cost-center-1');
       expect(component.expandedCostCenterId()).toBe('cost-center-1');
-      expect(component.expandedEmployees()).toEqual([employee]);
     });
 
-    it('collapses on a second click without asking the API again', () => {
+    it('collapses on a second click', () => {
       const component = createComponent();
       component.toggleEmployees(costCenter);
 
       component.toggleEmployees(costCenter);
 
       expect(component.expandedCostCenterId()).toBeNull();
-      expect(getEmployees).toHaveBeenCalledTimes(1);
-    });
-
-    it('shows an error when the employees cannot be loaded', () => {
-      const component = createComponent();
-      getEmployees.mockReturnValue(
-        throwError(() => new HttpErrorResponse({ status: 503 })),
-      );
-
-      component.toggleEmployees(costCenter);
-
-      expect(component.expandedEmployeesError()).toBe(
-        'Failed to load employees (503). Please try again.',
-      );
-      expect(component.expandedEmployeesLoading()).toBe(false);
     });
   });
 });

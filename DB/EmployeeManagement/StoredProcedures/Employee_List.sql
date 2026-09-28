@@ -3,7 +3,10 @@ CREATE PROCEDURE [dbo].[Employee_List]
     @PageSize INT = 10,
     @SearchTerm NVARCHAR(254) = NULL,
     @SortColumn VARCHAR(20) = 'name',
-    @SortDirection VARCHAR(4) = 'asc'
+    @SortDirection VARCHAR(4) = 'asc',
+    @OfficeId UNIQUEIDENTIFIER = NULL,
+    @DepartmentId UNIQUEIDENTIFIER = NULL,
+    @CostCenterId UNIQUEIDENTIFIER = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -19,11 +22,16 @@ BEGIN
         dbo.EmployeeAddress AS a
         ON e.EmployeeId = a.EmployeeId
     WHERE
-        @SearchTerm IS NULL
-        OR e.FirstName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
-        OR e.LastName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
-        OR e.Email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
-        OR e.PhoneNumber LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\';
+        (@OfficeId IS NULL OR e.OfficeId = @OfficeId)
+        AND (@DepartmentId IS NULL OR e.DepartmentId = @DepartmentId)
+        AND (@CostCenterId IS NULL OR e.CostCenterId = @CostCenterId)
+        AND (
+            @SearchTerm IS NULL
+            OR e.FirstName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+            OR e.LastName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+            OR e.Email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+            OR e.PhoneNumber LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        );
 
     SELECT
         e.EmployeeId,
@@ -65,11 +73,16 @@ BEGIN
         ORDER BY EffectiveDate DESC, CreatedAt DESC
     ) AS s
     WHERE
-        @SearchTerm IS NULL
-        OR e.FirstName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
-        OR e.LastName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
-        OR e.Email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
-        OR e.PhoneNumber LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        (@OfficeId IS NULL OR e.OfficeId = @OfficeId)
+        AND (@DepartmentId IS NULL OR e.DepartmentId = @DepartmentId)
+        AND (@CostCenterId IS NULL OR e.CostCenterId = @CostCenterId)
+        AND (
+            @SearchTerm IS NULL
+            OR e.FirstName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+            OR e.LastName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+            OR e.Email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+            OR e.PhoneNumber LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        )
     ORDER BY
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN e.LastName END ASC,
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN e.FirstName END ASC,

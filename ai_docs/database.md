@@ -45,7 +45,7 @@ The `EmployeeManagement` SQL Server database, as an SSDT project under `DB/Emplo
 
 ### Procedures
 
-- **`Employee_List`:** paged with `OFFSET`/`FETCH`. It searches with `LIKE` (wildcards escaped) and sorts through a `CASE` `ORDER BY` (no dynamic SQL). It returns two result sets, the total count and then the page, so an empty page past the end still reports the right total. Every sort ends on `EmployeeId`, so equal names page deterministically. `/export` reuses it with page size 5000 and returns `400` when more rows match.
+- **`Employee_List`:** paged with `OFFSET`/`FETCH`. Optional `@OfficeId`, `@DepartmentId` and `@CostCenterId` narrow it to one org unit. It searches with `LIKE` (wildcards escaped) and sorts through a `CASE` `ORDER BY` (no dynamic SQL). It returns two result sets, the total count and then the page, so an empty page past the end still reports the right total. Every sort ends on `EmployeeId`, so equal names page deterministically. `/export` reuses it with page size 5000 and returns `400` when more rows match.
 - **Current salary:** `Employee_Get` and `Employee_List` add `CurrentGrossSalary` via `OUTER APPLY (TOP 1 … WHERE EffectiveDate <= today ORDER BY EffectiveDate DESC, CreatedAt DESC)`, so a future-dated raise counts only once it takes effect. The department, office and cost-center totals use the same rule.
 - **`Employee_Get`:** one `IF` branch each for id, phone number and email, so each gets an index seek.
 - **`Employee_Update`:** a partial update (`ISNULL(@x, column)`) that updates the employee and address rows in one transaction.
@@ -53,7 +53,7 @@ The `EmployeeManagement` SQL Server database, as an SSDT project under `DB/Emplo
 - **`{Office,Department,CostCenter}_List`:** unpaginated. They add `EmployeeCount` and `TotalGrossSalary`.
 - **`<Org>_Delete`:** returns `409` while any employee still references the row.
 - **`Report_GetEmployeeInsights`:** feeds the charts page with one row per employee and no names or contact details: `StatusCode`, `Gender`, `BirthDate`, `HireDate`, `DepartmentName`, `OfficeName` and `CurrentGrossSalary` (the same current-salary rule as above). A second result set holds the salary history (`EmployeeId`, `EffectiveDate`, `GrossSalary`): nothing dated in the future, and one row per employee and date, the latest entry winning. `EmployeeId` only joins the two sets in `DbHelper` and isn't sent to the UI. The UI does the grouping.
-- **`Employee_ListByOffice`/`ByDepartment`/`ByCostCenter`:** the employees assigned to one office, department or cost center.
+- **`Employee_ListByOffice`/`ByDepartment`/`ByCostCenter`:** the employees assigned to one office, department or cost center. The UI now uses them only for the head count on the details pages; the employee tables there use `Employee_List` with a filter.
 - **`EmployeeAuditLog_List`:** paged. The total is a separate first result set, so an empty page still reports the right total.
 
 ### Employee lifecycle (enforced in the procs)

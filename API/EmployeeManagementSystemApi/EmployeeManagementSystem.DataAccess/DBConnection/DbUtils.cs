@@ -44,6 +44,9 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
                     request.SortColumn.ToString().ToLowerInvariant());
                 command.Parameters.AddVarChar("@SortDirection", FieldLengthConstants.SortDirection,
                     request.SortDirection.ToString().ToLowerInvariant());
+                command.Parameters.AddGuid("@OfficeId", request.OfficeId);
+                command.Parameters.AddGuid("@DepartmentId", request.DepartmentId);
+                command.Parameters.AddGuid("@CostCenterId", request.CostCenterId);
             },
             reader => DbHelper.HandleResponseWithPagedEmployeesAsync(reader, request.PageNumber, request.PageSize),
             cancellationToken);

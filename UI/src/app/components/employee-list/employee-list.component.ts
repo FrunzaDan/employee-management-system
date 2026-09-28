@@ -5,6 +5,7 @@ import {
   effect,
   signal,
   inject,
+  input,
   untracked,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -30,8 +31,16 @@ const SORT_LABELS: Record<EmployeeSortColumn, string> = {
   templateUrl: './employee-list.component.html',
   styleUrl: './employee-list.component.css',
   imports: [RouterLink],
+  // Each list keeps its own page, so a filtered list on an org page never
+  // shares state with the main employee list.
+  providers: [EmployeeService],
 })
 export class EmployeeListComponent implements OnInit {
+  readonly officeId = input<string>();
+  readonly departmentId = input<string>();
+  readonly costCenterId = input<string>();
+  readonly emptyMessage = input('No employees yet.');
+
   private readonly employeeService = inject(EmployeeService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
@@ -143,7 +152,16 @@ export class EmployeeListComponent implements OnInit {
       searchTerm: this.searchTerm().trim() || undefined,
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
+      ...this.orgFilter(),
     });
+  }
+
+  private orgFilter() {
+    return {
+      officeId: this.officeId(),
+      departmentId: this.departmentId(),
+      costCenterId: this.costCenterId(),
+    };
   }
 
   private fetchEmployees(): void {
@@ -154,6 +172,7 @@ export class EmployeeListComponent implements OnInit {
       searchTerm: this.searchTerm().trim() || undefined,
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
+      ...this.orgFilter(),
     });
   }
 

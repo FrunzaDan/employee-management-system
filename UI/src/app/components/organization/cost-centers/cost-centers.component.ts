@@ -5,10 +5,9 @@ import { firstValueFrom } from 'rxjs';
 import { CostCenterService } from '../../../services/cost-center.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { CostCenter } from '../../../interfaces/cost-center';
-import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
-import { employeeStatusLabel } from '../../../utils/employee-status-label';
 import { RonPipe } from '../../../pipes/ron.pipe';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 
 interface CostCenterDraft {
   costCenterId: string | null;
@@ -20,7 +19,7 @@ interface CostCenterDraft {
   selector: 'app-cost-centers',
   templateUrl: './cost-centers.component.html',
   styleUrl: './cost-centers.component.css',
-  imports: [RonPipe, RouterLink],
+  imports: [RonPipe, RouterLink, EmployeeListComponent],
 })
 export class CostCentersComponent implements OnInit {
   private readonly costCenterService = inject(CostCenterService);
@@ -36,11 +35,6 @@ export class CostCentersComponent implements OnInit {
   readonly deleteError = signal<string | null>(null);
 
   readonly expandedCostCenterId = signal<string | null>(null);
-  readonly expandedEmployees = signal<EmployeeSummary[]>([]);
-  readonly expandedEmployeesLoading = signal(false);
-  readonly expandedEmployeesError = signal<string | null>(null);
-
-  readonly employeeStatusLabel = employeeStatusLabel;
 
   ngOnInit(): void {
     this.costCenterService.loadCostCenters();
@@ -135,27 +129,8 @@ export class CostCentersComponent implements OnInit {
   }
 
   toggleEmployees(costCenter: CostCenter): void {
-    if (this.expandedCostCenterId() === costCenter.costCenterId) {
-      this.expandedCostCenterId.set(null);
-      return;
-    }
-
-    this.expandedCostCenterId.set(costCenter.costCenterId);
-    this.expandedEmployees.set([]);
-    this.expandedEmployeesError.set(null);
-    this.expandedEmployeesLoading.set(true);
-
-    this.costCenterService.getEmployees(costCenter.costCenterId).subscribe({
-      next: (employees) => {
-        this.expandedEmployees.set(employees);
-        this.expandedEmployeesLoading.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.expandedEmployeesError.set(
-          extractErrorMessage(error, 'Failed to load employees'),
-        );
-        this.expandedEmployeesLoading.set(false);
-      },
-    });
+    this.expandedCostCenterId.update((id) =>
+      id === costCenter.costCenterId ? null : costCenter.costCenterId,
+    );
   }
 }

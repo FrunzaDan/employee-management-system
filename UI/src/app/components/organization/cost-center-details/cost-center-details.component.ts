@@ -4,13 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { CostCenterService } from '../../../services/cost-center.service';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
-import { employeeStatusLabel } from '../../../utils/employee-status-label';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 
 @Component({
   selector: 'app-cost-center-details',
   templateUrl: './cost-center-details.component.html',
   styleUrl: './cost-center-details.component.css',
-  imports: [RouterLink],
+  imports: [RouterLink, EmployeeListComponent],
 })
 export class CostCenterDetailsComponent {
   private readonly costCenterService = inject(CostCenterService);
@@ -55,6 +55,4 @@ export class CostCenterDetailsComponent {
         )
       : null;
   });
-
-  readonly employeeStatusLabel = employeeStatusLabel;
 }

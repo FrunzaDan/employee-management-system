@@ -1,4 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component, input } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -6,7 +8,14 @@ import { Department } from '../../../interfaces/department';
 import { EmployeeSummary } from '../../../interfaces/employee-summary';
 import { EmployeeStatus } from '../../../interfaces/employee';
 import { DepartmentService } from '../../../services/department.service';
+import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 import { DepartmentDetailsComponent } from './department-details.component';
+
+@Component({ selector: 'app-employee-list', template: '' })
+class EmployeeListStub {
+  readonly departmentId = input<string>();
+  readonly emptyMessage = input<string>();
+}
 
 describe('DepartmentDetailsComponent', () => {
   let getDepartment: ReturnType<typeof vi.fn>;
@@ -37,6 +46,10 @@ describe('DepartmentDetailsComponent', () => {
         },
       ],
     });
+    TestBed.overrideComponent(DepartmentDetailsComponent, {
+      remove: { imports: [EmployeeListComponent] },
+      add: { imports: [EmployeeListStub] },
+    });
     const fixture = TestBed.createComponent(DepartmentDetailsComponent);
     fixture.componentRef.setInput('departmentId', departmentId);
     await fixture.whenStable();
@@ -57,7 +70,8 @@ describe('DepartmentDetailsComponent', () => {
     expect(component.department()).toEqual(department);
     expect(component.employees()).toEqual([employee]);
     expect(component.loadError()).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Ana');
+    const list = fixture.debugElement.query(By.directive(EmployeeListStub));
+    expect(list.componentInstance.departmentId()).toBe('department-1');
   });
 
   it('says so, without calling the API, when no id is given', async () => {

@@ -51,7 +51,10 @@ public class EmployeeGetting(IDbUtils dbUtils)
             PageSize = MaxExportRows,
             SearchTerm = request.SearchTerm,
             SortColumn = request.SortColumn,
-            SortDirection = request.SortDirection
+            SortDirection = request.SortDirection,
+            OfficeId = request.OfficeId,
+            DepartmentId = request.DepartmentId,
+            CostCenterId = request.CostCenterId
         };
 
         var validationError = ValidateAndNormalizeSortAndSearch(pagedRequest);

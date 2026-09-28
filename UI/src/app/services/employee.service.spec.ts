@@ -141,6 +141,22 @@ describe('EmployeeService', () => {
       req.flush(emptyPage(1));
     });
 
+    it('includes the org filters only when they are provided', () => {
+      load({
+        pageNumber: 1,
+        pageSize: 10,
+        officeId: 'office-1',
+        costCenterId: 'cost-center-1',
+      });
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
+      expect(req.request.params.get('officeId')).toBe('office-1');
+      expect(req.request.params.has('departmentId')).toBe(false);
+      expect(req.request.params.get('costCenterId')).toBe('cost-center-1');
+
+      req.flush(emptyPage(1));
+    });
+
     it('populates employees/totalItems/pageNumber/pageSize from a successful response', async () => {
       const employee = buildEmployee();
 
@@ -596,6 +612,17 @@ describe('EmployeeService', () => {
       expect(req.request.params.get('searchTerm')).toBe('dan');
       expect(req.request.params.get('sortColumn')).toBe('email');
       expect(req.request.params.get('sortDirection')).toBe('desc');
+
+      req.flush(new Blob(['csv content']));
+    });
+
+    it('includes the org filters only when they are provided', () => {
+      service.exportEmployees({ departmentId: 'department-1' });
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/export`);
+      expect(req.request.params.has('officeId')).toBe(false);
+      expect(req.request.params.get('departmentId')).toBe('department-1');
+      expect(req.request.params.has('costCenterId')).toBe(false);
 
       req.flush(new Blob(['csv content']));
     });

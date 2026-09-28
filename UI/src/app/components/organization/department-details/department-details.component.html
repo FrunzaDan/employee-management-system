@@ -34,7 +34,15 @@
           </div>
           <div class="detail-row">
             <dt>Number of employees</dt>
-            <dd>{{ employeesLoading() ? 'Loading…' : employees().length }}</dd>
+            <dd>
+              {{
+                employeesLoading()
+                  ? 'Loading…'
+                  : employeesError()
+                    ? '—'
+                    : employees().length
+              }}
+            </dd>
           </div>
         </dl>
       </div>
@@ -45,56 +53,11 @@
     <div class="card-body">
       <h2 class="card-title">Employees</h2>
 
-      @if (employeesLoading()) {
-        <div class="loading-state" role="status">
-          <span
-            class="spinner-border spinner-border-sm me-2"
-            aria-hidden="true"
-          ></span
-          >Loading employees…
-        </div>
-      } @else if (employeesError(); as err) {
-        <div class="alert alert-danger" role="alert">{{ err }}</div>
-      } @else if (employees().length === 0) {
-        <div class="empty-state">No employees assigned to this department.</div>
-      } @else {
-        <div
-          class="table-responsive"
-          role="region"
-          aria-label="Employees in this department"
-          tabindex="0"
-        >
-          <table class="table table-themed table-striped table-hover">
-            <caption class="visually-hidden">
-              Employees assigned to this department
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (employee of employees(); track employee.employeeId) {
-                <tr animate.enter="row-enter" [style.--row-index]="$index">
-                  <td class="align-middle">
-                    <a
-                      class="plain-Links hoverItem"
-                      [routerLink]="['/employees', employee.employeeId]"
-                    >
-                      {{ employee.firstName }} {{ employee.lastName }}
-                    </a>
-                  </td>
-                  <td class="align-middle">{{ employee.email }}</td>
-                  <td class="align-middle">
-                    {{ employeeStatusLabel(employee.status) }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+      @if (departmentId(); as id) {
+        <app-employee-list
+          [departmentId]="id"
+          emptyMessage="No employees assigned to this department."
+        />
       }
     </div>
   </div>

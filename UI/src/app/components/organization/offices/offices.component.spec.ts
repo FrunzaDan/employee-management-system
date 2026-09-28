@@ -1,10 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { Office } from '../../../interfaces/office';
-import { EmployeeSummary } from '../../../interfaces/employee-summary';
-import { EmployeeStatus } from '../../../interfaces/employee';
 import { OfficeService } from '../../../services/office.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { OfficesComponent } from './offices.component';
@@ -14,7 +12,6 @@ describe('OfficesComponent', () => {
   let createOffice: ReturnType<typeof vi.fn>;
   let updateOffice: ReturnType<typeof vi.fn>;
   let deleteOffice: ReturnType<typeof vi.fn>;
-  let getEmployees: ReturnType<typeof vi.fn>;
   let confirm: ReturnType<typeof vi.fn>;
 
   const office: Office = {
@@ -24,14 +21,6 @@ describe('OfficesComponent', () => {
     country: 'Romania',
     employeeCount: 2,
     totalGrossSalary: 12000,
-  };
-
-  const employee: EmployeeSummary = {
-    employeeId: 'employee-1',
-    firstName: 'Ana',
-    lastName: 'Pop',
-    email: 'ana@example.com',
-    status: EmployeeStatus.Active,
   };
 
   const conflict = new HttpErrorResponse({
@@ -50,7 +39,6 @@ describe('OfficesComponent', () => {
     deleteOffice = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
-    getEmployees = vi.fn().mockReturnValue(of([employee]));
     confirm = vi.fn().mockResolvedValue(true);
 
     TestBed.configureTestingModule({
@@ -65,7 +53,6 @@ describe('OfficesComponent', () => {
             createOffice,
             updateOffice,
             deleteOffice,
-            getEmployees,
           },
         },
         { provide: ConfirmDialogService, useValue: { confirm } },
@@ -223,51 +210,21 @@ describe('OfficesComponent', () => {
   });
 
   describe('toggleEmployees', () => {
-    it('expands the office and lists its employees', () => {
+    it('expands the office to show its employees', () => {
       const component = createComponent();
 
       component.toggleEmployees(office);
 
-      expect(getEmployees).toHaveBeenCalledWith('office-1');
       expect(component.expandedOfficeId()).toBe('office-1');
-      expect(component.expandedEmployees()).toEqual([employee]);
-      expect(component.expandedEmployeesLoading()).toBe(false);
     });
 
-    it('shows the loading state until the employees arrive', () => {
-      const component = createComponent();
-      const employees$ = new Subject<EmployeeSummary[]>();
-      getEmployees.mockReturnValue(employees$);
-
-      component.toggleEmployees(office);
-      expect(component.expandedEmployeesLoading()).toBe(true);
-
-      employees$.next([employee]);
-      expect(component.expandedEmployeesLoading()).toBe(false);
-    });
-
-    it('collapses on a second click without asking the API again', () => {
+    it('collapses on a second click', () => {
       const component = createComponent();
       component.toggleEmployees(office);
 
       component.toggleEmployees(office);
 
       expect(component.expandedOfficeId()).toBeNull();
-      expect(getEmployees).toHaveBeenCalledTimes(1);
-    });
-
-    it('shows an error when the employees cannot be loaded', () => {
-      const component = createComponent();
-      getEmployees.mockReturnValue(
-        throwError(() => new HttpErrorResponse({ status: 503 })),
-      );
-
-      component.toggleEmployees(office);
-
-      expect(component.expandedEmployeesError()).toBe(
-        'Failed to load employees (503). Please try again.',
-      );
-      expect(component.expandedEmployeesLoading()).toBe(false);
     });
   });
 });

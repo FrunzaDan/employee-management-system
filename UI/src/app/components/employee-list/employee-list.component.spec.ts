@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { EmployeeService } from '../../services/employee.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
@@ -20,6 +20,7 @@ describe('EmployeeListComponent', () => {
   let deactivateEmployeeSilently: ReturnType<typeof vi.fn>;
   let confirm: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
+  let providers: unknown[];
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
     employeeId: 'employeeId-1',
@@ -86,14 +87,13 @@ describe('EmployeeListComponent', () => {
       exportEmployees,
     };
 
-    TestBed.configureTestingModule({
-      providers: [
-        { provide: EmployeeService, useValue: employeeServiceStub },
-        { provide: ConfirmDialogService, useValue: { confirm } },
-        { provide: NotificationService, useValue: { show: notificationShow } },
-        { provide: Router, useValue: { navigate: vi.fn() } },
-      ],
-    });
+    providers = [
+      { provide: EmployeeService, useValue: employeeServiceStub },
+      { provide: ConfirmDialogService, useValue: { confirm } },
+      { provide: NotificationService, useValue: { show: notificationShow } },
+      { provide: Router, useValue: { navigate: vi.fn() } },
+    ];
+    TestBed.configureTestingModule({ providers });
 
     component = TestBed.runInInjectionContext(
       () => new EmployeeListComponent(),
@@ -253,6 +253,31 @@ describe('EmployeeListComponent', () => {
         sortColumn: 'name',
         sortDirection: 'asc',
       });
+    });
+  });
+
+  describe('org filter inputs', () => {
+    it('loads and exports only the employees of the given office', () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [...providers.slice(0, -1), provideRouter([])],
+      });
+      TestBed.overrideComponent(EmployeeListComponent, {
+        set: { providers: [] },
+      });
+      const fixture = TestBed.createComponent(EmployeeListComponent);
+      fixture.componentRef.setInput('officeId', 'office-1');
+      fixture.detectChanges();
+
+      expect(loadEmployees).toHaveBeenCalledWith(
+        expect.objectContaining({ officeId: 'office-1', pageNumber: 1 }),
+      );
+
+      fixture.componentInstance.exportCsv();
+
+      expect(exportEmployees).toHaveBeenCalledWith(
+        expect.objectContaining({ officeId: 'office-1' }),
+      );
     });
   });
 
