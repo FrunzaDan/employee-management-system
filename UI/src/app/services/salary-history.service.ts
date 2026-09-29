@@ -20,12 +20,14 @@ export class SalaryHistoryService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly employeeId = signal<string | undefined>(undefined);
+  private readonly employeeId = signal<() => string | undefined>(
+    () => undefined,
+  );
 
   private readonly salaryHistoryResource = httpResource<
     GenericResponse<Salary[]>
   >(() => {
-    const employeeId = this.employeeId();
+    const employeeId = this.employeeId()();
     if (!employeeId) return undefined;
     return { url: this.apiUrl, params: { employeeId } };
   });
@@ -46,12 +48,14 @@ export class SalaryHistoryService {
       : null;
   });
 
-  loadSalaryHistory(employeeId: string): void {
-    if (this.employeeId() === employeeId) {
-      this.salaryHistoryResource.reload();
-    } else {
-      this.employeeId.set(employeeId);
-    }
+  // Follows the given employee id: loads as soon as it's bound and again
+  // whenever the id changes.
+  bindSalaryHistory(employeeId: () => string | undefined): void {
+    this.employeeId.set(employeeId);
+  }
+
+  reloadSalaryHistory(): void {
+    this.salaryHistoryResource.reload();
   }
 
   createSalary(
@@ -60,7 +64,7 @@ export class SalaryHistoryService {
     return this.createSalarySilently(entry).pipe(
       tap(() => {
         this.notificationService.show('Salary entry added successfully.');
-        this.loadSalaryHistory(entry.employeeId);
+        this.reloadSalaryHistory();
       }),
     );
   }

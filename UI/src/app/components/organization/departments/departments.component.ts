@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  FormField,
+  FormRoot,
+  form,
+  pattern,
+  required,
+} from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -14,11 +21,18 @@ interface DepartmentDraft {
   name: string;
 }
 
+const emptyDepartmentDraft = (): DepartmentDraft => ({
+  departmentId: null,
+  name: '',
+});
+
+const NOT_BLANK = /\S/;
+
 @Component({
   selector: 'app-departments',
   templateUrl: './departments.component.html',
   styleUrl: './departments.component.css',
-  imports: [RonPipe, RouterLink, EmployeeListComponent],
+  imports: [EmployeeListComponent, FormField, FormRoot, RonPipe, RouterLink],
 })
 export class DepartmentsComponent implements OnInit {
   private readonly departmentService = inject(DepartmentService);
@@ -28,10 +42,26 @@ export class DepartmentsComponent implements OnInit {
   readonly loading = this.departmentService.loading;
   readonly loadError = this.departmentService.error;
 
-  readonly draft = signal<DepartmentDraft | null>(null);
-  readonly saving = signal(false);
+  readonly editorOpen = signal(false);
+  private readonly draft = signal<DepartmentDraft>(emptyDepartmentDraft());
+  readonly isEdit = computed(() => this.draft().departmentId !== null);
   readonly saveError = signal<string | null>(null);
   readonly deleteError = signal<string | null>(null);
+
+  readonly departmentForm = form(
+    this.draft,
+    (p) => {
+      required(p.name, { message: 'Department name is required.' });
+      pattern(p.name, NOT_BLANK, { message: 'Department name is required.' });
+    },
+    {
+      submission: {
+        action: () => this.save(),
+        onInvalid: (field) =>
+          field().errorSummary()[0]?.fieldTree().focusBoundControl(),
+      },
+    },
+  );
 
   readonly expandedDepartmentId = signal<string | null>(null);
 
@@ -40,35 +70,29 @@ export class DepartmentsComponent implements OnInit {
   }
 
   startAdd(): void {
-    this.saveError.set(null);
-    this.draft.set({ departmentId: null, name: '' });
+    this.openEditor(emptyDepartmentDraft());
   }
 
   startEdit(department: Department): void {
-    this.saveError.set(null);
-    this.draft.set({
+    this.openEditor({
       departmentId: department.departmentId,
       name: department.name,
     });
   }
 
   cancel(): void {
-    this.draft.set(null);
+    this.editorOpen.set(false);
     this.saveError.set(null);
   }
 
-  updateDraft(value: string): void {
-    this.draft.update((d) => (d ? { ...d, name: value } : d));
+  private openEditor(draft: DepartmentDraft): void {
+    this.saveError.set(null);
+    this.departmentForm().reset(draft);
+    this.editorOpen.set(true);
   }
 
-  async save(): Promise<void> {
+  private async save(): Promise<void> {
     const draft = this.draft();
-    if (!draft || !draft.name.trim()) {
-      this.saveError.set('Department name is required.');
-      return;
-    }
-
-    this.saving.set(true);
     this.saveError.set(null);
 
     try {
@@ -80,7 +104,7 @@ export class DepartmentsComponent implements OnInit {
             })
           : this.departmentService.createDepartment({ name: draft.name }),
       );
-      this.draft.set(null);
+      this.editorOpen.set(false);
     } catch (error) {
       this.saveError.set(
         extractErrorMessage(
@@ -88,8 +112,6 @@ export class DepartmentsComponent implements OnInit {
           'Failed to save department',
         ),
       );
-    } finally {
-      this.saving.set(false);
     }
   }
 

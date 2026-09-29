@@ -11,7 +11,15 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { Observable, map, retry, tap, throwError, timer } from 'rxjs';
+import {
+  Observable,
+  firstValueFrom,
+  map,
+  retry,
+  tap,
+  throwError,
+  timer,
+} from 'rxjs';
 import {
   CreateEmployeeRequest,
   Employee,
@@ -60,14 +68,14 @@ export class EmployeeService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly listParams = signal<LoadEmployeesParams | undefined>(
-    undefined,
+  private readonly listParams = signal<() => LoadEmployeesParams | undefined>(
+    () => undefined,
   );
 
   private readonly employeesResource = httpResource<
     GenericResponse<PagedResponse<Employee>>
   >(() => {
-    const params = this.listParams();
+    const params = this.listParams()();
     if (!params) return undefined;
     return {
       url: `${this.apiUrl}/all`,
@@ -95,11 +103,13 @@ export class EmployeeService {
 
   readonly employees = computed(() => this.page()?.items ?? []);
   readonly pageNumber = computed(
-    () => this.page()?.pageNumber ?? this.listParams()?.pageNumber ?? 1,
+    () => this.page()?.pageNumber ?? this.listParams()()?.pageNumber ?? 1,
   );
   readonly pageSize = computed(
     () =>
-      this.page()?.pageSize ?? this.listParams()?.pageSize ?? DEFAULT_PAGE_SIZE,
+      this.page()?.pageSize ??
+      this.listParams()()?.pageSize ??
+      DEFAULT_PAGE_SIZE,
   );
   readonly totalItems = computed(() => this.page()?.totalItems ?? 0);
   readonly loading = this.employeesResource.isLoading;
@@ -124,8 +134,14 @@ export class EmployeeService {
   readonly exportLoading = signal(false);
   readonly exportError = signal<string | null>(null);
 
-  loadEmployees(params: LoadEmployeesParams): void {
-    this.listParams.set({ ...params });
+  // The list follows the given params: it loads as soon as they're bound and
+  // again whenever they change.
+  bindEmployees(params: () => LoadEmployeesParams | undefined): void {
+    this.listParams.set(params);
+  }
+
+  reloadEmployees(): void {
+    this.employeesResource.reload();
   }
 
   getEmployee(employeeId: string): Observable<Employee> {
@@ -190,12 +206,12 @@ export class EmployeeService {
       .pipe(tap(() => this.removeEmployeeLocally(employeeId)));
   }
 
-  deactivateEmployee(employeeId: string): void {
-    this.changeStatus(employeeId, 'deactivate');
+  deactivateEmployee(employeeId: string): Promise<boolean> {
+    return this.changeStatus(employeeId, 'deactivate');
   }
 
-  reactivateEmployee(employeeId: string): void {
-    this.changeStatus(employeeId, 'reactivate');
+  reactivateEmployee(employeeId: string): Promise<boolean> {
+    return this.changeStatus(employeeId, 'reactivate');
   }
 
   deactivateEmployeeSilently(
@@ -246,30 +262,34 @@ export class EmployeeService {
       });
   }
 
-  private changeStatus(
+  private async changeStatus(
     employeeId: string,
     action: 'deactivate' | 'reactivate',
-  ): void {
+  ): Promise<boolean> {
     this.activationState.set({ loading: true, error: null });
     const params = new HttpParams().set('employeeId', employeeId);
 
-    this.http
-      .patch<GenericResponse<object>>(`${this.apiUrl}/${action}`, null, {
-        params,
-      })
-      .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
-      .subscribe({
-        next: () => {
-          if (action === 'deactivate') {
-            this.setStatusLocally(employeeId, EmployeeStatus.Deactivated);
-          } else {
-            this.refreshEmployeeLocally(employeeId);
-          }
-          this.activationState.set({ loading: false, error: null });
-          this.notificationService.show(`Employee ${action}d successfully.`);
-        },
-        error: (error: HttpErrorResponse) => this.handleActivationError(error),
-      });
+    try {
+      await firstValueFrom(
+        this.http
+          .patch<GenericResponse<object>>(`${this.apiUrl}/${action}`, null, {
+            params,
+          })
+          .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG)),
+      );
+    } catch (error) {
+      this.handleActivationError(error as HttpErrorResponse);
+      return false;
+    }
+
+    if (action === 'deactivate') {
+      this.setStatusLocally(employeeId, EmployeeStatus.Deactivated);
+    } else {
+      this.refreshEmployeeLocally(employeeId);
+    }
+    this.activationState.set({ loading: false, error: null });
+    this.notificationService.show(`Employee ${action}d successfully.`);
+    return true;
   }
 
   private setStatusLocally(employeeId: string, status: EmployeeStatus): void {

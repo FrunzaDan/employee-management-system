@@ -17,15 +17,15 @@
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   }
 
-  @if (draft(); as d) {
+  @if (editorOpen()) {
     <div
       class="card app-card mb-4"
       animate.enter="reveal-enter"
       animate.leave="reveal-leave"
     >
-      <div class="card-body">
+      <form class="card-body" [formRoot]="departmentForm">
         <h2 class="card-title">
-          {{ d.departmentId ? 'Edit department' : 'New department' }}
+          {{ isEdit() ? 'Edit department' : 'New department' }}
         </h2>
 
         @if (saveError(); as error) {
@@ -33,24 +33,32 @@
         }
 
         <div class="row g-3">
+          @let name = departmentForm.name();
+          @let nameError = name.touched() && name.invalid();
           <div class="col-12 col-md-6">
             <label class="form-label" for="name">Name</label>
             <input
               id="name"
               type="text"
               class="form-control"
-              [value]="d.name"
-              (input)="updateDraft($any($event.target).value)"
+              [formField]="departmentForm.name"
+              [class.is-invalid]="nameError"
+              [attr.aria-invalid]="nameError"
+              [attr.aria-describedby]="nameError ? 'name-error' : null"
             />
+            @if (nameError) {
+              <div class="invalid-feedback" id="name-error">
+                {{ name.errors()[0].message }}
+              </div>
+            }
           </div>
         </div>
 
         <div class="d-flex gap-2 mt-3">
           <button
-            type="button"
+            type="submit"
             class="btn btn-primary shadow-none"
-            [disabled]="saving()"
-            (click)="save()"
+            [disabled]="departmentForm().submitting()"
           >
             Save
           </button>
@@ -58,7 +66,7 @@
             Cancel
           </button>
         </div>
-      </div>
+      </form>
     </div>
   }
 

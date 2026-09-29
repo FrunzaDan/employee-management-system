@@ -346,7 +346,13 @@
                 </div>
               }
 
-              <div class="row g-2 align-items-end mt-2">
+              <form
+                class="row g-2 align-items-start mt-2"
+                [formRoot]="salaryForm"
+              >
+                @let grossSalary = salaryForm.grossSalary();
+                @let grossSalaryError =
+                  grossSalary.touched() && grossSalary.invalid();
                 <div class="col-12 col-sm-5">
                   <label class="form-label" for="newSalaryAmount"
                     >Gross salary</label
@@ -354,13 +360,24 @@
                   <input
                     id="newSalaryAmount"
                     type="number"
-                    min="0"
                     step="0.01"
                     class="form-control"
-                    [value]="newSalaryAmount()"
-                    (input)="newSalaryAmount.set($any($event.target).value)"
+                    [formField]="salaryForm.grossSalary"
+                    [class.is-invalid]="grossSalaryError"
+                    [attr.aria-invalid]="grossSalaryError"
+                    [attr.aria-describedby]="
+                      grossSalaryError ? 'newSalaryAmount-error' : null
+                    "
                   />
+                  @if (grossSalaryError) {
+                    <div class="invalid-feedback" id="newSalaryAmount-error">
+                      {{ grossSalary.errors()[0].message }}
+                    </div>
+                  }
                 </div>
+                @let effectiveDate = salaryForm.effectiveDate();
+                @let effectiveDateError =
+                  effectiveDate.touched() && effectiveDate.invalid();
                 <div class="col-12 col-sm-5">
                   <label class="form-label" for="newSalaryEffectiveDate"
                     >Effective date</label
@@ -369,23 +386,32 @@
                     id="newSalaryEffectiveDate"
                     type="date"
                     class="form-control"
-                    [value]="newSalaryEffectiveDate()"
-                    (input)="
-                      newSalaryEffectiveDate.set($any($event.target).value)
+                    [formField]="salaryForm.effectiveDate"
+                    [class.is-invalid]="effectiveDateError"
+                    [attr.aria-invalid]="effectiveDateError"
+                    [attr.aria-describedby]="
+                      effectiveDateError ? 'newSalaryEffectiveDate-error' : null
                     "
                   />
+                  @if (effectiveDateError) {
+                    <div
+                      class="invalid-feedback"
+                      id="newSalaryEffectiveDate-error"
+                    >
+                      {{ effectiveDate.errors()[0].message }}
+                    </div>
+                  }
                 </div>
-                <div class="col-12 col-sm-2">
+                <div class="col-12 col-sm-2 salary-form-submit">
                   <button
-                    type="button"
+                    type="submit"
                     class="btn btn-primary shadow-none w-100"
-                    [disabled]="addingSalary()"
-                    (click)="createSalary()"
+                    [disabled]="salaryForm().submitting()"
                   >
                     Add
                   </button>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
         </div>

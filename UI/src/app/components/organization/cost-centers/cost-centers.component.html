@@ -17,15 +17,15 @@
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   }
 
-  @if (draft(); as d) {
+  @if (editorOpen()) {
     <div
       class="card app-card mb-4"
       animate.enter="reveal-enter"
       animate.leave="reveal-leave"
     >
-      <div class="card-body">
+      <form class="card-body" [formRoot]="costCenterForm">
         <h2 class="card-title">
-          {{ d.costCenterId ? 'Edit cost center' : 'New cost center' }}
+          {{ isEdit() ? 'Edit cost center' : 'New cost center' }}
         </h2>
 
         @if (saveError(); as error) {
@@ -33,15 +33,24 @@
         }
 
         <div class="row g-3">
+          @let code = costCenterForm.code();
+          @let codeError = code.touched() && code.invalid();
           <div class="col-12 col-md-4">
             <label class="form-label" for="code">Code</label>
             <input
               id="code"
               type="text"
               class="form-control"
-              [value]="d.code"
-              (input)="updateDraft('code', $any($event.target).value)"
+              [formField]="costCenterForm.code"
+              [class.is-invalid]="codeError"
+              [attr.aria-invalid]="codeError"
+              [attr.aria-describedby]="codeError ? 'code-error' : null"
             />
+            @if (codeError) {
+              <div class="invalid-feedback" id="code-error">
+                {{ code.errors()[0].message }}
+              </div>
+            }
           </div>
           <div class="col-12 col-md-8">
             <label class="form-label" for="name">Name</label>
@@ -49,18 +58,16 @@
               id="name"
               type="text"
               class="form-control"
-              [value]="d.name"
-              (input)="updateDraft('name', $any($event.target).value)"
+              [formField]="costCenterForm.name"
             />
           </div>
         </div>
 
         <div class="d-flex gap-2 mt-3">
           <button
-            type="button"
+            type="submit"
             class="btn btn-primary shadow-none"
-            [disabled]="saving()"
-            (click)="save()"
+            [disabled]="costCenterForm().submitting()"
           >
             Save
           </button>
@@ -68,7 +75,7 @@
             Cancel
           </button>
         </div>
-      </div>
+      </form>
     </div>
   }
 

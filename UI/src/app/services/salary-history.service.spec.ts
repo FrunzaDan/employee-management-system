@@ -48,11 +48,11 @@ describe('SalaryHistoryService', () => {
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
   const load = (employeeId: string) => {
-    service.loadSalaryHistory(employeeId);
+    service.bindSalaryHistory(() => employeeId);
     TestBed.tick();
   };
 
-  it('makes no request until an employee is set', () => {
+  it('makes no request until an employee id is bound', () => {
     TestBed.tick();
 
     httpMock.expectNone(() => true);

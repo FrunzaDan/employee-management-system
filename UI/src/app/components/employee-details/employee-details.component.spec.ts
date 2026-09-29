@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { submit } from '@angular/forms/signals';
 import { ReplaySubject, of, throwError } from 'rxjs';
 import { Employee, EmployeeStatus } from '../../interfaces/employee';
 import { EmployeeService } from '../../services/employee.service';
@@ -13,7 +14,8 @@ import { EmployeeDetailsComponent } from './employee-details.component';
 
 describe('EmployeeDetailsComponent', () => {
   let getEmployee: ReturnType<typeof vi.fn>;
-  let loadAuditLog: ReturnType<typeof vi.fn>;
+  let bindAuditLog: ReturnType<typeof vi.fn>;
+  let reloadAuditLog: ReturnType<typeof vi.fn>;
   let deactivateEmployee: ReturnType<typeof vi.fn>;
   let reactivateEmployee: ReturnType<typeof vi.fn>;
   let deleteEmployee: ReturnType<typeof vi.fn>;
@@ -27,7 +29,8 @@ describe('EmployeeDetailsComponent', () => {
     await fixture.whenStable();
   };
   let activationLoading: ReturnType<typeof signal<boolean>>;
-  let loadSalaryHistory: ReturnType<typeof vi.fn>;
+  let bindSalaryHistory: ReturnType<typeof vi.fn>;
+  let createSalary: ReturnType<typeof vi.fn>;
 
   const buildEmployee = (overrides: Partial<Employee> = {}): Employee => ({
     employeeId: 'employeeId-1',
@@ -64,16 +67,20 @@ describe('EmployeeDetailsComponent', () => {
   const createComponent = (): EmployeeDetailsComponent => {
     employee$ = new ReplaySubject<Employee>(1);
     getEmployee = vi.fn(() => employee$);
-    loadAuditLog = vi.fn();
-    deactivateEmployee = vi.fn();
-    reactivateEmployee = vi.fn();
+    bindAuditLog = vi.fn();
+    reloadAuditLog = vi.fn();
+    deactivateEmployee = vi.fn().mockResolvedValue(true);
+    reactivateEmployee = vi.fn().mockResolvedValue(true);
     deleteEmployee = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     confirm = vi.fn().mockResolvedValue(true);
     navigate = vi.fn().mockResolvedValue(true);
     activationLoading = signal(false);
-    loadSalaryHistory = vi.fn();
+    bindSalaryHistory = vi.fn();
+    createSalary = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
 
     TestBed.configureTestingModule({
       providers: [
@@ -95,7 +102,8 @@ describe('EmployeeDetailsComponent', () => {
             entries: signal([]),
             loading: signal(false),
             error: signal<string | null>(null),
-            loadAuditLog,
+            bindAuditLog,
+            reloadAuditLog,
           },
         },
         {
@@ -104,8 +112,8 @@ describe('EmployeeDetailsComponent', () => {
             entries: signal([]),
             loading: signal(false),
             error: signal<string | null>(null),
-            loadSalaryHistory,
-            createSalary: vi.fn(),
+            bindSalaryHistory,
+            createSalary,
           },
         },
         provideRouter([]),
@@ -129,20 +137,12 @@ describe('EmployeeDetailsComponent', () => {
   });
 
   describe('loading by id', () => {
-    it('fetches the employee and its audit log using the id input', () => {
-      createComponent();
+    it('fetches the employee, and binds its audit log and salary history to the id input', () => {
+      const component = createComponent();
 
       expect(getEmployee).toHaveBeenCalledWith('employeeId-1');
-      expect(loadAuditLog).toHaveBeenCalledWith('employeeId-1');
-    });
-
-    it('navigates to the employee list instead of fetching when there is no id', () => {
-      routeParamId = null;
-      createComponent();
-
-      expect(getEmployee).not.toHaveBeenCalled();
-      expect(loadAuditLog).not.toHaveBeenCalled();
-      expect(navigate).toHaveBeenCalledWith(['/employees']);
+      expect(bindAuditLog).toHaveBeenCalledWith(component.employeeId);
+      expect(bindSalaryHistory).toHaveBeenCalledWith(component.employeeId);
     });
   });
 
@@ -217,7 +217,7 @@ describe('EmployeeDetailsComponent', () => {
       const component = createComponent();
       await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
 
-      component.reactivateEmployee();
+      await component.reactivateEmployee();
 
       expect(confirm).not.toHaveBeenCalled();
       expect(reactivateEmployee).toHaveBeenCalledWith('employeeId-1');
@@ -270,33 +270,105 @@ describe('EmployeeDetailsComponent', () => {
     });
   });
 
-  describe('audit log reload on activation-loading transition', () => {
-    it('reloads the employee and its audit log once a deactivate/reactivate call resolves (true -> false)', async () => {
+  describe('refresh after a status change', () => {
+    it('reloads the employee and its audit log once the status change succeeds', async () => {
       const component = createComponent();
       await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
-      loadAuditLog.mockClear();
 
-      activationLoading.set(true);
-      TestBed.flushEffects();
-      expect(loadAuditLog).not.toHaveBeenCalled();
+      await component.deactivateEmployee();
+      TestBed.tick();
 
-      activationLoading.set(false);
-      TestBed.flushEffects();
-
-      expect(loadAuditLog).toHaveBeenCalledWith('employeeId-1');
+      expect(reloadAuditLog).toHaveBeenCalledTimes(1);
       expect(getEmployee).toHaveBeenCalledTimes(2);
     });
 
-    it('does not reload on the initial false state (no prior true)', async () => {
+    it('does not reload when the status change fails', async () => {
       const component = createComponent();
       await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
-      loadAuditLog.mockClear();
+      reactivateEmployee.mockResolvedValue(false);
 
-      TestBed.flushEffects();
+      await component.reactivateEmployee();
+      TestBed.tick();
 
-      expect(loadAuditLog).not.toHaveBeenCalled();
+      expect(reloadAuditLog).not.toHaveBeenCalled();
+      expect(getEmployee).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('salary entry form', () => {
+    it('does not submit, and marks the fields, while they are empty', async () => {
+      const component = createComponent();
+      await loadEmployee(buildEmployee());
+
+      await submit(component.salaryForm);
+
+      expect(createSalary).not.toHaveBeenCalled();
+      expect(component.salaryForm.grossSalary().errors()[0].message).toBe(
+        'Gross salary is required.',
+      );
+      expect(component.salaryForm.effectiveDate().touched()).toBe(true);
+    });
+
+    it('rejects a gross salary that is not above zero', async () => {
+      const component = createComponent();
+      await loadEmployee(buildEmployee());
+      component.salaryForm.grossSalary().value.set(0);
+      component.salaryForm.effectiveDate().value.set('2026-01-01');
+
+      await submit(component.salaryForm);
+
+      expect(createSalary).not.toHaveBeenCalled();
+      expect(component.salaryForm.grossSalary().errors()[0].message).toBe(
+        'Gross salary must be greater than zero.',
+      );
+    });
+
+    it('adds the entry, clears the form, and refreshes the employee and audit trail', async () => {
+      const component = createComponent();
+      await loadEmployee(buildEmployee({ employeeId: 'employeeId-1' }));
+      component.salaryForm.grossSalary().value.set(5000);
+      component.salaryForm.effectiveDate().value.set('2026-01-01');
+
+      await submit(component.salaryForm);
+      TestBed.tick();
+
+      expect(createSalary).toHaveBeenCalledWith({
+        employeeId: 'employeeId-1',
+        grossSalary: 5000,
+        effectiveDate: '2026-01-01',
+      });
+      expect(component.salaryForm().value()).toEqual({
+        grossSalary: null,
+        effectiveDate: '',
+      });
+      expect(component.salaryForm().touched()).toBe(false);
+      expect(getEmployee).toHaveBeenCalledTimes(2);
+      expect(reloadAuditLog).toHaveBeenCalled();
+    });
+
+    it('keeps the values and shows the server message when adding fails', async () => {
+      const component = createComponent();
+      await loadEmployee(buildEmployee());
+      createSalary.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: { title: 'Error', detail: 'Duplicate effective date.' },
+            }),
+        ),
+      );
+      component.salaryForm.grossSalary().value.set(5000);
+      component.salaryForm.effectiveDate().value.set('2026-01-01');
+
+      await submit(component.salaryForm);
+
+      expect(component.createSalaryError()).toBe('Duplicate effective date.');
+      expect(component.salaryForm.grossSalary().value()).toBe(5000);
+      expect(reloadAuditLog).not.toHaveBeenCalled();
+    });
+  });
+
   describe('audit trail preview', () => {
     const buildAuditLog = (count: number): AuditLogEntry[] =>
       Array.from({ length: count }, (_, i) => ({

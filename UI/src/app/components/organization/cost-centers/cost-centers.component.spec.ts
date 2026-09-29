@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { submit } from '@angular/forms/signals';
 import { of, throwError } from 'rxjs';
 import { CostCenter } from '../../../interfaces/cost-center';
 import { CostCenterService } from '../../../services/cost-center.service';
@@ -72,14 +73,14 @@ describe('CostCentersComponent', () => {
     const component = createComponent();
 
     component.startAdd();
-    expect(component.draft()).toEqual({
+    expect(component.costCenterForm().value()).toEqual({
       costCenterId: null,
       code: '',
       name: '',
     });
 
     component.startEdit(costCenter);
-    expect(component.draft()).toEqual({
+    expect(component.costCenterForm().value()).toEqual({
       costCenterId: 'cost-center-1',
       code: 'CC-100',
       name: '',
@@ -90,35 +91,38 @@ describe('CostCentersComponent', () => {
     it('refuses a blank code without calling the API, even when a name is given', async () => {
       const component = createComponent();
       component.startAdd();
-      component.updateDraft('name', 'Sales');
+      component.costCenterForm.name().value.set('Sales');
 
-      await component.save();
+      await submit(component.costCenterForm);
 
-      expect(component.saveError()).toBe('Cost center code is required.');
+      expect(component.costCenterForm.code().errors()[0].message).toBe(
+        'Cost center code is required.',
+      );
+      expect(component.saveError()).toBeNull();
       expect(createCostCenter).not.toHaveBeenCalled();
     });
 
     it('creates a new cost center and closes the draft', async () => {
       const component = createComponent();
       component.startAdd();
-      component.updateDraft('code', 'CC-200');
+      component.costCenterForm.code().value.set('CC-200');
 
-      await component.save();
+      await submit(component.costCenterForm);
 
       expect(createCostCenter).toHaveBeenCalledWith({
         code: 'CC-200',
         name: '',
       });
-      expect(component.draft()).toBeNull();
-      expect(component.saving()).toBe(false);
+      expect(component.editorOpen()).toBe(false);
+      expect(component.costCenterForm().submitting()).toBe(false);
     });
 
     it('updates an existing cost center by its id', async () => {
       const component = createComponent();
       component.startEdit(costCenter);
-      component.updateDraft('name', 'Engineering');
+      component.costCenterForm.name().value.set('Engineering');
 
-      await component.save();
+      await submit(component.costCenterForm);
 
       expect(updateCostCenter).toHaveBeenCalledWith({
         costCenterId: 'cost-center-1',
@@ -133,11 +137,11 @@ describe('CostCentersComponent', () => {
       updateCostCenter.mockReturnValue(throwError(() => conflict));
       component.startEdit(costCenter);
 
-      await component.save();
+      await submit(component.costCenterForm);
 
       expect(component.saveError()).toBe('Cost center still has employees.');
-      expect(component.draft()).not.toBeNull();
-      expect(component.saving()).toBe(false);
+      expect(component.editorOpen()).toBe(true);
+      expect(component.costCenterForm().submitting()).toBe(false);
     });
   });
 

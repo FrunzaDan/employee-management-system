@@ -106,3 +106,10 @@
   color: #495057;
   font-size: 0.85rem;
 }
+
+/* Line the Add button up with the inputs, below their labels. */
+@media (min-width: 576px) {
+  .salary-form-submit {
+    padding-top: 2rem;
+  }
+}

@@ -1,14 +1,20 @@
 import {
   Component,
   computed,
-  effect,
   inject,
   input,
+  linkedSignal,
   signal,
-  untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
+import {
+  FormField,
+  FormRoot,
+  form,
+  min,
+  required,
+} from '@angular/forms/signals';
 import { RonPipe } from '../../pipes/ron.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -24,6 +30,16 @@ import { employeeStatusLabel } from '../../utils/employee-status-label';
 
 const AUDIT_LOG_PREVIEW_SIZE = 10;
 
+interface SalaryFormModel {
+  grossSalary: number | null;
+  effectiveDate: string;
+}
+
+const emptySalaryForm = (): SalaryFormModel => ({
+  grossSalary: null,
+  effectiveDate: '',
+});
+
 const GENDER_LABELS = new Map<Gender, string>([
   [Gender.NotDeclared, 'not declared'],
   [Gender.Male, 'male'],
@@ -34,7 +50,7 @@ const GENDER_LABELS = new Map<Gender, string>([
   selector: 'app-employee-details',
   templateUrl: './employee-details.component.html',
   styleUrl: './employee-details.component.css',
-  imports: [DatePipe, RonPipe, RouterLink],
+  imports: [DatePipe, FormField, FormRoot, RonPipe, RouterLink],
 })
 export class EmployeeDetailsComponent {
   private readonly employeeService = inject(EmployeeService);
@@ -78,7 +94,11 @@ export class EmployeeDetailsComponent {
   readonly auditLog = this.auditLogService.entries;
   readonly auditLogLoading = this.auditLogService.loading;
   readonly auditLogError = this.auditLogService.error;
-  readonly showAllAuditLog = signal(false);
+  // Collapsed again whenever another employee is shown.
+  readonly showAllAuditLog = linkedSignal({
+    source: this.employeeId,
+    computation: () => false,
+  });
   readonly visibleAuditLog = computed(() =>
     this.showAllAuditLog()
       ? this.auditLog()
@@ -87,16 +107,30 @@ export class EmployeeDetailsComponent {
   readonly hiddenAuditLogCount = computed(
     () => this.auditLog().length - this.visibleAuditLog().length,
   );
-  private wasActivationLoading = false;
 
   readonly salaryHistory = this.salaryHistoryService.entries;
   readonly salaryHistoryLoading = this.salaryHistoryService.loading;
   readonly salaryHistoryError = this.salaryHistoryService.error;
 
-  readonly newSalaryAmount = signal('');
-  readonly newSalaryEffectiveDate = signal('');
-  readonly addingSalary = signal(false);
+  private readonly salaryModel = signal<SalaryFormModel>(emptySalaryForm());
   readonly createSalaryError = signal<string | null>(null);
+  readonly salaryForm = form(
+    this.salaryModel,
+    (p) => {
+      required(p.grossSalary, { message: 'Gross salary is required.' });
+      min(p.grossSalary, 0.01, {
+        message: 'Gross salary must be greater than zero.',
+      });
+      required(p.effectiveDate, { message: 'Effective date is required.' });
+    },
+    {
+      submission: {
+        action: () => this.createSalary(),
+        onInvalid: (field) =>
+          field().errorSummary()[0]?.fieldTree().focusBoundControl(),
+      },
+    },
+  );
 
   readonly genderLabel = computed(() => {
     const employee = this.employee();
@@ -116,30 +150,8 @@ export class EmployeeDetailsComponent {
   });
 
   constructor() {
-    effect(() => {
-      const id = this.employeeId();
-      untracked(() => {
-        if (id) {
-          this.showAllAuditLog.set(false);
-          this.auditLogService.loadAuditLog(id);
-          this.salaryHistoryService.loadSalaryHistory(id);
-        } else {
-          this.router.navigate(['/employees']);
-        }
-      });
-    });
-
-    effect(() => {
-      const loading = this.activationLoading();
-      if (this.wasActivationLoading && !loading) {
-        const employeeId = this.employee()?.employeeId;
-        if (employeeId) {
-          this.employeeResource.reload();
-          this.auditLogService.loadAuditLog(employeeId);
-        }
-      }
-      this.wasActivationLoading = loading;
-    });
+    this.auditLogService.bindAuditLog(this.employeeId);
+    this.salaryHistoryService.bindSalaryHistory(this.employeeId);
   }
 
   async deactivateEmployee(): Promise<void> {
@@ -150,48 +162,40 @@ export class EmployeeDetailsComponent {
       { title: 'Deactivate employee?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.employeeService.deactivateEmployee(employeeId);
+    if (await this.employeeService.deactivateEmployee(employeeId))
+      this.refreshAfterStatusChange();
   }
 
-  reactivateEmployee(): void {
+  async reactivateEmployee(): Promise<void> {
     const employeeId = this.employee()?.employeeId;
     if (!employeeId) return;
-    this.employeeService.reactivateEmployee(employeeId);
+    if (await this.employeeService.reactivateEmployee(employeeId))
+      this.refreshAfterStatusChange();
   }
 
-  async createSalary(): Promise<void> {
+  private refreshAfterStatusChange(): void {
+    this.employeeResource.reload();
+    this.auditLogService.reloadAuditLog();
+  }
+
+  private async createSalary(): Promise<void> {
     const employeeId = this.employee()?.employeeId;
     if (!employeeId) return;
 
-    const grossSalary = Number(this.newSalaryAmount());
-    if (
-      !this.newSalaryAmount() ||
-      Number.isNaN(grossSalary) ||
-      grossSalary <= 0
-    ) {
-      this.createSalaryError.set('Enter a valid, positive gross salary.');
-      return;
-    }
-    if (!this.newSalaryEffectiveDate()) {
-      this.createSalaryError.set('Enter an effective date.');
-      return;
-    }
-
-    this.addingSalary.set(true);
     this.createSalaryError.set(null);
+    const { grossSalary, effectiveDate } = this.salaryModel();
 
     try {
       await firstValueFrom(
         this.salaryHistoryService.createSalary({
-          employeeId: employeeId,
-          grossSalary,
-          effectiveDate: this.newSalaryEffectiveDate(),
+          employeeId,
+          grossSalary: grossSalary!,
+          effectiveDate,
         }),
       );
-      this.newSalaryAmount.set('');
-      this.newSalaryEffectiveDate.set('');
+      this.salaryForm().reset(emptySalaryForm());
       this.employeeResource.reload();
-      this.auditLogService.loadAuditLog(employeeId);
+      this.auditLogService.reloadAuditLog();
     } catch (error) {
       this.createSalaryError.set(
         extractErrorMessage(
@@ -199,8 +203,6 @@ export class EmployeeDetailsComponent {
           'Failed to add salary entry',
         ),
       );
-    } finally {
-      this.addingSalary.set(false);
     }
   }
 

@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  FormField,
+  FormRoot,
+  form,
+  pattern,
+  required,
+} from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -16,11 +23,20 @@ interface OfficeDraft {
   country: string;
 }
 
+const emptyOfficeDraft = (): OfficeDraft => ({
+  officeId: null,
+  name: '',
+  city: '',
+  country: '',
+});
+
+const NOT_BLANK = /\S/;
+
 @Component({
   selector: 'app-offices',
   templateUrl: './offices.component.html',
   styleUrl: './offices.component.css',
-  imports: [RonPipe, RouterLink, EmployeeListComponent],
+  imports: [EmployeeListComponent, FormField, FormRoot, RonPipe, RouterLink],
 })
 export class OfficesComponent implements OnInit {
   private readonly officeService = inject(OfficeService);
@@ -30,10 +46,26 @@ export class OfficesComponent implements OnInit {
   readonly loading = this.officeService.loading;
   readonly loadError = this.officeService.error;
 
-  readonly draft = signal<OfficeDraft | null>(null);
-  readonly saving = signal(false);
+  readonly editorOpen = signal(false);
+  private readonly draft = signal<OfficeDraft>(emptyOfficeDraft());
+  readonly isEdit = computed(() => this.draft().officeId !== null);
   readonly saveError = signal<string | null>(null);
   readonly deleteError = signal<string | null>(null);
+
+  readonly officeForm = form(
+    this.draft,
+    (p) => {
+      required(p.name, { message: 'Office name is required.' });
+      pattern(p.name, NOT_BLANK, { message: 'Office name is required.' });
+    },
+    {
+      submission: {
+        action: () => this.save(),
+        onInvalid: (field) =>
+          field().errorSummary()[0]?.fieldTree().focusBoundControl(),
+      },
+    },
+  );
 
   readonly expandedOfficeId = signal<string | null>(null);
 
@@ -42,13 +74,11 @@ export class OfficesComponent implements OnInit {
   }
 
   startAdd(): void {
-    this.saveError.set(null);
-    this.draft.set({ officeId: null, name: '', city: '', country: '' });
+    this.openEditor(emptyOfficeDraft());
   }
 
   startEdit(office: Office): void {
-    this.saveError.set(null);
-    this.draft.set({
+    this.openEditor({
       officeId: office.officeId,
       name: office.name,
       city: office.city ?? '',
@@ -57,22 +87,18 @@ export class OfficesComponent implements OnInit {
   }
 
   cancel(): void {
-    this.draft.set(null);
+    this.editorOpen.set(false);
     this.saveError.set(null);
   }
 
-  updateDraft(field: keyof Omit<OfficeDraft, 'officeId'>, value: string): void {
-    this.draft.update((d) => (d ? { ...d, [field]: value } : d));
+  private openEditor(draft: OfficeDraft): void {
+    this.saveError.set(null);
+    this.officeForm().reset(draft);
+    this.editorOpen.set(true);
   }
 
-  async save(): Promise<void> {
+  private async save(): Promise<void> {
     const draft = this.draft();
-    if (!draft || !draft.name.trim()) {
-      this.saveError.set('Office name is required.');
-      return;
-    }
-
-    this.saving.set(true);
     this.saveError.set(null);
 
     try {
@@ -89,7 +115,7 @@ export class OfficesComponent implements OnInit {
             })
           : this.officeService.createOffice(payload),
       );
-      this.draft.set(null);
+      this.editorOpen.set(false);
     } catch (error) {
       this.saveError.set(
         extractErrorMessage(
@@ -97,8 +123,6 @@ export class OfficesComponent implements OnInit {
           'Failed to save office',
         ),
       );
-    } finally {
-      this.saving.set(false);
     }
   }
 

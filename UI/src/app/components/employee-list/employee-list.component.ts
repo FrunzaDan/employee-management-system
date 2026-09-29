@@ -1,13 +1,12 @@
 import {
   Component,
-  OnInit,
   computed,
-  effect,
-  signal,
   inject,
   input,
-  untracked,
+  linkedSignal,
+  signal,
 } from '@angular/core';
+import { FormField, debounce, form } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
@@ -20,6 +19,8 @@ import { employeeStatusLabel } from '../../utils/employee-status-label';
 
 type EmployeeSortColumn = 'name' | 'email' | 'phoneNumber';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 const SORT_LABELS: Record<EmployeeSortColumn, string> = {
   name: 'name',
   email: 'email',
@@ -30,12 +31,12 @@ const SORT_LABELS: Record<EmployeeSortColumn, string> = {
   selector: 'app-employee-list',
   templateUrl: './employee-list.component.html',
   styleUrl: './employee-list.component.css',
-  imports: [RouterLink],
+  imports: [FormField, RouterLink],
   // Each list keeps its own page, so a filtered list on an org page never
   // shares state with the main employee list.
   providers: [EmployeeService],
 })
-export class EmployeeListComponent implements OnInit {
+export class EmployeeListComponent {
   readonly officeId = input<string>();
   readonly departmentId = input<string>();
   readonly costCenterId = input<string>();
@@ -54,7 +55,6 @@ export class EmployeeListComponent implements OnInit {
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
-  readonly selectedEmployeeIds = signal<ReadonlySet<string>>(new Set());
   readonly bulkActionInProgress = signal(false);
 
   readonly allSelected = computed(
@@ -72,12 +72,34 @@ export class EmployeeListComponent implements OnInit {
 
   readonly employeeStatusLabel = employeeStatusLabel;
 
-  readonly searchTerm = signal('');
+  readonly searchForm = form(signal({ term: '' }), (p) => {
+    debounce(p.term, SEARCH_DEBOUNCE_MS);
+  });
+  readonly searchTerm = computed(() => this.searchForm.term().value().trim());
   readonly sortColumn = signal<EmployeeSortColumn>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
   readonly pageSize = 50;
-  readonly currentPage = signal(1);
+  // Back to page 1 whenever the search or the sort changes.
+  readonly currentPage = linkedSignal({
+    source: () => [this.searchTerm(), this.sortColumn(), this.sortDirection()],
+    computation: () => 1,
+  });
+
+  readonly listParams = computed(() => ({
+    pageNumber: this.currentPage(),
+    pageSize: this.pageSize,
+    searchTerm: this.searchTerm() || undefined,
+    sortColumn: this.sortColumn(),
+    sortDirection: this.sortDirection(),
+    ...this.orgFilter(),
+  }));
+
+  // A new page, search or sort starts with nothing selected.
+  readonly selectedEmployeeIds = linkedSignal<unknown, ReadonlySet<string>>({
+    source: this.listParams,
+    computation: () => new Set(),
+  });
 
   readonly totalItems = this.employeeService.totalItems;
   readonly totalPages = computed(() =>
@@ -96,35 +118,13 @@ export class EmployeeListComponent implements OnInit {
   );
 
   constructor() {
-    effect(() => {
-      if (this.loading() || this.loadError()) return;
-      const lastPage = this.totalPages();
-      if (this.currentPage() <= lastPage) return;
-      untracked(() => {
-        this.currentPage.set(lastPage);
-        this.fetchEmployees();
-      });
-    });
-  }
-
-  private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
-  private static readonly SEARCH_DEBOUNCE_MS = 300;
-
-  onSearchInput(value: string): void {
-    this.searchTerm.set(value);
-
-    clearTimeout(this.searchDebounceTimer);
-    this.searchDebounceTimer = setTimeout(() => {
-      this.currentPage.set(1);
-      this.fetchEmployees();
-    }, EmployeeListComponent.SEARCH_DEBOUNCE_MS);
+    this.employeeService.bindEmployees(this.listParams);
   }
 
   goToPage(page: number): void {
     const target = Math.min(Math.max(page, 1), this.totalPages());
     if (target === this.currentPage()) return;
     this.currentPage.set(target);
-    this.fetchEmployees();
   }
 
   ariaSort(column: EmployeeSortColumn): 'ascending' | 'descending' | 'none' {
@@ -139,17 +139,11 @@ export class EmployeeListComponent implements OnInit {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
-    this.currentPage.set(1);
-    this.fetchEmployees();
-  }
-
-  ngOnInit(): void {
-    this.fetchEmployees();
   }
 
   exportCsv(): void {
     this.employeeService.exportEmployees({
-      searchTerm: this.searchTerm().trim() || undefined,
+      searchTerm: this.searchTerm() || undefined,
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
       ...this.orgFilter(),
@@ -164,16 +158,15 @@ export class EmployeeListComponent implements OnInit {
     };
   }
 
-  private fetchEmployees(): void {
-    this.selectedEmployeeIds.set(new Set());
-    this.employeeService.loadEmployees({
-      pageNumber: this.currentPage(),
-      pageSize: this.pageSize,
-      searchTerm: this.searchTerm().trim() || undefined,
-      sortColumn: this.sortColumn(),
-      sortDirection: this.sortDirection(),
-      ...this.orgFilter(),
-    });
+  // After rows are removed, step back a page if this one is now empty;
+  // otherwise reload it so it fills up again from the next page.
+  private refreshAfterRemoval(): void {
+    if (this.employees().length === 0 && this.currentPage() > 1) {
+      this.currentPage.update((page) => page - 1);
+    } else {
+      this.selectedEmployeeIds.set(new Set());
+      this.employeeService.reloadEmployees();
+    }
   }
 
   async deactivateEmployee(employeeId: string): Promise<void> {
@@ -182,11 +175,11 @@ export class EmployeeListComponent implements OnInit {
       { title: 'Deactivate employee?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.employeeService.deactivateEmployee(employeeId);
+    await this.employeeService.deactivateEmployee(employeeId);
   }
 
-  reactivateEmployee(employeeId: string): void {
-    this.employeeService.reactivateEmployee(employeeId);
+  async reactivateEmployee(employeeId: string): Promise<void> {
+    await this.employeeService.reactivateEmployee(employeeId);
   }
 
   async deleteEmployee(employeeId: string): Promise<void> {
@@ -202,7 +195,7 @@ export class EmployeeListComponent implements OnInit {
     this.employeeService.deleteEmployee(employeeId).subscribe({
       next: () => {
         this.deleting.set(false);
-        this.fetchEmployees();
+        this.refreshAfterRemoval();
       },
       error: (error: HttpErrorResponse) => {
         this.deleting.set(false);
@@ -304,7 +297,7 @@ export class EmployeeListComponent implements OnInit {
             : `Bulk action completed with ${failed} failure(s) (${succeeded} succeeded).`,
           failed === 0 ? 'success' : 'error',
         );
-        this.fetchEmployees();
+        this.refreshAfterRemoval();
       });
   }
 }

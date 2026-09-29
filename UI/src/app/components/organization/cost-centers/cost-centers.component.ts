@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  FormField,
+  FormRoot,
+  form,
+  pattern,
+  required,
+} from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -15,11 +22,19 @@ interface CostCenterDraft {
   name: string;
 }
 
+const emptyCostCenterDraft = (): CostCenterDraft => ({
+  costCenterId: null,
+  code: '',
+  name: '',
+});
+
+const NOT_BLANK = /\S/;
+
 @Component({
   selector: 'app-cost-centers',
   templateUrl: './cost-centers.component.html',
   styleUrl: './cost-centers.component.css',
-  imports: [RonPipe, RouterLink, EmployeeListComponent],
+  imports: [EmployeeListComponent, FormField, FormRoot, RonPipe, RouterLink],
 })
 export class CostCentersComponent implements OnInit {
   private readonly costCenterService = inject(CostCenterService);
@@ -29,10 +44,26 @@ export class CostCentersComponent implements OnInit {
   readonly loading = this.costCenterService.loading;
   readonly loadError = this.costCenterService.error;
 
-  readonly draft = signal<CostCenterDraft | null>(null);
-  readonly saving = signal(false);
+  readonly editorOpen = signal(false);
+  private readonly draft = signal<CostCenterDraft>(emptyCostCenterDraft());
+  readonly isEdit = computed(() => this.draft().costCenterId !== null);
   readonly saveError = signal<string | null>(null);
   readonly deleteError = signal<string | null>(null);
+
+  readonly costCenterForm = form(
+    this.draft,
+    (p) => {
+      required(p.code, { message: 'Cost center code is required.' });
+      pattern(p.code, NOT_BLANK, { message: 'Cost center code is required.' });
+    },
+    {
+      submission: {
+        action: () => this.save(),
+        onInvalid: (field) =>
+          field().errorSummary()[0]?.fieldTree().focusBoundControl(),
+      },
+    },
+  );
 
   readonly expandedCostCenterId = signal<string | null>(null);
 
@@ -41,13 +72,11 @@ export class CostCentersComponent implements OnInit {
   }
 
   startAdd(): void {
-    this.saveError.set(null);
-    this.draft.set({ costCenterId: null, code: '', name: '' });
+    this.openEditor(emptyCostCenterDraft());
   }
 
   startEdit(costCenter: CostCenter): void {
-    this.saveError.set(null);
-    this.draft.set({
+    this.openEditor({
       costCenterId: costCenter.costCenterId,
       code: costCenter.code,
       name: costCenter.name ?? '',
@@ -55,25 +84,18 @@ export class CostCentersComponent implements OnInit {
   }
 
   cancel(): void {
-    this.draft.set(null);
+    this.editorOpen.set(false);
     this.saveError.set(null);
   }
 
-  updateDraft(
-    field: keyof Omit<CostCenterDraft, 'costCenterId'>,
-    value: string,
-  ): void {
-    this.draft.update((d) => (d ? { ...d, [field]: value } : d));
+  private openEditor(draft: CostCenterDraft): void {
+    this.saveError.set(null);
+    this.costCenterForm().reset(draft);
+    this.editorOpen.set(true);
   }
 
-  async save(): Promise<void> {
+  private async save(): Promise<void> {
     const draft = this.draft();
-    if (!draft || !draft.code.trim()) {
-      this.saveError.set('Cost center code is required.');
-      return;
-    }
-
-    this.saving.set(true);
     this.saveError.set(null);
 
     try {
@@ -89,7 +111,7 @@ export class CostCentersComponent implements OnInit {
             })
           : this.costCenterService.createCostCenter(payload),
       );
-      this.draft.set(null);
+      this.editorOpen.set(false);
     } catch (error) {
       this.saveError.set(
         extractErrorMessage(
@@ -97,8 +119,6 @@ export class CostCentersComponent implements OnInit {
           'Failed to save cost center',
         ),
       );
-    } finally {
-      this.saving.set(false);
     }
   }
 

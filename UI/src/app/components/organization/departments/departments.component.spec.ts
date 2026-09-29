@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { submit } from '@angular/forms/signals';
 import { of, throwError } from 'rxjs';
 import { Department } from '../../../interfaces/department';
 import { DepartmentService } from '../../../services/department.service';
@@ -71,10 +72,13 @@ describe('DepartmentsComponent', () => {
     const component = createComponent();
 
     component.startAdd();
-    expect(component.draft()).toEqual({ departmentId: null, name: '' });
+    expect(component.departmentForm().value()).toEqual({
+      departmentId: null,
+      name: '',
+    });
 
     component.startEdit(department);
-    expect(component.draft()).toEqual({
+    expect(component.departmentForm().value()).toEqual({
       departmentId: 'department-1',
       name: 'Engineering',
     });
@@ -84,32 +88,35 @@ describe('DepartmentsComponent', () => {
     it('refuses a blank name without calling the API', async () => {
       const component = createComponent();
       component.startAdd();
-      component.updateDraft('  ');
+      component.departmentForm.name().value.set('  ');
 
-      await component.save();
+      await submit(component.departmentForm);
 
-      expect(component.saveError()).toBe('Department name is required.');
+      expect(component.departmentForm.name().errors()[0].message).toBe(
+        'Department name is required.',
+      );
+      expect(component.saveError()).toBeNull();
       expect(createDepartment).not.toHaveBeenCalled();
     });
 
     it('creates a new department and closes the draft', async () => {
       const component = createComponent();
       component.startAdd();
-      component.updateDraft('Sales');
+      component.departmentForm.name().value.set('Sales');
 
-      await component.save();
+      await submit(component.departmentForm);
 
       expect(createDepartment).toHaveBeenCalledWith({ name: 'Sales' });
-      expect(component.draft()).toBeNull();
-      expect(component.saving()).toBe(false);
+      expect(component.editorOpen()).toBe(false);
+      expect(component.departmentForm().submitting()).toBe(false);
     });
 
     it('updates an existing department by its id', async () => {
       const component = createComponent();
       component.startEdit(department);
-      component.updateDraft('Platform');
+      component.departmentForm.name().value.set('Platform');
 
-      await component.save();
+      await submit(component.departmentForm);
 
       expect(updateDepartment).toHaveBeenCalledWith({
         departmentId: 'department-1',
@@ -122,13 +129,13 @@ describe('DepartmentsComponent', () => {
       const component = createComponent();
       createDepartment.mockReturnValue(throwError(() => conflict));
       component.startAdd();
-      component.updateDraft('Sales');
+      component.departmentForm.name().value.set('Sales');
 
-      await component.save();
+      await submit(component.departmentForm);
 
       expect(component.saveError()).toBe('Department still has employees.');
-      expect(component.draft()).not.toBeNull();
-      expect(component.saving()).toBe(false);
+      expect(component.editorOpen()).toBe(true);
+      expect(component.departmentForm().submitting()).toBe(false);
     });
   });
 

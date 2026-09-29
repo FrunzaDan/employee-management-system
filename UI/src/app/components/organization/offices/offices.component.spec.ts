@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { submit } from '@angular/forms/signals';
 import { of, throwError } from 'rxjs';
 import { Office } from '../../../interfaces/office';
 import { OfficeService } from '../../../services/office.service';
@@ -75,7 +76,7 @@ describe('OfficesComponent', () => {
 
       component.startAdd();
 
-      expect(component.draft()).toEqual({
+      expect(component.officeForm().value()).toEqual({
         officeId: null,
         name: '',
         city: '',
@@ -88,7 +89,7 @@ describe('OfficesComponent', () => {
 
       component.startEdit(office);
 
-      expect(component.draft()).toEqual({
+      expect(component.officeForm().value()).toEqual({
         officeId: 'office-1',
         name: 'Head office',
         city: '',
@@ -100,20 +101,20 @@ describe('OfficesComponent', () => {
       const component = createComponent();
       component.startAdd();
 
-      component.updateDraft('city', 'Cluj');
+      component.officeForm.city().value.set('Cluj');
 
-      expect(component.draft()?.city).toBe('Cluj');
-      expect(component.draft()?.name).toBe('');
+      expect(component.officeForm.city().value()).toBe('Cluj');
+      expect(component.officeForm.name().value()).toBe('');
     });
 
     it('cancel throws the draft and any save error away', async () => {
       const component = createComponent();
       component.startAdd();
-      await component.save();
+      await submit(component.officeForm);
 
       component.cancel();
 
-      expect(component.draft()).toBeNull();
+      expect(component.editorOpen()).toBe(false);
       expect(component.saveError()).toBeNull();
     });
   });
@@ -122,21 +123,24 @@ describe('OfficesComponent', () => {
     it('refuses a blank name without calling the API', async () => {
       const component = createComponent();
       component.startAdd();
-      component.updateDraft('name', '   ');
+      component.officeForm.name().value.set('   ');
 
-      await component.save();
+      await submit(component.officeForm);
 
-      expect(component.saveError()).toBe('Office name is required.');
+      expect(component.officeForm.name().errors()[0].message).toBe(
+        'Office name is required.',
+      );
+      expect(component.saveError()).toBeNull();
       expect(createOffice).not.toHaveBeenCalled();
     });
 
     it('creates a new office and closes the draft', async () => {
       const component = createComponent();
       component.startAdd();
-      component.updateDraft('name', 'Branch');
-      component.updateDraft('city', 'Iasi');
+      component.officeForm.name().value.set('Branch');
+      component.officeForm.city().value.set('Iasi');
 
-      await component.save();
+      await submit(component.officeForm);
 
       expect(createOffice).toHaveBeenCalledWith({
         name: 'Branch',
@@ -144,16 +148,16 @@ describe('OfficesComponent', () => {
         country: '',
       });
       expect(updateOffice).not.toHaveBeenCalled();
-      expect(component.draft()).toBeNull();
-      expect(component.saving()).toBe(false);
+      expect(component.editorOpen()).toBe(false);
+      expect(component.officeForm().submitting()).toBe(false);
     });
 
     it('updates an existing office by its id', async () => {
       const component = createComponent();
       component.startEdit(office);
-      component.updateDraft('name', 'Renamed');
+      component.officeForm.name().value.set('Renamed');
 
-      await component.save();
+      await submit(component.officeForm);
 
       expect(updateOffice).toHaveBeenCalledWith({
         officeId: 'office-1',
@@ -169,11 +173,11 @@ describe('OfficesComponent', () => {
       updateOffice.mockReturnValue(throwError(() => conflict));
       component.startEdit(office);
 
-      await component.save();
+      await submit(component.officeForm);
 
       expect(component.saveError()).toBe('Office still has employees.');
-      expect(component.draft()).not.toBeNull();
-      expect(component.saving()).toBe(false);
+      expect(component.editorOpen()).toBe(true);
+      expect(component.officeForm().submitting()).toBe(false);
     });
   });
 

@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { ApplicationRef } from '@angular/core';
+import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -13,7 +13,7 @@ import {
   EmployeeStatus,
   Gender,
 } from '../interfaces/employee';
-import { EmployeeService } from './employee.service';
+import { EmployeeService, LoadEmployeesParams } from './employee.service';
 import { NotificationService } from './notification.service';
 
 describe('EmployeeService', () => {
@@ -55,8 +55,8 @@ describe('EmployeeService', () => {
 
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
-  const load = (params: Parameters<EmployeeService['loadEmployees']>[0]) => {
-    service.loadEmployees(params);
+  const load = (params: LoadEmployeesParams) => {
+    service.bindEmployees(() => params);
     TestBed.tick();
   };
 
@@ -97,7 +97,7 @@ describe('EmployeeService', () => {
     vi.useRealTimers();
   });
 
-  describe('loadEmployees', () => {
+  describe('bindEmployees', () => {
     const emptyPage = (pageNumber: number) => ({
       status: 200,
       responseMessage: 'ok',
@@ -196,7 +196,7 @@ describe('EmployeeService', () => {
     });
   });
 
-  describe('loadEmployees (resource behaviour)', () => {
+  describe('bindEmployees (resource behaviour)', () => {
     const pageOf = (employees: Employee[], pageNumber = 1) => ({
       status: 200,
       responseMessage: 'ok',
@@ -208,7 +208,7 @@ describe('EmployeeService', () => {
       },
     });
 
-    it('makes no request until loadEmployees() is called', () => {
+    it('makes no request until params are bound', () => {
       TestBed.tick();
 
       httpMock.expectNone((r) => r.url === `${API_URL}/all`);
@@ -250,10 +250,30 @@ describe('EmployeeService', () => {
       expect(service.pageNumber()).toBe(2);
     });
 
-    it('fetches the same page again when asked with the same params', async () => {
+    it('follows the bound params as they change', async () => {
+      const params = signal<LoadEmployeesParams>({
+        pageNumber: 1,
+        pageSize: 10,
+      });
+      service.bindEmployees(params);
+      TestBed.tick();
+      httpMock.expectOne((r) => r.url === `${API_URL}/all`).flush(pageOf([]));
+      await settle();
+
+      params.set({ pageNumber: 1, pageSize: 10, searchTerm: 'dan' });
+      TestBed.tick();
+
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
+      expect(req.request.params.get('searchTerm')).toBe('dan');
+      req.flush(pageOf([]));
+      await settle();
+    });
+
+    it('fetches the same page again on reloadEmployees()', async () => {
       await seedEmployees([buildEmployee()]);
 
-      load({ pageNumber: 1, pageSize: 10 });
+      service.reloadEmployees();
+      TestBed.tick();
 
       httpMock.expectOne((r) => r.url === `${API_URL}/all`).flush(pageOf([]));
       await settle();
@@ -478,24 +498,26 @@ describe('EmployeeService', () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
-    it('sets activationLoading true synchronously while deactivation is in flight', () => {
-      service.deactivateEmployee('employee-1');
+    it('sets activationLoading true synchronously while deactivation is in flight', async () => {
+      const done = service.deactivateEmployee('employee-1');
 
       expect(service.activationLoading()).toBe(true);
 
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
         .flush({ status: 200, responseMessage: 'ok' });
+      expect(await done).toBe(true);
     });
 
     it('deactivateEmployee marks the loaded employee Deactivated and notifies on success', async () => {
       await seedEmployees([buildEmployee()]);
 
-      service.deactivateEmployee('employee-1');
+      const done = service.deactivateEmployee('employee-1');
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/deactivate`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.params.get('employeeId')).toBe('employee-1');
       req.flush({ status: 200, responseMessage: 'ok' });
+      await done;
 
       expect(service.employees()[0].status).toBe(EmployeeStatus.Deactivated);
       expect(notificationShow).toHaveBeenCalledWith(
@@ -510,10 +532,11 @@ describe('EmployeeService', () => {
         buildEmployee({ status: EmployeeStatus.Deactivated }),
       ]);
 
-      service.reactivateEmployee('employee-1');
+      const done = service.reactivateEmployee('employee-1');
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/reactivate`);
       expect(req.request.method).toBe('PATCH');
       req.flush({ status: 200, responseMessage: 'ok' });
+      await done;
 
       const reload = httpMock.expectOne((r) => r.url === `${API_URL}/get`);
       expect(reload.request.params.get('searchTerm')).toBe('employee-1');
@@ -528,18 +551,19 @@ describe('EmployeeService', () => {
       );
     });
 
-    it('succeeds and notifies even when the employee is not in the loaded list (e.g. from the details page)', () => {
-      service.deactivateEmployee('missing-employeeId');
+    it('succeeds and notifies even when the employee is not in the loaded list (e.g. from the details page)', async () => {
+      const done = service.deactivateEmployee('missing-employeeId');
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
         .flush({ status: 200, responseMessage: 'ok' });
+      expect(await done).toBe(true);
 
       expect(notificationShow).toHaveBeenCalled();
       expect(service.activationError()).toBeNull();
     });
 
-    it('does not retry a definitive 4xx error and surfaces the server message', () => {
-      service.deactivateEmployee('employee-1');
+    it('does not retry a definitive 4xx error and surfaces the server message', async () => {
+      const done = service.deactivateEmployee('employee-1');
 
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
@@ -552,6 +576,7 @@ describe('EmployeeService', () => {
           { status: 409, statusText: 'Conflict' },
         );
 
+      expect(await done).toBe(false);
       expect(service.activationLoading()).toBe(false);
       expect(service.activationError()).toBe(
         'Employee is already deactivated.',
@@ -562,7 +587,7 @@ describe('EmployeeService', () => {
       await seedEmployees([buildEmployee()]);
       vi.useFakeTimers();
 
-      service.deactivateEmployee('employee-1');
+      const done = service.deactivateEmployee('employee-1');
 
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
@@ -573,6 +598,7 @@ describe('EmployeeService', () => {
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
         .flush({ status: 200, responseMessage: 'ok' });
+      expect(await done).toBe(true);
 
       expect(service.employees()[0].status).toBe(EmployeeStatus.Deactivated);
       expect(service.activationLoading()).toBe(false);

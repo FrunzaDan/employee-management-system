@@ -7,7 +7,9 @@
         showcase a realistic, end-to-end CRUD workflow: an Angular single-page
         frontend talking to an ASP.NET Core Web API, which persists data in SQL
         Server through raw ADO.NET calls to stored procedures — no ORM in
-        between.
+        between. An employer signs in and manages employees, their job
+        information and salary history, and the org structure (offices,
+        departments, and cost centers).
       </p>
     </div>
   </div>
@@ -30,20 +32,29 @@
 
 docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1433 --name sqlserver --platform linux/arm64 -d mcr.microsoft.com/azure-sql-edge</code></pre>
           <p class="card-text">
+            On macOS and Linux the API always uses that container. On Windows it
+            uses the container if it answers within 3 seconds, and otherwise
+            falls back to a locally installed SQL Server (Windows
+            authentication); the choice is logged at startup.
+          </p>
+          <p class="card-text">
             Once the container is up and the schema is deployed (see
             <em>Database</em> below), the two remaining pieces both need to be
             started:
           </p>
           <ul>
             <li>
-              <strong>API</strong> — the ASP.NET Core Web API project, run with
+              <strong>API</strong> — the ASP.NET Core Web API project at
+              <code>https://localhost:7146</code>, run with
               <code>dotnet run</code> (or from your IDE). It serves the REST
               endpoints and talks to SQL Server over ADO.NET.
             </li>
             <li>
-              <strong>Angular frontend</strong> — the SPA, run with
+              <strong>Angular frontend</strong> — the SPA at
+              <code>http://localhost:4206</code>, run with
               <code>ng serve</code> / <code>npm start</code>. It calls the API
-              over HTTPS for authentication and every employee operation.
+              over HTTPS for authentication and every employee and org-structure
+              operation.
             </li>
           </ul>
           <p class="card-text mb-0">
@@ -69,9 +80,9 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <li>
               <code>./build.sh</code> — a CI-style, one-shot build: restores and
               builds the .NET solution, runs its test suite, builds the SQL
-              database project, then installs and builds the Angular app. It
-              doesn't start anything; it just proves everything compiles and the
-              tests pass.
+              database project, then installs, format-checks, builds and tests
+              the Angular app. It doesn't start anything; it just proves
+              everything compiles and the tests pass.
             </li>
             <li>
               <code>./run.sh</code> — the actual local dev environment. It makes
@@ -102,19 +113,21 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <code>run.sh</code> builds that project into a
             <code>.dacpac</code> and deploys it with <code>sqlpackage</code>,
             retrying automatically until the freshly-started container starts
-            accepting connections. This deploy is a diff against the container's
-            current state, so it's idempotent — running it again against an
-            already-initialized database changes nothing — and it's allowed to
-            rebuild already-populated tables when a schema change requires it
-            (e.g. adding a constraint), since this is disposable local dev data,
-            not a production database that needs that guardrail.
+            accepting connections. On a fresh server that one publish creates
+            the database and everything in it. This deploy is a diff against the
+            container's current state, so it's idempotent — running it again
+            against an already-initialized database changes nothing — and it's
+            allowed to rebuild already-populated tables when a schema change
+            requires it (e.g. adding a constraint), since this is disposable
+            local dev data, not a production database that needs that guardrail.
           </p>
-          <p class="card-text">The schema has three tables:</p>
+          <p class="card-text">The schema has eight tables:</p>
           <ul>
             <li>
               <code>Employee</code> — one row per employee: name, email, phone
-              number, gender, birth date, a numeric
-              <code>StatusCode</code> (active / deactivated), and
+              number, gender, birth date, hire date, a numeric
+              <code>StatusCode</code> (active / deactivated / test), optional
+              links to an office, a department, and a cost center, and
               creation/last-interaction timestamps, keyed by an
               <code>EmployeeId</code> (GUID) primary key. Email and phone number
               each carry a unique constraint, so duplicates are rejected by the
@@ -128,29 +141,48 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <li>
               <code>Employer</code> — login accounts for the API, keyed by
               <code>Username</code> (primary key): a PBKDF2 password hash and
-              its salt (never the plaintext password), a role, and a
-              last-interaction timestamp.
+              its salt (never the plaintext password), a role, and the time of
+              the last successful login.
+            </li>
+            <li>
+              <code>Office</code>, <code>Department</code>,
+              <code>CostCenter</code> — the org structure, as small lookup
+              tables with GUID keys; a cost center's code is unique.
+            </li>
+            <li>
+              <code>EmployeeSalary</code> — an append-only salary history: one
+              row per gross salary with the date it takes effect. Entries are
+              never edited or deleted; a raise is a new row.
+            </li>
+            <li>
+              <code>EmployeeAuditLog</code> — one row per change to an employee
+              (created, edited, deactivated, reactivated, deleted, salary
+              changed). It deliberately has no foreign key to
+              <code>Employee</code>, so an employee's history survives their
+              deletion.
             </li>
           </ul>
           <p class="card-text">
-            All employee/employer reads and writes go through stored procedures
-            rather than ad-hoc SQL from the API:
+            All reads and writes go through stored procedures, named
+            <code>&lt;Entity&gt;_&lt;Verb&gt;</code>, rather than ad-hoc SQL
+            from the API:
           </p>
           <ul>
             <li>
               <code>Employee_Create</code> — inserts the employee and address
               rows in one transaction, rejecting duplicate email/phone number
-              first.
+              and an unknown office, department, or cost center first.
             </li>
             <li>
               <code>Employee_Get</code> — looks up a single employee by ID,
-              phone number, or email.
+              phone number, or email, with their current gross salary.
             </li>
             <li>
               <code>Employee_List</code> — returns one page of employees joined
-              with their addresses, filtered by an optional search term and
-              sorted by name/email/phone number, plus a total count for
-              pagination.
+              with their addresses and current salary, filtered by an optional
+              search term (name, email, or phone number) and optionally by one
+              office, department, or cost center, sorted by name/email/phone
+              number, plus a total count for pagination.
             </li>
             <li>
               <code>Employee_Update</code> — updates only the fields that were
@@ -158,25 +190,57 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               <code>Employee_Deactivate</code> /
-              <code>Employee_Reactivate</code> — flip <code>StatusCode</code>,
-              refusing to "change" it to the state it's already in.
+              <code>Employee_Reactivate</code> — deactivating remembers the
+              status the employee had, and reactivating restores it (so a test
+              employee comes back as a test employee); both refuse to "change"
+              an employee to the state they're already in.
             </li>
             <li>
-              <code>Employee_Delete</code> — hard-deletes a employee and its
-              address, but only once it's already deactivated.
+              <code>Employee_Delete</code> — hard-deletes an employee with their
+              address and salary history, but only once they're deactivated (or
+              are a test employee).
             </li>
             <li>
-              <code>Employer_GetAuthData</code> — returns a employer's password
-              hash, salt, and role for the login flow, and stamps their
-              last-interaction time.
+              <code>EmployeeSalary_Create</code> /
+              <code>EmployeeSalary_ListByEmployee</code> — add and list salary
+              entries. The current salary is the latest entry already in effect,
+              so a future-dated raise only counts once its date arrives.
+            </li>
+            <li>
+              <code>Office_*</code>, <code>Department_*</code>,
+              <code>CostCenter_*</code> — list, get, create, update, and delete
+              each org unit. Lists add the head count and total gross salary;
+              delete is refused while any employee is still assigned.
+              <code>Employee_ListByOffice</code> / <code>ByDepartment</code> /
+              <code>ByCostCenter</code> return the employees in one unit.
+            </li>
+            <li>
+              <code>EmployeeAuditLog_Create</code> /
+              <code>EmployeeAuditLog_ListByEmployee</code> /
+              <code>EmployeeAuditLog_List</code> /
+              <code>EmployeeAuditLog_DeleteAll</code> — write, read (one
+              employee's trail, or the global one, paged) and clear the audit
+              log.
+            </li>
+            <li>
+              <code>Report_GetEmployeeInsights</code> — feeds the charts page:
+              one anonymous row per employee (no names or contact details) plus
+              their salary history.
+            </li>
+            <li>
+              <code>Employer_GetAuthData</code> /
+              <code>Employer_RecordLogin</code> — return an employer's password
+              hash, salt, and role for the login flow, and stamp the time of a
+              successful login.
             </li>
           </ul>
           <p class="card-text mb-0">
-            A post-deployment script seeds one demo login the first time the
-            schema is deployed (it's skipped if that employer already exists),
-            so there's something to sign in with immediately after
-            initialization: username <code>TestEmployerID</code>, password
-            <code>Employer123</code>.
+            A post-deployment script seeds one demo login (it's skipped if that
+            employer already exists), so there's something to sign in with
+            immediately after initialization: username
+            <code>TestEmployerID</code>, password <code>Employer123</code>. It
+            also seeds a few offices, departments, and cost centers, again only
+            when they're missing.
           </p>
         </div>
       </div>
@@ -209,7 +273,9 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               The submitted password is re-hashed with PBKDF2-SHA256 (100,000
               iterations, per-user salt) and compared to the stored hash using a
               constant-time comparison — the plaintext password is never stored
-              anywhere.
+              anywhere. An unknown username is hashed against a dummy salt, so
+              it takes as long as a wrong password and doesn't reveal which
+              usernames exist.
             </li>
             <li>
               On success, the API mints a JWT signed with HMAC-SHA256 (the same
@@ -223,14 +289,15 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               The Angular app stores that token in
               <code>sessionStorage</code> (cleared automatically when the tab
               closes) and attaches it as an
-              <code>Authorization: Bearer</code> header on every subsequent API
-              call.
+              <code>Authorization: Bearer</code> header on every subsequent call
+              to the API — and only to the API, never to any other host.
             </li>
             <li>
               Every protected endpoint is decorated with
               <code>[Authorize]</code>; ASP.NET's JWT bearer middleware verifies
               the signature, issuer, audience, and expiry on each request —
-              independent of anything the browser claims.
+              independent of anything the browser claims. Clearing the global
+              audit log additionally requires the employer role.
             </li>
             <li>
               On navigation, an Angular route guard double-checks the token
@@ -252,17 +319,27 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Data access &amp; CRUD operations</h2>
+          <h2 class="card-title">Data access &amp; errors</h2>
+          <p class="card-text">
+            All data access goes through ADO.NET <code>SqlCommand</code> objects
+            calling the stored procedures listed under <em>Database</em> above,
+            with every input passed as a typed, bound parameter — nothing is
+            built by string-concatenating SQL. That gives the API the standard
+            CRUD set (create, read one or all, update) plus the
+            deactivate/reactivate/delete lifecycle, salary history, the audit
+            log and the charts data, all exposed through the
+            <code>[Authorize]</code>-protected <code>EmployeeController</code>,
+            <code>OfficeController</code>, <code>DepartmentController</code> and
+            <code>CostCenterController</code> endpoints the Angular app calls.
+          </p>
           <p class="card-text mb-0">
-            All employee data access goes through ADO.NET
-            <code>SqlCommand</code> objects calling the stored procedures listed
-            under <em>Database</em> above, with every input passed as a bound
-            parameter — nothing is built by string-concatenating SQL. That gives
-            the API the standard CRUD set (create, read one or all, update) plus
-            the deactivate/reactivate/delete lifecycle described below, all
-            exposed through the <code>[Authorize]</code>-protected
-            <code>EmployeeController</code>
-            endpoints the Angular app calls.
+            Every write procedure reports its outcome as a result row: success,
+            or the HTTP status that fits (<code>400</code> for a bad reference,
+            <code>404</code> for not found, <code>409</code> for a duplicate or
+            a state conflict). Every error the API returns is an RFC 9457
+            Problem Details response, which the UI reads to show a specific
+            message next to the control that failed; anything unexpected is
+            logged once and returned as a <code>500</code>.
           </p>
         </div>
       </div>
@@ -325,14 +402,23 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <code>POST /api/employee/create</code> endpoint the
             <em>Add employee</em> form uses — each with a randomly generated
             name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), a
-            home address, and a salary history of 2 to 6 entries (a starting
-            salary on the hire date, then raises up to today). Every one of them
-            is created with the <code>Test</code> status (<code>1904</code>)
-            rather than <code>Active</code>, so they're clearly distinguishable
-            from real employees everywhere the status is shown. It exists purely
-            so there's enough data to try out search, sorting, and pagination
-            locally; like an active employee, a test employee can still be
-            deactivated and deleted afterwards.
+            home address, a hire date between 2005 and 2025, and a random
+            office, department, and cost center from the existing ones. Every
+            one of them is created with the <code>Test</code> status
+            (<code>1904</code>) rather than <code>Active</code>, so they're
+            clearly distinguishable from real employees everywhere the status is
+            shown. It exists purely so there's enough data to try out search,
+            sorting, pagination, and the charts locally; like an active
+            employee, a test employee can still be deactivated, and they can be
+            deleted straight away.
+          </p>
+          <p class="card-text">
+            Each test employee also gets
+            <strong>a salary history of 2 to 6 entries</strong> (through
+            <code>POST /api/employee/salary-history</code>, the same endpoint as
+            the salary form on an employee's page): a starting salary of 3,000
+            to 9,000 RON on the hire date, then raises of 3 to 15% on random
+            dates up to today, so every entry has already taken effect.
           </p>
           <button
             type="button"
@@ -365,20 +451,28 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               Add a new employee through a validated form (name, contact
-              details, address, birth date via a native date picker, etc.).
+              details, address, birth and hire dates via a native date picker,
+              office, department, cost center, etc.); leaving a form with
+              unsaved changes asks first.
             </li>
             <li>
-              Open a employee's details page for a full read-only view, with a
-              plain-language account status instead of a raw code.
+              Open an employee's details page for a full read-only view, with a
+              plain-language account status instead of a raw code, their job
+              information and current salary, their salary history, and their
+              audit trail.
             </li>
             <li>Edit an existing employee's information.</li>
+            <li>
+              Add a salary entry (a raise, or a first salary) from an employee's
+              details page; past entries can't be changed.
+            </li>
             <li>
               Deactivate an active employee (with a confirmation prompt), or
               reactivate one that was deactivated.
             </li>
             <li>
-              Permanently delete a employee once it has been deactivated (also
-              confirmation-guarded).
+              Permanently delete an employee once they have been deactivated, or
+              a test employee at any time (also confirmation-guarded).
             </li>
             <li>
               Select several employees at once with row checkboxes and run a
@@ -391,9 +485,21 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               Export the currently filtered/sorted employee list to a CSV file.
             </li>
             <li>
+              Manage offices, departments, and cost centers: add, edit, and
+              delete them (deleting is blocked while employees are assigned),
+              see each one's head count and total gross salary, and open one to
+              see its employees.
+            </li>
+            <li>
+              Explore the charts dashboard: key figures at a glance, the
+              workforce (hires, status, gender, age, years of service,
+              departments, offices), pay (salary spread, payroll by department,
+              pay gap, pay vs. years of service), and salary growth over time.
+            </li>
+            <li>
               Browse a global, paginated audit trail of every employee change
-              (create/edit/deactivate/reactivate/delete) across the whole
-              system, newest first.
+              (create/edit/deactivate/reactivate/delete/salary change) across
+              the whole system, newest first, and clear it.
             </li>
             <li>
               Get redirected to login automatically if your session expires or

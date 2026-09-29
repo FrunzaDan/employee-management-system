@@ -17,15 +17,15 @@
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   }
 
-  @if (draft(); as d) {
+  @if (editorOpen()) {
     <div
       class="card app-card mb-4"
       animate.enter="reveal-enter"
       animate.leave="reveal-leave"
     >
-      <div class="card-body">
+      <form class="card-body" [formRoot]="officeForm">
         <h2 class="card-title">
-          {{ d.officeId ? 'Edit office' : 'New office' }}
+          {{ isEdit() ? 'Edit office' : 'New office' }}
         </h2>
 
         @if (saveError(); as error) {
@@ -33,15 +33,24 @@
         }
 
         <div class="row g-3">
+          @let name = officeForm.name();
+          @let nameError = name.touched() && name.invalid();
           <div class="col-12 col-md-4">
             <label class="form-label" for="name">Name</label>
             <input
               id="name"
               type="text"
               class="form-control"
-              [value]="d.name"
-              (input)="updateDraft('name', $any($event.target).value)"
+              [formField]="officeForm.name"
+              [class.is-invalid]="nameError"
+              [attr.aria-invalid]="nameError"
+              [attr.aria-describedby]="nameError ? 'name-error' : null"
             />
+            @if (nameError) {
+              <div class="invalid-feedback" id="name-error">
+                {{ name.errors()[0].message }}
+              </div>
+            }
           </div>
           <div class="col-12 col-md-4">
             <label class="form-label" for="officeCity">City</label>
@@ -49,8 +58,7 @@
               id="officeCity"
               type="text"
               class="form-control"
-              [value]="d.city"
-              (input)="updateDraft('city', $any($event.target).value)"
+              [formField]="officeForm.city"
             />
           </div>
           <div class="col-12 col-md-4">
@@ -59,18 +67,16 @@
               id="officeCountry"
               type="text"
               class="form-control"
-              [value]="d.country"
-              (input)="updateDraft('country', $any($event.target).value)"
+              [formField]="officeForm.country"
             />
           </div>
         </div>
 
         <div class="d-flex gap-2 mt-3">
           <button
-            type="button"
+            type="submit"
             class="btn btn-primary shadow-none"
-            [disabled]="saving()"
-            (click)="save()"
+            [disabled]="officeForm().submitting()"
           >
             Save
           </button>
@@ -78,7 +84,7 @@
             Cancel
           </button>
         </div>
-      </div>
+      </form>
     </div>
   }
 

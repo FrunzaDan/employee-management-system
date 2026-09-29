@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { EmployeeService } from '../../services/employee.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
@@ -11,7 +11,8 @@ import { EmployeeListComponent } from './employee-list.component';
 
 describe('EmployeeListComponent', () => {
   let component: EmployeeListComponent;
-  let loadEmployees: ReturnType<typeof vi.fn>;
+  let bindEmployees: ReturnType<typeof vi.fn>;
+  let reloadEmployees: ReturnType<typeof vi.fn>;
   let exportEmployees: ReturnType<typeof vi.fn>;
   let totalItems: ReturnType<typeof signal<number>>;
   let employees: ReturnType<typeof signal<Employee[]>>;
@@ -53,7 +54,8 @@ describe('EmployeeListComponent', () => {
   });
 
   beforeEach(() => {
-    loadEmployees = vi.fn();
+    bindEmployees = vi.fn();
+    reloadEmployees = vi.fn();
     exportEmployees = vi.fn();
     totalItems = signal(0);
     employees = signal<Employee[]>([]);
@@ -76,7 +78,8 @@ describe('EmployeeListComponent', () => {
       totalItems: totalItems,
       pageNumber: signal(1),
       pageSize: signal(10),
-      loadEmployees,
+      bindEmployees,
+      reloadEmployees,
       activationLoading: signal(false),
       activationError: signal<string | null>(null),
       deactivateEmployeeSilently,
@@ -91,7 +94,7 @@ describe('EmployeeListComponent', () => {
       { provide: EmployeeService, useValue: employeeServiceStub },
       { provide: ConfirmDialogService, useValue: { confirm } },
       { provide: NotificationService, useValue: { show: notificationShow } },
-      { provide: Router, useValue: { navigate: vi.fn() } },
+      provideRouter([]),
     ];
     TestBed.configureTestingModule({ providers });
 
@@ -104,19 +107,27 @@ describe('EmployeeListComponent', () => {
     vi.useRealTimers();
   });
 
+  it('binds the list to its params, starting on page 1 sorted by name', () => {
+    expect(bindEmployees).toHaveBeenCalledWith(component.listParams);
+    expect(component.listParams()).toEqual({
+      pageNumber: 1,
+      pageSize: 50,
+      searchTerm: undefined,
+      sortColumn: 'name',
+      sortDirection: 'asc',
+    });
+  });
+
   describe('setSort', () => {
     it('toggles direction when clicking the already-active column, and resets to page 1', () => {
       totalItems.set(75);
-      component.currentPage.set(3);
-      loadEmployees.mockClear();
+      component.currentPage.set(2);
 
       component.setSort('name');
 
       expect(component.sortColumn()).toBe('name');
       expect(component.sortDirection()).toBe('desc');
-      expect(component.currentPage()).toBe(1);
-      expect(loadEmployees).toHaveBeenCalledTimes(1);
-      expect(loadEmployees).toHaveBeenCalledWith({
+      expect(component.listParams()).toEqual({
         pageNumber: 1,
         pageSize: 50,
         searchTerm: undefined,
@@ -126,114 +137,99 @@ describe('EmployeeListComponent', () => {
     });
 
     it('switches column and resets direction to asc when clicking a different column', () => {
+      component.setSort('name');
+
       component.setSort('email');
 
       expect(component.sortColumn()).toBe('email');
       expect(component.sortDirection()).toBe('asc');
-      expect(loadEmployees).toHaveBeenLastCalledWith({
-        pageNumber: 1,
-        pageSize: 50,
-        searchTerm: undefined,
-        sortColumn: 'email',
-        sortDirection: 'asc',
-      });
+      expect(component.listParams()).toEqual(
+        expect.objectContaining({ sortColumn: 'email', sortDirection: 'asc' }),
+      );
     });
   });
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
       totalItems.set(120);
-      loadEmployees.mockClear();
 
       component.goToPage(10);
 
       expect(component.currentPage()).toBe(3);
-      expect(loadEmployees).toHaveBeenLastCalledWith(
-        expect.objectContaining({ pageNumber: 3 }),
-      );
+      expect(component.listParams().pageNumber).toBe(3);
     });
 
     it('clamps below page 1 up to 1', () => {
       totalItems.set(75);
-      component.currentPage.set(3);
-      loadEmployees.mockClear();
+      component.currentPage.set(2);
 
       component.goToPage(0);
 
       expect(component.currentPage()).toBe(1);
-      expect(loadEmployees).toHaveBeenLastCalledWith(
-        expect.objectContaining({ pageNumber: 1 }),
-      );
+      expect(component.listParams().pageNumber).toBe(1);
     });
 
-    it('does nothing when the target page equals the current page', () => {
-      loadEmployees.mockClear();
+    it('keeps the same params when the target page equals the current page', () => {
+      const before = component.listParams();
 
       component.goToPage(1);
 
-      expect(loadEmployees).not.toHaveBeenCalled();
+      expect(component.listParams()).toBe(before);
     });
   });
 
-  describe('page clamping after a reload', () => {
-    it('steps back to the last page when the current page no longer exists', () => {
-      totalItems.set(120);
-      component.currentPage.set(3);
-      TestBed.tick();
-      loadEmployees.mockClear();
-
-      totalItems.set(100);
-      TestBed.tick();
-
-      expect(component.currentPage()).toBe(2);
-      expect(loadEmployees).toHaveBeenCalledWith(
-        expect.objectContaining({ pageNumber: 2 }),
-      );
-    });
-  });
-
-  describe('onSearchInput', () => {
-    it('debounces so only the last call within the window triggers a fetch', () => {
-      vi.useFakeTimers();
-
-      component.onSearchInput('d');
-      vi.advanceTimersByTime(100);
-      component.onSearchInput('da');
-      vi.advanceTimersByTime(100);
-      component.onSearchInput('dan');
-
-      expect(loadEmployees).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(299);
-      expect(loadEmployees).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(1);
-      expect(loadEmployees).toHaveBeenCalledTimes(1);
-      expect(loadEmployees).toHaveBeenCalledWith({
-        pageNumber: 1,
-        pageSize: 50,
-        searchTerm: 'dan',
-        sortColumn: 'name',
-        sortDirection: 'asc',
-      });
-    });
-
-    it('resets to page 1 once the debounced fetch fires', () => {
-      vi.useFakeTimers();
+  describe('search', () => {
+    it('searches by the trimmed term and goes back to page 1', () => {
       totalItems.set(75);
       component.currentPage.set(2);
-      loadEmployees.mockClear();
 
-      component.onSearchInput('dan');
-      vi.advanceTimersByTime(300);
+      component.searchForm.term().value.set('  dan  ');
 
-      expect(component.currentPage()).toBe(1);
+      expect(component.listParams()).toEqual(
+        expect.objectContaining({ pageNumber: 1, searchTerm: 'dan' }),
+      );
+    });
+
+    it('leaves searchTerm out of the params when the box is blank', () => {
+      component.searchForm.term().value.set('   ');
+
+      expect(component.listParams().searchTerm).toBeUndefined();
+    });
+
+    it('waits for typing to pause before searching', async () => {
+      vi.useFakeTimers();
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers });
+      TestBed.overrideComponent(EmployeeListComponent, {
+        set: { providers: [] },
+      });
+      const fixture = TestBed.createComponent(EmployeeListComponent);
+      fixture.detectChanges();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        'input[type="search"]',
+      );
+
+      input.value = 'dan';
+      input.dispatchEvent(new Event('input'));
+      await vi.advanceTimersByTimeAsync(299);
+      expect(fixture.componentInstance.listParams().searchTerm).toBeUndefined();
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(fixture.componentInstance.listParams().searchTerm).toBe('dan');
+    });
+
+    it('clears the selection when the search changes', () => {
+      component.toggleSelection('employee-1', true);
+
+      component.searchForm.term().value.set('dan');
+
+      expect(component.isSelected('employee-1')).toBe(false);
     });
   });
 
   describe('exportCsv', () => {
     it('exports with the current search term (trimmed) and sort state', () => {
-      component.searchTerm.set('  dan  ');
+      component.searchForm.term().value.set('  dan  ');
       component.setSort('email');
 
       component.exportCsv();
@@ -260,7 +256,7 @@ describe('EmployeeListComponent', () => {
     it('loads and exports only the employees of the given office', () => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        providers: [...providers.slice(0, -1), provideRouter([])],
+        providers,
       });
       TestBed.overrideComponent(EmployeeListComponent, {
         set: { providers: [] },
@@ -269,7 +265,10 @@ describe('EmployeeListComponent', () => {
       fixture.componentRef.setInput('officeId', 'office-1');
       fixture.detectChanges();
 
-      expect(loadEmployees).toHaveBeenCalledWith(
+      expect(bindEmployees).toHaveBeenCalledWith(
+        fixture.componentInstance.listParams,
+      );
+      expect(fixture.componentInstance.listParams()).toEqual(
         expect.objectContaining({ officeId: 'office-1', pageNumber: 1 }),
       );
 
@@ -332,15 +331,26 @@ describe('EmployeeListComponent', () => {
       expect(deleteEmployee).not.toHaveBeenCalled();
     });
 
-    it('deletes the employee and refetches the current page on success', async () => {
-      loadEmployees.mockClear();
+    it('deletes the employee and reloads the current page on success', async () => {
+      employees.set([buildEmployee()]);
 
       await component.deleteEmployee('employeeId-1');
 
       expect(deleteEmployee).toHaveBeenCalledWith('employeeId-1');
       expect(component.deleting()).toBe(false);
       expect(component.deleteError()).toBeNull();
-      expect(loadEmployees).toHaveBeenCalledTimes(1);
+      expect(reloadEmployees).toHaveBeenCalledTimes(1);
+    });
+
+    it('steps back a page instead when the delete empties the current one', async () => {
+      totalItems.set(51);
+      component.currentPage.set(2);
+      employees.set([]);
+
+      await component.deleteEmployee('employeeId-1');
+
+      expect(component.currentPage()).toBe(1);
+      expect(reloadEmployees).not.toHaveBeenCalled();
     });
 
     it('surfaces the error and stops loading when the delete request fails', async () => {
@@ -384,7 +394,7 @@ describe('EmployeeListComponent', () => {
       expect(deleteEmployeeSilently).not.toHaveBeenCalled();
     });
 
-    it('deactivates Active employees and deletes non-Active ones, then shows a success summary and refetches', async () => {
+    it('deactivates Active employees and deletes non-Active ones, then shows a success summary and reloads', async () => {
       employees.set([
         buildEmployee({
           employeeId: 'active-1',
@@ -397,7 +407,6 @@ describe('EmployeeListComponent', () => {
         buildEmployee({ employeeId: 'test-1', status: EmployeeStatus.Test }),
       ]);
       component.toggleSelectAll(true);
-      loadEmployees.mockClear();
 
       await component.bulkDeleteSelected();
 
@@ -413,7 +422,8 @@ describe('EmployeeListComponent', () => {
         'success',
       );
       expect(component.bulkActionInProgress()).toBe(false);
-      expect(loadEmployees).toHaveBeenCalledTimes(1);
+      expect(reloadEmployees).toHaveBeenCalledTimes(1);
+      expect(component.selectedEmployeeIds().size).toBe(0);
     });
 
     it('reports a failure count and does not stop the batch when one operation fails', async () => {

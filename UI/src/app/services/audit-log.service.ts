@@ -11,12 +11,14 @@ import { extractErrorMessage } from '../utils/extract-error-message';
 export class AuditLogService {
   private readonly apiUrl = `${environment.apiUrl}/api/employee/audit-log`;
 
-  private readonly employeeId = signal<string | undefined>(undefined);
+  private readonly employeeId = signal<() => string | undefined>(
+    () => undefined,
+  );
 
   private readonly auditLogResource = httpResource<
     GenericResponse<AuditLogEntry[]>
   >(() => {
-    const employeeId = this.employeeId();
+    const employeeId = this.employeeId()();
     if (!employeeId) return undefined;
     return {
       url: this.apiUrl,
@@ -40,11 +42,13 @@ export class AuditLogService {
       : null;
   });
 
-  loadAuditLog(employeeId: string): void {
-    if (this.employeeId() === employeeId) {
-      this.auditLogResource.reload();
-    } else {
-      this.employeeId.set(employeeId);
-    }
+  // Follows the given employee id: loads as soon as it's bound and again
+  // whenever the id changes.
+  bindAuditLog(employeeId: () => string | undefined): void {
+    this.employeeId.set(employeeId);
+  }
+
+  reloadAuditLog(): void {
+    this.auditLogResource.reload();
   }
 }
