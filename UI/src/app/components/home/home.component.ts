@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import { EmployeeListComponent } from '../employee-list/employee-list.component';
 
 @Component({
@@ -7,4 +7,6 @@ import { EmployeeListComponent } from '../employee-list/employee-list.component'
   styleUrl: './home.component.css',
   imports: [EmployeeListComponent],
 })
-export class HomeComponent {}
+export class HomeComponent {
+  readonly employeeList = viewChild(EmployeeListComponent);
+}

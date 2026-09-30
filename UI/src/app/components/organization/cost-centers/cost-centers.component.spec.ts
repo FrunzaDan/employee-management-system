@@ -143,6 +143,32 @@ describe('CostCentersComponent', () => {
       expect(component.editorOpen()).toBe(true);
       expect(component.costCenterForm().submitting()).toBe(false);
     });
+
+    it('shows a duplicate code under the code field and keeps the draft open', async () => {
+      const component = createComponent();
+      createCostCenter.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: {
+                detail: 'Cost center code already exists.',
+                errors: { code: ['Cost center code already exists.'] },
+              },
+            }),
+        ),
+      );
+      component.startAdd();
+      component.costCenterForm.code().value.set('CC-100');
+
+      await submit(component.costCenterForm);
+
+      expect(component.saveError()).toBeNull();
+      expect(component.editorOpen()).toBe(true);
+      expect(component.costCenterForm.code().errors()[0].message).toBe(
+        'Cost center code already exists.',
+      );
+    });
   });
 
   describe('delete', () => {

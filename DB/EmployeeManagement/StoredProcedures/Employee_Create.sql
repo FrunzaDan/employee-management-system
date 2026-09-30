@@ -23,6 +23,7 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
+    DECLARE @Field VARCHAR(50) = NULL;
     DECLARE @EmployeeId UNIQUEIDENTIFIER = NULL;
     DECLARE @Inserted TABLE (EmployeeId UNIQUEIDENTIFIER);
 
@@ -30,11 +31,13 @@ BEGIN
     BEGIN
         SET @Result = 409;
         SET @Message = 'Phone number already exists.';
+        SET @Field = 'PhoneNumber';
     END
     ELSE IF EXISTS (SELECT 1 FROM dbo.Employee WHERE Email = @Email)
     BEGIN
         SET @Result = 409;
         SET @Message = 'Email already exists.';
+        SET @Field = 'Email';
     END
     ELSE IF @OfficeId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.Office WHERE OfficeId = @OfficeId)
     BEGIN
@@ -96,5 +99,5 @@ BEGIN
         END CATCH
     END
 
-    SELECT @Result AS Result, @Message AS Message, @EmployeeId AS EmployeeId;
+    SELECT @Result AS Result, @Message AS Message, @EmployeeId AS EmployeeId, @Field AS Field;
 END

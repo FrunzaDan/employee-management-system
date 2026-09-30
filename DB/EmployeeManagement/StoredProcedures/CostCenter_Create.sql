@@ -8,6 +8,7 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
+    DECLARE @Field VARCHAR(50) = NULL;
     DECLARE @CostCenterId UNIQUEIDENTIFIER = NULL;
     DECLARE @Inserted TABLE (CostCenterId UNIQUEIDENTIFIER);
 
@@ -15,8 +16,9 @@ BEGIN
     BEGIN
         SET @Result = 409;
         SET @Message = 'Cost center code already exists.';
+        SET @Field = 'Code';
 
-        SELECT @Result AS Result, @Message AS Message, @CostCenterId AS CostCenterId;
+        SELECT @Result AS Result, @Message AS Message, @CostCenterId AS CostCenterId, @Field AS Field;
         RETURN;
     END
 
@@ -36,7 +38,8 @@ BEGIN
 
         SET @Result = 409;
         SET @Message = 'Cost center code already exists.';
+        SET @Field = 'Code';
     END CATCH
 
-    SELECT @Result AS Result, @Message AS Message, @CostCenterId AS CostCenterId;
+    SELECT @Result AS Result, @Message AS Message, @CostCenterId AS CostCenterId, @Field AS Field;
 END

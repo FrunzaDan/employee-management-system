@@ -9,13 +9,14 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
+    DECLARE @Field VARCHAR(50) = NULL;
 
     IF NOT EXISTS (SELECT 1 FROM dbo.CostCenter WHERE CostCenterId = @CostCenterId)
     BEGIN
         SET @Result = 404;
         SET @Message = 'Cost center not found.';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -25,8 +26,9 @@ BEGIN
     BEGIN
         SET @Result = 409;
         SET @Message = 'Cost center code already exists.';
+        SET @Field = 'Code';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -46,7 +48,8 @@ BEGIN
 
         SET @Result = 409;
         SET @Message = 'Cost center code already exists.';
+        SET @Field = 'Code';
     END CATCH
 
-    SELECT @Result AS Result, @Message AS Message;
+    SELECT @Result AS Result, @Message AS Message, @Field AS Field;
 END

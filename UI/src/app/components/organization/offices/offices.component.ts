@@ -5,6 +5,7 @@ import {
   form,
   pattern,
   required,
+  TreeValidationResult,
 } from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -13,6 +14,7 @@ import { OfficeService } from '../../../services/office.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { Office } from '../../../interfaces/office';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
+import { toServerErrors } from '../../../utils/server-errors';
 import { RonPipe } from '../../../pipes/ron.pipe';
 import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 
@@ -97,7 +99,7 @@ export class OfficesComponent implements OnInit {
     this.editorOpen.set(true);
   }
 
-  private async save(): Promise<void> {
+  private async save(): Promise<TreeValidationResult> {
     const draft = this.draft();
     this.saveError.set(null);
 
@@ -117,12 +119,14 @@ export class OfficesComponent implements OnInit {
       );
       this.editorOpen.set(false);
     } catch (error) {
-      this.saveError.set(
-        extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to save office',
-        ),
+      const { fieldErrors, message } = toServerErrors(
+        error as HttpErrorResponse,
+        this.officeForm,
+        'Failed to save office',
       );
+      this.saveError.set(message);
+      fieldErrors[0]?.fieldTree().focusBoundControl();
+      return fieldErrors;
     }
   }
 

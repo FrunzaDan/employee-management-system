@@ -14,6 +14,7 @@ import {
   form,
   min,
   required,
+  TreeValidationResult,
 } from '@angular/forms/signals';
 import { RonPipe } from '../../pipes/ron.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -25,6 +26,7 @@ import { SalaryHistoryService } from '../../services/salary-history.service';
 import { Employee, EmployeeStatus, Gender } from '../../interfaces/employee';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
+import { toServerErrors } from '../../utils/server-errors';
 import { auditActionLabel } from '../../utils/audit-action-label';
 import { employeeStatusLabel } from '../../utils/employee-status-label';
 
@@ -178,7 +180,7 @@ export class EmployeeDetailsComponent {
     this.auditLogService.reloadAuditLog();
   }
 
-  private async createSalary(): Promise<void> {
+  private async createSalary(): Promise<TreeValidationResult> {
     const employeeId = this.employee()?.employeeId;
     if (!employeeId) return;
 
@@ -197,12 +199,14 @@ export class EmployeeDetailsComponent {
       this.employeeResource.reload();
       this.auditLogService.reloadAuditLog();
     } catch (error) {
-      this.createSalaryError.set(
-        extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to add salary entry',
-        ),
+      const { fieldErrors, message } = toServerErrors(
+        error as HttpErrorResponse,
+        this.salaryForm,
+        'Failed to add salary entry',
       );
+      this.createSalaryError.set(message);
+      fieldErrors[0]?.fieldTree().focusBoundControl();
+      return fieldErrors;
     }
   }
 

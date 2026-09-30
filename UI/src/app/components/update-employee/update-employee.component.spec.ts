@@ -216,6 +216,36 @@ describe('UpdateEmployeeComponent', () => {
       expect(component.saveError()).toBe('Email already registered.');
       expect(navigate).not.toHaveBeenCalled();
     });
+
+    it('shows a duplicate the server reports under its field, not above the form', async () => {
+      const component = createComponent();
+      await loadEmployee(buildEmployee());
+      updateEmployee.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: {
+                detail: 'Phone number already exists.',
+                errors: { phoneNumber: ['Phone number already exists.'] },
+              },
+            }),
+        ),
+      );
+
+      await submit(component.employeeForm);
+
+      expect(component.saveError()).toBeNull();
+      expect(component.employeeForm.phoneNumber().errors()).toEqual([
+        expect.objectContaining({
+          kind: 'server',
+          message: 'Phone number already exists.',
+        }),
+      ]);
+
+      component.employeeForm.phoneNumber().value.set('0722000000');
+      expect(component.employeeForm.phoneNumber().errors()).toEqual([]);
+    });
   });
 
   describe('unsaved changes', () => {

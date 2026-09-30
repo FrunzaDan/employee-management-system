@@ -5,6 +5,7 @@ import {
   form,
   pattern,
   required,
+  TreeValidationResult,
 } from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -13,6 +14,7 @@ import { CostCenterService } from '../../../services/cost-center.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { CostCenter } from '../../../interfaces/cost-center';
 import { extractErrorMessage } from '../../../utils/extract-error-message';
+import { toServerErrors } from '../../../utils/server-errors';
 import { RonPipe } from '../../../pipes/ron.pipe';
 import { EmployeeListComponent } from '../../employee-list/employee-list.component';
 
@@ -94,7 +96,7 @@ export class CostCentersComponent implements OnInit {
     this.editorOpen.set(true);
   }
 
-  private async save(): Promise<void> {
+  private async save(): Promise<TreeValidationResult> {
     const draft = this.draft();
     this.saveError.set(null);
 
@@ -113,12 +115,14 @@ export class CostCentersComponent implements OnInit {
       );
       this.editorOpen.set(false);
     } catch (error) {
-      this.saveError.set(
-        extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to save cost center',
-        ),
+      const { fieldErrors, message } = toServerErrors(
+        error as HttpErrorResponse,
+        this.costCenterForm,
+        'Failed to save cost center',
       );
+      this.saveError.set(message);
+      fieldErrors[0]?.fieldTree().focusBoundControl();
+      return fieldErrors;
     }
   }
 

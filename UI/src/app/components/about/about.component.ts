@@ -13,8 +13,13 @@ import { CostCenter } from '../../interfaces/cost-center';
 import {
   CreateEmployeeRequest,
   EmployeeStatus,
-  Gender,
 } from '../../interfaces/employee';
+import {
+  buildRandomEmployee,
+  pick,
+  randomInt,
+  toIsoDate,
+} from '../../utils/random-employee';
 
 const TEST_EMPLOYEE_COUNT = 50;
 
@@ -27,182 +32,6 @@ const MIN_SALARY_ENTRIES = 2;
 const MAX_SALARY_ENTRIES = 6;
 const MIN_RAISE = 0.03;
 const MAX_RAISE = 0.15;
-
-const FIRST_NAMES = [
-  'Andrei',
-  'Maria',
-  'Ion',
-  'Elena',
-  'Mihai',
-  'Ioana',
-  'Cristian',
-  'Ana',
-  'Alexandru',
-  'Gabriela',
-  'Florin',
-  'Andreea',
-  'Radu',
-  'Simona',
-  'George',
-  'Cristina',
-  'Dan',
-  'Diana',
-  'Vasile',
-  'Larisa',
-  'Adrian',
-  'Mihaela',
-  'Bogdan',
-  'Roxana',
-  'Cătălin',
-  'Monica',
-  'Ștefan',
-  'Alina',
-  'Vlad',
-  'Nicoleta',
-  'Gabriel',
-  'Laura',
-  'Razvan',
-  'Aurelia',
-  'Dorin',
-  'Camelia',
-  'Eugen',
-  'Loredana',
-  'Sorin',
-  'Rodica',
-];
-
-const LAST_NAMES = [
-  'Popescu',
-  'Ionescu',
-  'Popa',
-  'Radu',
-  'Dumitru',
-  'Stan',
-  'Gheorghe',
-  'Constantin',
-  'Marin',
-  'Stoica',
-  'Matei',
-  'Ciobanu',
-  'Munteanu',
-  'Rusu',
-  'Barbu',
-  'Florea',
-  'Nistor',
-  'Toma',
-  'Oprea',
-  'Cristea',
-  'Preda',
-  'Dobre',
-  'Dima',
-  'Sârbu',
-  'Neagu',
-  'Enache',
-  'Bălan',
-  'Diaconu',
-  'Ilie',
-  'Lupu',
-  'Moldovan',
-  'Dragomir',
-  'Micu',
-  'Nica',
-  'Suciu',
-  'Voinea',
-  'Burlacu',
-  'Manole',
-  'Pavel',
-  'Ungureanu',
-];
-
-const COUNTIES_CITIES: ReadonlyArray<{ county: string; city: string }> = [
-  { county: 'Cluj', city: 'Cluj-Napoca' },
-  { county: 'Iasi', city: 'Iasi' },
-  { county: 'Timis', city: 'Timisoara' },
-  { county: 'Brasov', city: 'Brasov' },
-  { county: 'Constanta', city: 'Constanta' },
-  { county: 'Bihor', city: 'Oradea' },
-  { county: 'Sibiu', city: 'Sibiu' },
-  { county: 'Dolj', city: 'Craiova' },
-  { county: 'Ilfov', city: 'Otopeni' },
-  { county: 'Bucuresti', city: 'Bucuresti' },
-  { county: 'Arad', city: 'Arad' },
-  { county: 'Arges', city: 'Pitesti' },
-  { county: 'Bacău', city: 'Bacău' },
-  { county: 'Bistrița-Năsăud', city: 'Bistrița' },
-  { county: 'Botoșani', city: 'Botoșani' },
-  { county: 'Brăila', city: 'Brăila' },
-  { county: 'Buzău', city: 'Buzău' },
-  { county: 'Caraș-Severin', city: 'Reșița' },
-  { county: 'Călărași', city: 'Călărași' },
-  { county: 'Covasna', city: 'Sfântu Gheorghe' },
-  { county: 'Dâmbovița', city: 'Târgoviște' },
-  { county: 'Galați', city: 'Galați' },
-  { county: 'Gorj', city: 'Târgu Jiu' },
-  { county: 'Hunedoara', city: 'Deva' },
-  { county: 'Maramureș', city: 'Baia Mare' },
-  { county: 'Mureș', city: 'Târgu Mureș' },
-  { county: 'Neamț', city: 'Piatra Neamț' },
-  { county: 'Prahova', city: 'Ploiești' },
-  { county: 'Suceava', city: 'Suceava' },
-  { county: 'Vâlcea', city: 'Râmnicu Vâlcea' },
-];
-
-const STREETS = [
-  'Strada Avram Iancu',
-  'Strada Nicolae Bălcescu',
-  'Strada 1 Decembrie 1918',
-  'Strada Stefan cel Mare',
-  'Strada George Coșbuc',
-  'Strada Tudor Vladimirescu',
-  'Strada Ion Creangă',
-  'Strada George Enescu',
-  'Strada Horea',
-  'Strada Primăverii',
-  'Strada Castanilor',
-  'Strada Teilor',
-  'Strada Stejarului',
-  'Strada Livezii',
-  'Strada Şcolii',
-  'Strada Bisericii',
-  'Strada Păcii',
-  'Strada Field',
-  'Strada Carpați',
-  'Strada Crișan',
-];
-
-function pick<T>(values: ReadonlyArray<T>): T {
-  return values[Math.floor(Math.random() * values.length)];
-}
-
-function randomDigits(length: number): string {
-  let digits = '';
-  for (let i = 0; i < length; i++) {
-    digits += Math.floor(Math.random() * 10).toString();
-  }
-  return digits;
-}
-
-function toIsoDate(date: Date): string {
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-function randomBirthDate(): string {
-  const start = new Date(1950, 0, 1).getTime();
-  const end = new Date(2005, 11, 31).getTime();
-  return toIsoDate(new Date(start + Math.random() * (end - start)));
-}
-
-function randomHireDate(): string {
-  const start = HIRE_DATE_RANGE_START.getTime();
-  const end = HIRE_DATE_RANGE_END.getTime();
-  return toIsoDate(new Date(start + Math.random() * (end - start)));
-}
-
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 function roundToTen(value: number): number {
   return Math.round(value / 10) * 10;
@@ -284,10 +113,9 @@ export class AboutComponent {
         firstValueFrom(this.costCenterService.fetchCostCenters()),
       ]);
 
-      const employees = Array.from(
-        { length: TEST_EMPLOYEE_COUNT },
-        (_, index) =>
-          this.buildRandomEmployee(index, offices, departments, costCenters),
+      const taken = new Set<string>();
+      const employees = Array.from({ length: TEST_EMPLOYEE_COUNT }, () =>
+        this.buildRandomEmployee(taken, offices, departments, costCenters),
       );
 
       let added = 0;
@@ -339,33 +167,14 @@ export class AboutComponent {
   }
 
   private buildRandomEmployee(
-    index: number,
+    taken: Set<string>,
     offices: Office[],
     departments: Department[],
     costCenters: CostCenter[],
   ): CreateEmployeeRequest {
-    const firstName = pick(FIRST_NAMES);
-    const lastName = pick(LAST_NAMES);
-    const { county, city } = pick(COUNTIES_CITIES);
-    const suffix = index.toString().padStart(2, '0');
-
     return {
-      firstName,
-      lastName,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${suffix}@example.com`,
-      phoneNumber: `07${randomDigits(6)}${suffix}`,
-      gender: pick([Gender.NotDeclared, Gender.Male, Gender.Female]),
-      birthDate: randomBirthDate(),
+      ...buildRandomEmployee(HIRE_DATE_RANGE_START, HIRE_DATE_RANGE_END, taken),
       status: EmployeeStatus.Test,
-      address: {
-        country: 'Romania',
-        county,
-        city,
-        street: pick(STREETS),
-        streetNumber: (Math.floor(Math.random() * 150) + 1).toString(),
-        postalCode: randomDigits(6),
-      },
-      hireDate: randomHireDate(),
       officeId: pickId(offices, (office) => office.officeId),
       departmentId: pickId(
         departments,

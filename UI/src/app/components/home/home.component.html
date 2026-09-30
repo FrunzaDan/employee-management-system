@@ -1,7 +1,13 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Employees</h1>
+      <h1 class="page-title">
+        Employees
+        @let list = employeeList();
+        @if (list && !list.loading() && !list.loadError()) {
+          ({{ list.totalItems() }})
+        }
+      </h1>
       <p class="page-subtitle">
         Search, sort and manage your employee records.
       </p>

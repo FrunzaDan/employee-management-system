@@ -56,6 +56,18 @@ internal static class SqlDataReaderExtensions
         return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
     }
 
+    /// <summary>Like <see cref="GetNullableString"/>, but also null when the result has no such column.</summary>
+    public static string? GetOptionalString(this SqlDataReader reader, string column)
+    {
+        for (var ordinal = 0; ordinal < reader.FieldCount; ordinal++)
+        {
+            if (string.Equals(reader.GetName(ordinal), column, StringComparison.OrdinalIgnoreCase))
+                return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        }
+
+        return null;
+    }
+
     public static int GetInt32(this SqlDataReader reader, string column) =>
         reader.GetInt32(reader.GetOrdinal(column));
 

@@ -23,6 +23,7 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
+    DECLARE @Field VARCHAR(50) = NULL;
     DECLARE @Now DATETIME2(3) = SYSUTCDATETIME();
 
     IF NOT EXISTS (SELECT 1 FROM dbo.Employee WHERE EmployeeId = @EmployeeId)
@@ -30,7 +31,7 @@ BEGIN
         SET @Result = 404;
         SET @Message = 'Employee not found.';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -40,8 +41,9 @@ BEGIN
     BEGIN
         SET @Result = 409;
         SET @Message = 'Email already exists.';
+        SET @Field = 'Email';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -51,8 +53,9 @@ BEGIN
     BEGIN
         SET @Result = 409;
         SET @Message = 'Phone number already exists.';
+        SET @Field = 'PhoneNumber';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -61,7 +64,7 @@ BEGIN
         SET @Result = 400;
         SET @Message = 'Office not found.';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -70,7 +73,7 @@ BEGIN
         SET @Result = 400;
         SET @Message = 'Department not found.';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -79,7 +82,7 @@ BEGIN
         SET @Result = 400;
         SET @Message = 'Cost center not found.';
 
-        SELECT @Result AS Result, @Message AS Message;
+        SELECT @Result AS Result, @Message AS Message, @Field AS Field;
         RETURN;
     END
 
@@ -131,5 +134,5 @@ BEGIN
         SET @Message = 'Email or phone number already exists.';
     END CATCH
 
-    SELECT @Result AS Result, @Message AS Message;
+    SELECT @Result AS Result, @Message AS Message, @Field AS Field;
 END
