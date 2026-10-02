@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Office } from '../../../interfaces/office';
 import { OfficeService } from '../../../services/office.service';
@@ -229,6 +230,94 @@ describe('OfficesComponent', () => {
       component.toggleEmployees(office);
 
       expect(component.expandedOfficeId()).toBeNull();
+    });
+  });
+
+  describe('template', () => {
+    let fixture: ComponentFixture<OfficesComponent>;
+
+    const el = <T extends HTMLElement>(selector: string): T =>
+      fixture.nativeElement.querySelector(selector);
+    const buttonByText = (text: string): HTMLButtonElement =>
+      Array.from<HTMLButtonElement>(
+        fixture.nativeElement.querySelectorAll('button'),
+      ).find((b) => b.textContent?.trim() === text)!;
+    const type = (selector: string, value: string) => {
+      const input = el<HTMLInputElement>(selector);
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    };
+    const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+    beforeEach(async () => {
+      TestBed.configureTestingModule({ providers: [provideRouter([])] });
+      createComponent();
+      fixture = TestBed.createComponent(OfficesComponent);
+      await fixture.whenStable();
+    });
+
+    it('loads and renders each office, with a dash for a missing city', () => {
+      const row = el('tbody tr');
+
+      expect(loadOffices).toHaveBeenCalledTimes(1);
+      expect(row.textContent).toContain('Head office');
+      expect(row.textContent).toContain('—');
+      expect(row.textContent).toContain('Romania');
+      expect(row.textContent).toContain('12.000,00 RON');
+    });
+
+    it('creates an office from the Add office form', async () => {
+      buttonByText('Add office').click();
+      await fixture.whenStable();
+      expect(el('form h2').textContent).toContain('New office');
+
+      type('#name', 'Branch');
+      type('#officeCity', 'Iasi');
+      buttonByText('Save').click();
+      await settle();
+
+      expect(createOffice).toHaveBeenCalledWith({
+        name: 'Branch',
+        city: 'Iasi',
+        country: '',
+      });
+    });
+
+    it('shows the error under the name and does not save a blank office', async () => {
+      buttonByText('Add office').click();
+      await fixture.whenStable();
+
+      buttonByText('Save').click();
+      await settle();
+      await fixture.whenStable();
+
+      expect(el('#name-error').textContent).toContain(
+        'Office name is required.',
+      );
+      expect(createOffice).not.toHaveBeenCalled();
+    });
+
+    it("edits the row's office from its pre-filled Edit form", async () => {
+      buttonByText('Edit').click();
+      await fixture.whenStable();
+      expect(el('form h2').textContent).toContain('Edit office');
+      expect(el<HTMLInputElement>('#name').value).toBe('Head office');
+
+      type('#name', 'Renamed');
+      buttonByText('Save').click();
+      await settle();
+
+      expect(updateOffice).toHaveBeenCalledWith(
+        expect.objectContaining({ officeId: 'office-1', name: 'Renamed' }),
+      );
+      expect(createOffice).not.toHaveBeenCalled();
+    });
+
+    it("deletes the row's office from its Delete button", async () => {
+      buttonByText('Delete').click();
+      await settle();
+
+      expect(deleteOffice).toHaveBeenCalledWith('office-1');
     });
   });
 });

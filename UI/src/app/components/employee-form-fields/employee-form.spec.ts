@@ -1,4 +1,12 @@
-import { emptyEmployeeForm, isEmployeeFormDirty } from './employee-form';
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { form } from '@angular/forms/signals';
+import {
+  emptyEmployeeForm,
+  employeeFormSchema,
+  isEmployeeFormDirty,
+  toCreateEmployeeRequest,
+} from './employee-form';
 import { environment } from '../../../environments/environment';
 
 describe('isEmployeeFormDirty', () => {
@@ -37,4 +45,42 @@ describe('environment.emailRegex', () => {
       expect(emailRegex.test(email)).toBe(false);
     },
   );
+});
+
+describe('toCreateEmployeeRequest', () => {
+  it('sends gender as a number, nests the address and leaves blank optional values out', () => {
+    const request = toCreateEmployeeRequest({
+      ...emptyEmployeeForm(),
+      gender: '2',
+      city: 'Cluj-Napoca',
+    });
+
+    expect(request.gender).toBe(2);
+    expect(request.address.city).toBe('Cluj-Napoca');
+    expect(request.birthDate).toBeUndefined();
+    expect(request.hireDate).toBeUndefined();
+    expect(request.officeId).toBeUndefined();
+    expect(request.departmentId).toBeUndefined();
+    expect(request.costCenterId).toBeUndefined();
+  });
+});
+
+describe('employeeFormSchema', () => {
+  const birthDateErrors = (birthDate: string) =>
+    TestBed.runInInjectionContext(() =>
+      form(signal({ ...emptyEmployeeForm(), birthDate }), employeeFormSchema),
+    )
+      .birthDate()
+      .errors()
+      .map((error) => error.message);
+
+  it('rejects a birth date in the future', () => {
+    expect(birthDateErrors('2999-01-01')).toContain(
+      'Birth date cannot be in the future',
+    );
+  });
+
+  it('accepts a birth date in the past', () => {
+    expect(birthDateErrors('1990-01-01')).toEqual([]);
+  });
 });

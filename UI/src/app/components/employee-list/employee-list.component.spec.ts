@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { EmployeeService } from '../../services/employee.service';
@@ -19,6 +19,8 @@ describe('EmployeeListComponent', () => {
   let deleteEmployee: ReturnType<typeof vi.fn>;
   let deleteEmployeeSilently: ReturnType<typeof vi.fn>;
   let deactivateEmployeeSilently: ReturnType<typeof vi.fn>;
+  let deactivateEmployee: ReturnType<typeof vi.fn>;
+  let reactivateEmployee: ReturnType<typeof vi.fn>;
   let confirm: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
   let providers: unknown[];
@@ -68,6 +70,8 @@ describe('EmployeeListComponent', () => {
     deactivateEmployeeSilently = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    deactivateEmployee = vi.fn().mockResolvedValue(undefined);
+    reactivateEmployee = vi.fn().mockResolvedValue(undefined);
     confirm = vi.fn().mockResolvedValue(true);
     notificationShow = vi.fn();
 
@@ -83,6 +87,8 @@ describe('EmployeeListComponent', () => {
       activationLoading: signal(false),
       activationError: signal<string | null>(null),
       deactivateEmployeeSilently,
+      deactivateEmployee,
+      reactivateEmployee,
       deleteEmployee,
       deleteEmployeeSilently,
       exportLoading: signal(false),
@@ -353,6 +359,15 @@ describe('EmployeeListComponent', () => {
       expect(reloadEmployees).not.toHaveBeenCalled();
     });
 
+    it('reloads page 1 when the delete empties it, since there is no page to step back to', async () => {
+      employees.set([]);
+
+      await component.deleteEmployee('employeeId-1');
+
+      expect(component.currentPage()).toBe(1);
+      expect(reloadEmployees).toHaveBeenCalledTimes(1);
+    });
+
     it('surfaces the error and stops loading when the delete request fails', async () => {
       deleteEmployee.mockReturnValue(
         throwError(
@@ -449,6 +464,155 @@ describe('EmployeeListComponent', () => {
         'Bulk action completed with 1 failure(s) (1 succeeded).',
         'error',
       );
+    });
+  });
+
+  describe('template', () => {
+    let fixture: ComponentFixture<EmployeeListComponent>;
+
+    const el = <T extends HTMLElement>(selector: string): T =>
+      fixture.nativeElement.querySelector(selector);
+    const button = (label: string): HTMLButtonElement =>
+      el(`button[aria-label="${label}"]`);
+    const buttonByText = (text: string): HTMLButtonElement =>
+      Array.from<HTMLButtonElement>(
+        fixture.nativeElement.querySelectorAll('button'),
+      ).find((b) => b.textContent?.trim().startsWith(text))!;
+    const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers });
+      TestBed.overrideComponent(EmployeeListComponent, {
+        set: { providers: [] },
+      });
+      employees.set([
+        buildEmployee({
+          employeeId: 'active-1',
+          firstName: 'Ana',
+          lastName: 'Pop',
+          email: 'ana@example.com',
+          status: EmployeeStatus.Active,
+        }),
+        buildEmployee({
+          employeeId: 'deactivated-1',
+          firstName: 'Ion',
+          lastName: 'Rus',
+          email: 'ion@example.com',
+          status: EmployeeStatus.Deactivated,
+        }),
+      ]);
+      totalItems.set(120);
+      fixture = TestBed.createComponent(EmployeeListComponent);
+      await fixture.whenStable();
+    });
+
+    it('renders one row per employee with name, email and status', () => {
+      const rows = fixture.nativeElement.querySelectorAll('tbody tr');
+
+      expect(rows.length).toBe(2);
+      expect(rows[0].textContent).toContain('Ana Pop');
+      expect(rows[0].textContent).toContain('ana@example.com');
+      expect(rows[1].textContent).toContain('Ion Rus');
+    });
+
+    it('offers Deactivate only on active rows and Reactivate/Delete only on deactivated rows', () => {
+      expect(button('Deactivate Ana Pop')).not.toBeNull();
+      expect(button('Delete Ana Pop')).toBeNull();
+      expect(button('Reactivate Ana Pop')).toBeNull();
+
+      expect(button('Deactivate Ion Rus')).toBeNull();
+      expect(button('Reactivate Ion Rus')).not.toBeNull();
+      expect(button('Delete Ion Rus')).not.toBeNull();
+    });
+
+    it("deletes that row's employee when its Delete button is clicked", async () => {
+      button('Delete Ion Rus').click();
+      await settle();
+
+      expect(deleteEmployee).toHaveBeenCalledWith('deactivated-1');
+      expect(deactivateEmployee).not.toHaveBeenCalled();
+    });
+
+    it("deactivates that row's employee when its Deactivate button is clicked", async () => {
+      button('Deactivate Ana Pop').click();
+      await settle();
+
+      expect(deactivateEmployee).toHaveBeenCalledWith('active-1');
+      expect(deleteEmployee).not.toHaveBeenCalled();
+    });
+
+    it("reactivates that row's employee when its Reactivate button is clicked", async () => {
+      button('Reactivate Ion Rus').click();
+      await settle();
+
+      expect(reactivateEmployee).toHaveBeenCalledWith('deactivated-1');
+    });
+
+    it.each([
+      ['Name', 'name'],
+      ['Email', 'email'],
+      ['Phone number', 'phoneNumber'],
+    ])(
+      'sorts by the column whose header "%s" is clicked',
+      async (text, column) => {
+        buttonByText(text).click();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.sortColumn()).toBe(column);
+        expect(
+          el(
+            `th[aria-sort="${column === 'name' ? 'descending' : 'ascending'}"]`,
+          ).textContent,
+        ).toContain(text);
+      },
+    );
+
+    it('moves forward and back through pages with Next and Previous', async () => {
+      expect(buttonByText('Previous').disabled).toBe(true);
+      expect(el('nav').textContent).toContain('Page 1 of 3');
+
+      buttonByText('Next').click();
+      await fixture.whenStable();
+      expect(fixture.componentInstance.listParams().pageNumber).toBe(2);
+      expect(el('nav').textContent).toContain('Page 2 of 3');
+
+      buttonByText('Previous').click();
+      await fixture.whenStable();
+      expect(fixture.componentInstance.listParams().pageNumber).toBe(1);
+    });
+
+    it('disables Next on the last page', async () => {
+      fixture.componentInstance.goToPage(3);
+      await fixture.whenStable();
+
+      expect(buttonByText('Next').disabled).toBe(true);
+    });
+
+    it('selects rows through the checkboxes and bulk-deletes the selection', async () => {
+      const bulk = buttonByText('Bulk delete selected');
+      expect(bulk.disabled).toBe(true);
+
+      el<HTMLInputElement>('input[aria-label="Select Ion Rus"]').click();
+      await fixture.whenStable();
+      expect(bulk.textContent).toContain('(1)');
+
+      el<HTMLInputElement>(
+        'input[aria-label="Select all employees on this page"]',
+      ).click();
+      await fixture.whenStable();
+      expect(bulk.textContent).toContain('(2)');
+
+      bulk.click();
+      await settle();
+      expect(deactivateEmployeeSilently).toHaveBeenCalledWith('active-1');
+      expect(deleteEmployeeSilently).toHaveBeenCalledWith('deactivated-1');
+    });
+
+    it('exports through the Export CSV button', () => {
+      buttonByText('Export CSV').click();
+
+      expect(exportEmployees).toHaveBeenCalledTimes(1);
     });
   });
 });

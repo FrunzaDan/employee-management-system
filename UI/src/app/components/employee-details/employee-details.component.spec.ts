@@ -192,6 +192,51 @@ describe('EmployeeDetailsComponent', () => {
     });
   });
 
+  describe('action buttons', () => {
+    const buttonByText = (text: string): HTMLButtonElement | undefined =>
+      Array.from<HTMLButtonElement>(
+        fixture.nativeElement.querySelectorAll('.page-header button'),
+      ).find((b) => b.textContent?.trim() === text);
+    const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+    it('offers Deactivate for an Active employee, with Delete disabled until then', async () => {
+      createComponent();
+      await loadEmployee(buildEmployee({ status: EmployeeStatus.Active }));
+
+      expect(buttonByText('Reactivate')).toBeUndefined();
+      expect(buttonByText('Delete')!.disabled).toBe(true);
+
+      buttonByText('Deactivate')!.click();
+      await settle();
+
+      expect(deactivateEmployee).toHaveBeenCalledWith('employeeId-1');
+      expect(deleteEmployee).not.toHaveBeenCalled();
+    });
+
+    it('offers Reactivate for a Deactivated employee', async () => {
+      createComponent();
+      await loadEmployee(buildEmployee({ status: EmployeeStatus.Deactivated }));
+
+      expect(buttonByText('Deactivate')).toBeUndefined();
+
+      buttonByText('Reactivate')!.click();
+      await settle();
+
+      expect(reactivateEmployee).toHaveBeenCalledWith('employeeId-1');
+    });
+
+    it('deletes a Deactivated employee from the Delete button', async () => {
+      createComponent();
+      await loadEmployee(buildEmployee({ status: EmployeeStatus.Deactivated }));
+
+      buttonByText('Delete')!.click();
+      await settle();
+
+      expect(deleteEmployee).toHaveBeenCalledWith('employeeId-1');
+      expect(reactivateEmployee).not.toHaveBeenCalled();
+    });
+  });
+
   describe('deactivateEmployee / reactivateEmployee', () => {
     it('deactivateEmployee asks for confirmation before delegating to the service', async () => {
       const component = createComponent();

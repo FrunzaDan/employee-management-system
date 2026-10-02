@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CostCenter } from '../../../interfaces/cost-center';
 import { CostCenterService } from '../../../services/cost-center.service';
@@ -219,6 +220,94 @@ describe('CostCentersComponent', () => {
       component.toggleEmployees(costCenter);
 
       expect(component.expandedCostCenterId()).toBeNull();
+    });
+  });
+
+  describe('template', () => {
+    let fixture: ComponentFixture<CostCentersComponent>;
+
+    const el = <T extends HTMLElement>(selector: string): T =>
+      fixture.nativeElement.querySelector(selector);
+    const buttonByText = (text: string): HTMLButtonElement =>
+      Array.from<HTMLButtonElement>(
+        fixture.nativeElement.querySelectorAll('button'),
+      ).find((b) => b.textContent?.trim() === text)!;
+    const type = (selector: string, value: string) => {
+      const input = el<HTMLInputElement>(selector);
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    };
+    const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+    beforeEach(async () => {
+      TestBed.configureTestingModule({ providers: [provideRouter([])] });
+      createComponent();
+      fixture = TestBed.createComponent(CostCentersComponent);
+      await fixture.whenStable();
+    });
+
+    it('loads and renders each cost center, with a dash for a missing name', () => {
+      const row = el('tbody tr');
+
+      expect(loadCostCenters).toHaveBeenCalledTimes(1);
+      expect(row.textContent).toContain('CC-100');
+      expect(row.textContent).toContain('—');
+      expect(row.textContent).toContain('12.000,00 RON');
+    });
+
+    it('creates a cost center from the Add cost center form', async () => {
+      buttonByText('Add cost center').click();
+      await fixture.whenStable();
+      expect(el('form h2').textContent).toContain('New cost center');
+
+      type('#code', 'CC-200');
+      buttonByText('Save').click();
+      await settle();
+
+      expect(createCostCenter).toHaveBeenCalledWith({
+        code: 'CC-200',
+        name: '',
+      });
+    });
+
+    it('shows the error under the code and does not save a blank cost center', async () => {
+      buttonByText('Add cost center').click();
+      await fixture.whenStable();
+
+      buttonByText('Save').click();
+      await settle();
+      await fixture.whenStable();
+
+      expect(el('#code-error').textContent).toContain(
+        'Cost center code is required.',
+      );
+      expect(createCostCenter).not.toHaveBeenCalled();
+    });
+
+    it("edits the row's cost center from its pre-filled Edit form", async () => {
+      buttonByText('Edit').click();
+      await fixture.whenStable();
+      expect(el('form h2').textContent).toContain('Edit cost center');
+      expect(el<HTMLInputElement>('#code').value).toBe('CC-100');
+
+      type('#name', 'Engineering');
+      buttonByText('Save').click();
+      await settle();
+
+      expect(updateCostCenter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          costCenterId: 'cost-center-1',
+          name: 'Engineering',
+        }),
+      );
+      expect(createCostCenter).not.toHaveBeenCalled();
+    });
+
+    it("deletes the row's cost center from its Delete button", async () => {
+      buttonByText('Delete').click();
+      await settle();
+
+      expect(deleteCostCenter).toHaveBeenCalledWith('cost-center-1');
     });
   });
 });
