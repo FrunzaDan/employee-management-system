@@ -8,13 +8,13 @@ A learning full-stack CRUD app: an employer logs in and manages employee records
 
 | Layer | Folder | Tech |
 |---|---|---|
-| UI | `UI/` | Angular 22 (zoneless, signals, SSR) |
-| API | `API/EmployeeManagementSystemApi/` | .NET 10 ASP.NET Core Web API |
-| DB | `DB/EmployeeManagement/` | SQL Server, SSDT `.sqlproj` deployed with `sqlpackage` |
+| UI | `src/UI/` | Angular 22 (zoneless, signals, SSR) |
+| API | `src/API/EmployeeManagementSystemApi/` | .NET 10 ASP.NET Core Web API |
+| DB | `src/DB/EmployeeManagement/` | SQL Server, SSDT `.sqlproj` deployed with `sqlpackage` |
 
 - `build.sh` — build and test everything; starts nothing.
 - `run.sh` — start the Docker database, deploy the schema, then start the API and UI.
-- `API/Postman/` — Postman collection for manual API calls.
+- `src/API/Postman/` — Postman collection for manual API calls.
 - `Documentation/Diagrams/` — early sketches; the docs below win where they disagree.
 
 ## How it works

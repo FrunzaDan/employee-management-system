@@ -2,7 +2,7 @@
 
 ## What it is
 
-The `EmployeeManagement` SQL Server database, as an SSDT project under `DB/EmployeeManagement/`. All access goes through stored procedures.
+The `EmployeeManagement` SQL Server database, as an SSDT project under `src/DB/EmployeeManagement/`. All access goes through stored procedures.
 
 ## Key files / paths
 

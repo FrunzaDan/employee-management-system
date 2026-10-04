@@ -32,7 +32,7 @@ Employee Management System is a full-stack web app that lets an employer manage 
 Before running this project, ensure you have the following installed:
 
 - .NET 10 SDK (10.0.401 or newer, pinned in `global.json`)
-- .NET 8 SDK (the database project's `DB/EmployeeManagement/global.json` pins it for the SQL build tooling)
+- .NET 8 SDK (the database project's `src/DB/EmployeeManagement/global.json` pins it for the SQL build tooling)
 - Node.js `^22.22.3`, `^24.15.0` or `>=26` with npm
 - Docker Desktop (runs the SQL Server container)
 - A trusted ASP.NET Core dev certificate: `dotnet dev-certs https --trust` (once per machine)
@@ -52,7 +52,7 @@ cd employee-management-system
 
 ### 2. Configuration
 
-Everything works out of the box for local development. The relevant settings live in `API/EmployeeManagementSystemApi/EmployeeManagementSystem.WebAPI/appsettings.json`:
+Everything works out of the box for local development. The relevant settings live in `src/API/EmployeeManagementSystemApi/EmployeeManagementSystem.WebAPI/appsettings.json`:
 
 - `ConnectionStrings:Docker` points at the container on `localhost,1433`. On Windows, the API falls back to `ConnectionStrings:LocalSqlServer` (Windows auth) if Docker doesn't answer within 3 seconds.
 - `Auth` holds the JWT key, issuer, audience and token lifetime. The key is a placeholder for local use only.
@@ -87,7 +87,7 @@ That restores and builds the .NET solution, runs the xUnit tests, builds the SQL
 
 ## Database & Migrations
 
-There are no EF migrations. The schema is an SSDT project in `DB/EmployeeManagement`:
+There are no EF migrations. The schema is an SSDT project in `src/DB/EmployeeManagement`:
 
 - Tables: `Employee`, `EmployeeAddress`, `EmployeeSalary`, `EmployeeAuditLog`, `Employer`, `Office`, `Department` and `CostCenter`.
 - All data access goes through stored procedures named `<Entity>_<Verb>`.
@@ -106,7 +106,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" \
 
 ## API / App Usage
 
-Swagger UI is available at `https://localhost:7146/swagger` in Development, with a bearer-token scheme for trying calls by hand. There is also a Postman collection in `API/Postman/`.
+Swagger UI is available at `https://localhost:7146/swagger` in Development, with a bearer-token scheme for trying calls by hand. There is also a Postman collection in `src/API/Postman/`.
 
 | Area | Routes |
 |---|---|
