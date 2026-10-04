@@ -161,7 +161,9 @@ export class AboutComponent {
               ...entry,
             }),
           );
-        } catch {}
+        } catch {
+          // Sample data: an entry that fails to save is just left out.
+        }
       }),
     );
   }

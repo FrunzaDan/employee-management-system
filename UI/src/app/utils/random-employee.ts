@@ -136,12 +136,12 @@ const LAST_NAMES = [
 ];
 
 // Heavier weights on the cities with offices, so most staff live near one.
-const CITIES: ReadonlyArray<{
+const CITIES: readonly {
   county: string;
   city: string;
   postalPrefix: string;
   weight: number;
-}> = [
+}[] = [
   { county: 'București', city: 'București', postalPrefix: '0', weight: 14 },
   { county: 'Cluj', city: 'Cluj-Napoca', postalPrefix: '400', weight: 12 },
   { county: 'Iași', city: 'Iași', postalPrefix: '700', weight: 8 },
@@ -197,19 +197,18 @@ const STREETS = [
 
 const EMAIL_DOMAINS = ['example.com', 'example.net', 'mail.example.org'];
 
-export const GENDER_WEIGHTS: ReadonlyArray<{ gender: Gender; weight: number }> =
-  [
-    { gender: Gender.Male, weight: 46 },
-    { gender: Gender.Female, weight: 46 },
-    { gender: Gender.NotDeclared, weight: 8 },
-  ];
+export const GENDER_WEIGHTS: readonly { gender: Gender; weight: number }[] = [
+  { gender: Gender.Male, weight: 46 },
+  { gender: Gender.Female, weight: 46 },
+  { gender: Gender.NotDeclared, weight: 8 },
+];
 
-export function pick<T>(values: ReadonlyArray<T>): T {
+export function pick<T>(values: readonly T[]): T {
   return values[Math.floor(Math.random() * values.length)];
 }
 
 export function pickWeighted<T extends { weight: number }>(
-  values: ReadonlyArray<T>,
+  values: readonly T[],
 ): T {
   const total = values.reduce((sum, value) => sum + value.weight, 0);
   let roll = Math.random() * total;

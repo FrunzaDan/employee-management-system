@@ -23,7 +23,7 @@ import { EmployeeService } from '../../services/employee.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { SalaryHistoryService } from '../../services/salary-history.service';
-import { Employee, EmployeeStatus, Gender } from '../../interfaces/employee';
+import { EmployeeStatus, Gender } from '../../interfaces/employee';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import { toServerErrors } from '../../utils/server-errors';

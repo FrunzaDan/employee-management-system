@@ -30,7 +30,7 @@ const STATUS_ORDER = [
   EmployeeStatus.Deactivated,
 ];
 
-const GENDER_LABELS: ReadonlyArray<[Gender, string]> = [
+const GENDER_LABELS: readonly [Gender, string][] = [
   [Gender.Female, 'Female'],
   [Gender.Male, 'Male'],
   [Gender.NotDeclared, 'Not declared'],
