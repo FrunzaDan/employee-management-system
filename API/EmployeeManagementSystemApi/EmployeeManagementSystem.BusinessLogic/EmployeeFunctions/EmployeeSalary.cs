@@ -31,7 +31,7 @@ public class EmployeeSalary(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger)
         if (response.Status == 200)
             await auditLogger.LogAsync(request.EmployeeId, performedBy, AuditAction.SalaryChanged,
                 string.Create(CultureInfo.InvariantCulture,
-                    $"Gross salary set to {grossSalary} effective {effectiveDate:yyyy-MM-dd}"));
+                    $"Gross salary set to {grossSalary} effective {effectiveDate:yyyy-MM-dd}"), cancellationToken: CancellationToken.None);
 
         return response;
     }

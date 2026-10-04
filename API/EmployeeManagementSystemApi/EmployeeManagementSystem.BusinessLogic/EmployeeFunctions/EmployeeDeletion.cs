@@ -14,7 +14,7 @@ public class EmployeeDeletion(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger
         var response = await dbUtils.DeleteEmployeeAsync(employeeId, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(employeeId, performedBy, AuditAction.Deleted);
+            await auditLogger.LogAsync(employeeId, performedBy, AuditAction.Deleted, cancellationToken: CancellationToken.None);
 
         return response;
     }

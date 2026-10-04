@@ -23,7 +23,12 @@ public class EmployeeGettingTests
         LastInteractionAt = DateTime.UtcNow,
         Address = new AddressModel
         {
-            Country = "Romania", County = "Cluj", City = "Cluj-Napoca", PostalCode = "400001", Street = "Main", StreetNumber = "1"
+            Country = "Romania",
+            County = "Cluj",
+            City = "Cluj-Napoca",
+            PostalCode = "400001",
+            Street = "Main",
+            StreetNumber = "1"
         }
     };
 
@@ -221,7 +226,9 @@ public class EmployeeGettingTests
         var getting = new EmployeeGetting(dbUtils.Object);
         var request = new ExportEmployeesRequest
         {
-            SearchTerm = " dan ", SortColumn = EmployeeSortColumn.Email, SortDirection = SortDirection.Desc
+            SearchTerm = " dan ",
+            SortColumn = EmployeeSortColumn.Email,
+            SortDirection = SortDirection.Desc
         };
 
         await getting.GetEmployeesForExportAsync(request, TestContext.Current.CancellationToken);
@@ -245,7 +252,9 @@ public class EmployeeGettingTests
         var getting = new EmployeeGetting(dbUtils.Object);
         var request = new ExportEmployeesRequest
         {
-            OfficeId = Guid.NewGuid(), DepartmentId = Guid.NewGuid(), CostCenterId = Guid.NewGuid()
+            OfficeId = Guid.NewGuid(),
+            DepartmentId = Guid.NewGuid(),
+            CostCenterId = Guid.NewGuid()
         };
 
         await getting.GetEmployeesForExportAsync(request, TestContext.Current.CancellationToken);

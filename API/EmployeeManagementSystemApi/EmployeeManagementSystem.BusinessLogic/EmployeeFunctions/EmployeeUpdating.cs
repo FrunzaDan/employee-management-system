@@ -50,7 +50,7 @@ public class EmployeeUpdating(IDbUtils dbUtils, IEmployeeAuditLogger auditLogger
         var response = await dbUtils.UpdateEmployeeAsync(request, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(request.EmployeeId, performedBy, AuditAction.Edited, DescribeChangedFields(request));
+            await auditLogger.LogAsync(request.EmployeeId, performedBy, AuditAction.Edited, DescribeChangedFields(request), cancellationToken: CancellationToken.None);
 
         return response;
     }

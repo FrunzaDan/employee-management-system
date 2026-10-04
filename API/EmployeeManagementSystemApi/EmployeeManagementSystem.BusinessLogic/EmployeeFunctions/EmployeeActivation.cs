@@ -14,7 +14,7 @@ public class EmployeeActivation(IDbUtils dbUtils, IEmployeeAuditLogger auditLogg
         var response = await dbUtils.DeactivateEmployeeAsync(employeeId, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(employeeId, performedBy, AuditAction.Deactivated);
+            await auditLogger.LogAsync(employeeId, performedBy, AuditAction.Deactivated, cancellationToken: CancellationToken.None);
 
         return response;
     }
@@ -28,7 +28,7 @@ public class EmployeeActivation(IDbUtils dbUtils, IEmployeeAuditLogger auditLogg
         var response = await dbUtils.ReactivateEmployeeAsync(employeeId, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(employeeId, performedBy, AuditAction.Reactivated);
+            await auditLogger.LogAsync(employeeId, performedBy, AuditAction.Reactivated, cancellationToken: CancellationToken.None);
 
         return response;
     }

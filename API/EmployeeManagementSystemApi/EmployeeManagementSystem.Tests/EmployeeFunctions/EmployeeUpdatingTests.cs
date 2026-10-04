@@ -97,7 +97,10 @@ public class EmployeeUpdatingTests
         var editing = new EmployeeUpdating(dbUtils.Object, auditLogger.Object);
         var request = new UpdateEmployeeRequest
         {
-            EmployeeId = ValidEmployeeId, Email = "dan@example.com", PhoneNumber = "123456789", BirthDate = new DateOnly(1990, 1, 2)
+            EmployeeId = ValidEmployeeId,
+            Email = "dan@example.com",
+            PhoneNumber = "123456789",
+            BirthDate = new DateOnly(1990, 1, 2)
         };
 
         var result = await editing.UpdateEmployeeAsync(request, PerformedBy, TestContext.Current.CancellationToken);

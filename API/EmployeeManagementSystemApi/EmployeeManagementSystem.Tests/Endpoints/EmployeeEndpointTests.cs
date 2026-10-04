@@ -32,7 +32,11 @@ public class EmployeeEndpointTests
         CurrentGrossSalary = 12000m,
         Address = new AddressModel
         {
-            Country = "Romania", County = "Cluj", City = "Cluj-Napoca", PostalCode = "400001", Street = "Main",
+            Country = "Romania",
+            County = "Cluj",
+            City = "Cluj-Napoca",
+            PostalCode = "400001",
+            Street = "Main",
             StreetNumber = "1"
         },
     };
@@ -57,7 +61,11 @@ public class EmployeeEndpointTests
             officeId = OfficeId,
             address = new
             {
-                country = "Romania", county = "Cluj", city = "Cluj-Napoca", postalCode = "400001", street = "Main",
+                country = "Romania",
+                county = "Cluj",
+                city = "Cluj-Napoca",
+                postalCode = "400001",
+                street = "Main",
                 streetNumber = "1"
             },
         });
