@@ -24,8 +24,8 @@ The `EmployeeManagement` SQL Server database, as an SSDT project under `src/DB/E
   - `FirstName`, `LastName`;
   - `Email` (unique) and `PhoneNumber` (`VARCHAR(15)`, unique);
   - `Gender` (`TINYINT`, 0/1/2);
-  - `BirthDate` and `HireDate` (`DATE`);
-  - `StatusCode` (`SMALLINT`, default 1901);
+  - `BirthDate` and `HireDate` (`DATE`, nullable);
+  - `StatusCode` (`SMALLINT`, default 1901) and `StatusCodeBeforeDeactivation` (nullable, `1901` or `1904`; see the lifecycle below);
   - nullable FKs `OfficeId`, `DepartmentId`, `CostCenterId`, each indexed;
   - `AccountCreatedAt` (when the row was created here; `HireDate` is when they were actually hired), `LastInteractionAt`.
 - **`EmployeeAddress`:** one row per employee. `EmployeeId` is both the primary key and the foreign key. Every column is `NOT NULL`.
