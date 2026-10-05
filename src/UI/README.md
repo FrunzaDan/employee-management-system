@@ -6,7 +6,7 @@ This isn't usually run standalone in dev — use `./run.sh` from the repo root, 
 
 ## Development server
 
-`npm start` (equivalent to `ng serve`) runs this app alone against whatever `EmployeeManagementSystemAPI` URL is set in `src/environments/environment.ts` — the API must already be running separately. Navigate to `http://localhost:4206/`.
+`npm start` (equivalent to `ng serve`) runs this app alone against whatever `EmployeeManagementSystemAPI` URL is set in `src/environments/environment.ts` — the API must already be running separately. Navigate to `http://localhost:4205/`.
 
 ## Code scaffolding
 
