@@ -1,4 +1,4 @@
-﻿using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
+using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
 using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.Services.Implementation;

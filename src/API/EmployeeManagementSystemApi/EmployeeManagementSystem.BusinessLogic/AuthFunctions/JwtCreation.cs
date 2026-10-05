@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Security.Claims;
 using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Configuration;

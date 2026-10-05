@@ -1,4 +1,4 @@
-﻿namespace EmployeeManagementSystem.BusinessLogic.Constants;
+namespace EmployeeManagementSystem.BusinessLogic.Constants;
 
 public static class RegexConstants
 {

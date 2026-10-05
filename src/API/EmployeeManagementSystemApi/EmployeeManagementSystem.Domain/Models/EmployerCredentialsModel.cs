@@ -1,4 +1,4 @@
-﻿namespace EmployeeManagementSystem.Domain.Models;
+namespace EmployeeManagementSystem.Domain.Models;
 
 public sealed class EmployerCredentials
 {

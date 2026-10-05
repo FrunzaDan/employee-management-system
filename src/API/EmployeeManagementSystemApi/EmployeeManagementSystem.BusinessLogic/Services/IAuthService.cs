@@ -1,4 +1,4 @@
-﻿using EmployeeManagementSystem.Domain.Models;
+using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.Services;
 
