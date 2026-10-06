@@ -41,62 +41,6 @@ public sealed record EmployeeModel
     public decimal? CurrentGrossSalary { get; init; }
 }
 
-public sealed class CreateEmployeeRequest
-{
-    public string? FirstName { get; set; }
-
-    public string? LastName { get; set; }
-
-    public string? PhoneNumber { get; set; }
-
-    public string? Email { get; set; }
-
-    public Gender? Gender { get; set; }
-
-    public DateOnly? BirthDate { get; set; }
-
-    public EmployeeStatus? Status { get; set; }
-
-    public AddressRequest? Address { get; set; }
-
-    public DateOnly? HireDate { get; set; }
-
-    public Guid? OfficeId { get; set; }
-
-    public Guid? DepartmentId { get; set; }
-
-    public Guid? CostCenterId { get; set; }
-}
-
-public sealed class UpdateEmployeeRequest
-{
-    public Guid EmployeeId { get; set; }
-
-    public string? FirstName { get; set; }
-
-    public string? LastName { get; set; }
-
-    public string? PhoneNumber { get; set; }
-
-    public string? Email { get; set; }
-
-    public Gender? Gender { get; set; }
-
-    public DateOnly? BirthDate { get; set; }
-
-    public AddressRequest? Address { get; set; }
-
-    public DateOnly? HireDate { get; set; }
-
-    public Guid? OfficeId { get; set; }
-
-    public Guid? DepartmentId { get; set; }
-
-    public Guid? CostCenterId { get; set; }
-}
-
-public sealed record EmployeeLookup(Guid? EmployeeId = null, string? PhoneNumber = null, string? Email = null);
-
 public sealed record EmployeeSummaryModel
 {
     public required Guid EmployeeId { get; init; }

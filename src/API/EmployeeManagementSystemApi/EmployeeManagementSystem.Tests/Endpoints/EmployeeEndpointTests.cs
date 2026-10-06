@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
+using EmployeeManagementSystem.BusinessLogic.Contracts;
 using EmployeeManagementSystem.Domain.Models;
 using Moq;
 
@@ -46,7 +48,7 @@ public class EmployeeEndpointTests
     {
         await using var api = new ApiHost();
         CreateEmployeeRequest? sent = null;
-        api.Db.Setup(d => d.CreateEmployeeAsync(It.IsAny<CreateEmployeeRequest>(), It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.CreateEmployeeAsync(It.IsAny<CreateEmployeeRequest>(), It.IsAny<CancellationToken>()))
             .Callback<CreateEmployeeRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(new ResponseModel<Guid?>(200, "Employee created successfully.", EmployeeId));
 
@@ -85,7 +87,7 @@ public class EmployeeEndpointTests
     public async Task GetGet_LooksTheEmployeeUpById_AndReturnsItInTheWireFormat()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeeAsync(new EmployeeLookup(EmployeeId, null, null), It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.GetEmployeeAsync(new EmployeeLookup(EmployeeId, null, null), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<EmployeeModel>(200, "Employee found.", SampleEmployee()));
 
         var response = await api.GetAsync($"/api/employee/get?searchTerm={EmployeeId}");
@@ -106,14 +108,14 @@ public class EmployeeEndpointTests
     public async Task GetGet_AnUnknownEmployee_IsA404Problem()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeeAsync(It.IsAny<EmployeeLookup>(), It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.GetEmployeeAsync(It.IsAny<EmployeeLookup>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<EmployeeModel>(404, "Employee not found."));
 
         var response = await api.GetAsync("/api/employee/get?searchTerm=ana@example.com");
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.NotFound);
         Assert.Equal("Employee not found.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.GetEmployeeAsync(new EmployeeLookup(null, null, "ana@example.com"),
+        api.Employees.Verify(d => d.GetEmployeeAsync(new EmployeeLookup(null, null, "ana@example.com"),
             It.IsAny<CancellationToken>()));
     }
 
@@ -122,7 +124,7 @@ public class EmployeeEndpointTests
     {
         await using var api = new ApiHost();
         GetEmployeesRequest? sent = null;
-        api.Db.Setup(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()))
             .Callback<GetEmployeesRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(new ResponseModel<PagedResponse<EmployeeModel>>(200, "1 employees found (page 2).",
                 new PagedResponse<EmployeeModel>([SampleEmployee()], 51, 2, 50)));
@@ -154,7 +156,7 @@ public class EmployeeEndpointTests
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal("Page size must be between 1 and 100.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()),
+        api.Employees.Verify(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -162,7 +164,7 @@ public class EmployeeEndpointTests
     public async Task GetExport_ReturnsACsvFile()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.GetEmployeesAsync(It.IsAny<GetEmployeesRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<PagedResponse<EmployeeModel>>(200, "",
                 new PagedResponse<EmployeeModel>([SampleEmployee()], 1, 1, 5000)));
 
@@ -181,7 +183,7 @@ public class EmployeeEndpointTests
     {
         await using var api = new ApiHost();
         UpdateEmployeeRequest? sent = null;
-        api.Db.Setup(d => d.UpdateEmployeeAsync(It.IsAny<UpdateEmployeeRequest>(), It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.UpdateEmployeeAsync(It.IsAny<UpdateEmployeeRequest>(), It.IsAny<CancellationToken>()))
             .Callback<UpdateEmployeeRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(Ok());
 
@@ -202,12 +204,12 @@ public class EmployeeEndpointTests
     public async Task PatchDeactivate_DeactivatesThatEmployee_AndAuditsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeactivateEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Employees.Setup(d => d.DeactivateEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.PatchAsync($"/api/employee/deactivate?employeeId={EmployeeId}");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.ReactivateEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        api.Employees.Verify(d => d.ReactivateEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         api.VerifyAudit(EmployeeId, AuditAction.Deactivated);
     }
 
@@ -215,12 +217,12 @@ public class EmployeeEndpointTests
     public async Task PatchReactivate_ReactivatesThatEmployee_AndAuditsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.ReactivateEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Employees.Setup(d => d.ReactivateEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.PatchAsync($"/api/employee/reactivate?employeeId={EmployeeId}");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.DeactivateEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        api.Employees.Verify(d => d.DeactivateEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         api.VerifyAudit(EmployeeId, AuditAction.Reactivated);
     }
 
@@ -233,14 +235,14 @@ public class EmployeeEndpointTests
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal("Invalid or empty employee ID.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.DeactivateEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        api.Employees.Verify(d => d.DeactivateEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DeleteDelete_DeletesThatEmployee_AndAuditsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Employees.Setup(d => d.DeleteEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.DeleteAsync($"/api/employee/delete?employeeId={EmployeeId}");
 
@@ -252,14 +254,14 @@ public class EmployeeEndpointTests
     public async Task DeleteDelete_AStateConflictFromTheDb_IsA409Problem_AndNotAudited()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.DeleteEmployeeAsync(EmployeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(409, "Only a deactivated employee can be deleted."));
 
         var response = await api.DeleteAsync($"/api/employee/delete?employeeId={EmployeeId}");
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.Conflict);
         Assert.Equal("Only a deactivated employee can be deleted.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.LogEmployeeAuditAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(),
+        api.AuditLog.Verify(d => d.LogEmployeeAuditAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(),
             It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -267,7 +269,7 @@ public class EmployeeEndpointTests
     public async Task GetSalaryHistory_ReturnsTheEmployeesSalaries()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeeSalaryHistoryAsync(EmployeeId, It.IsAny<CancellationToken>()))
+        api.Salaries.Setup(d => d.GetEmployeeSalaryHistoryAsync(EmployeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<SalaryModel>>(200, "", [
                 new SalaryModel
                 {
@@ -288,7 +290,7 @@ public class EmployeeEndpointTests
     {
         await using var api = new ApiHost();
         CreateSalaryRequest? sent = null;
-        api.Db.Setup(d => d.CreateEmployeeSalaryAsync(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()))
+        api.Salaries.Setup(d => d.CreateEmployeeSalaryAsync(It.IsAny<CreateSalaryRequest>(), It.IsAny<CancellationToken>()))
             .Callback<CreateSalaryRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(Ok());
 
@@ -307,7 +309,7 @@ public class EmployeeEndpointTests
     public async Task GetAuditLog_ReturnsTheEmployeesEntries_WithTheActionAsText()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeeAuditLogAsync(EmployeeId, It.IsAny<CancellationToken>()))
+        api.AuditLog.Setup(d => d.GetEmployeeAuditLogAsync(EmployeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<AuditLogEntry>>(200, "", [
                 new AuditLogEntry
                 {
@@ -328,7 +330,7 @@ public class EmployeeEndpointTests
     public async Task GetAllAuditLog_PassesThePage_AndReturnsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetAllEmployeeAuditLogAsync(3, 20, It.IsAny<CancellationToken>()))
+        api.AuditLog.Setup(d => d.GetAllEmployeeAuditLogAsync(3, 20, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(200, "",
                 new PagedResponse<GlobalAuditLogEntry>([], 41, 3, 20)));
 
@@ -343,19 +345,19 @@ public class EmployeeEndpointTests
     public async Task DeleteAllAuditLog_ClearsTheLog()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.AuditLog.Setup(d => d.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.DeleteAsync("/api/employee/audit-log/all");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
+        api.AuditLog.Verify(d => d.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task GetInsights_ReturnsTheProfilesWithTheirSalaryHistory()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeeInsightsAsync(It.IsAny<CancellationToken>()))
+        api.Employees.Setup(d => d.GetEmployeeInsightsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<EmployeeInsightsModel>(200, "", new EmployeeInsightsModel
             {
                 Employees =

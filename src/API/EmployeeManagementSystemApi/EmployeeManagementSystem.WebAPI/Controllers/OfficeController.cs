@@ -1,4 +1,5 @@
-using EmployeeManagementSystem.BusinessLogic.Services;
+using EmployeeManagementSystem.BusinessLogic.Contracts;
+using EmployeeManagementSystem.BusinessLogic.Features.Offices;
 using EmployeeManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,35 +9,36 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class OfficeController(IOfficeService officeService) : ApiControllerBase
+public class OfficeController : ApiControllerBase
 {
     [HttpGet("all")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<OfficeModel>>>> GetOffices(
-        CancellationToken cancellationToken) =>
-        Reply(await officeService.GetOfficesAsync(cancellationToken));
+        [FromServices] GetOfficesHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(cancellationToken));
 
     [HttpGet("get")]
     public async Task<ActionResult<ResponseModel<OfficeModel>>> GetOffice([FromQuery] Guid officeId,
-        CancellationToken cancellationToken) =>
-        Reply(await officeService.GetOfficeAsync(officeId, cancellationToken));
+        [FromServices] GetOfficeHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(officeId, cancellationToken));
 
     [HttpPost("create")]
     public async Task<ActionResult<ResponseModel<Guid?>>> CreateOffice([FromBody] CreateOfficeRequest request,
-        CancellationToken cancellationToken) =>
-        Reply(await officeService.CreateOfficeAsync(request, cancellationToken));
+        [FromServices] CreateOfficeHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(request, cancellationToken));
 
     [HttpPatch("update")]
     public async Task<ActionResult<ResponseModel<object>>> UpdateOffice([FromBody] UpdateOfficeRequest request,
-        CancellationToken cancellationToken) =>
-        Reply(await officeService.UpdateOfficeAsync(request, cancellationToken));
+        [FromServices] UpdateOfficeHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(request, cancellationToken));
 
     [HttpDelete("delete")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteOffice([FromQuery] Guid officeId,
-        CancellationToken cancellationToken) =>
-        Reply(await officeService.DeleteOfficeAsync(officeId, cancellationToken));
+        [FromServices] DeleteOfficeHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(officeId, cancellationToken));
 
     [HttpGet("employees")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<EmployeeSummaryModel>>>> GetEmployeesByOffice(
-        [FromQuery] Guid officeId, CancellationToken cancellationToken) =>
-        Reply(await officeService.GetEmployeesByOfficeAsync(officeId, cancellationToken));
+        [FromQuery] Guid officeId, [FromServices] GetEmployeesByOfficeHandler handler,
+        CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(officeId, cancellationToken));
 }

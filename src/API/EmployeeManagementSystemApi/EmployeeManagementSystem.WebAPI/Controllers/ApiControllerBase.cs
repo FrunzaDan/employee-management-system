@@ -1,5 +1,5 @@
 using System.Text.Json;
-using EmployeeManagementSystem.Domain.Models;
+using EmployeeManagementSystem.BusinessLogic.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 

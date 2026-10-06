@@ -10,15 +10,3 @@ public sealed record DepartmentModel
 
     public decimal? TotalGrossSalary { get; init; }
 }
-
-public sealed class CreateDepartmentRequest
-{
-    public string? Name { get; set; }
-}
-
-public sealed class UpdateDepartmentRequest
-{
-    public Guid DepartmentId { get; set; }
-
-    public string? Name { get; set; }
-}

@@ -1,8 +1,9 @@
 using System.Globalization;
 using System.Net;
 using System.Security.Claims;
-using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
-using EmployeeManagementSystem.BusinessLogic.Services;
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
+using EmployeeManagementSystem.BusinessLogic.Contracts;
+using EmployeeManagementSystem.BusinessLogic.Features.Auth;
 using EmployeeManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -25,14 +26,18 @@ public class EndpointAuthorizationTests
     // The only API endpoints a caller may reach without a token.
     private static readonly HashSet<string> AnonymousEndpoints = ["POST /api/authentication/access-token"];
 
-    private static WebApplicationFactory<Program> CreateFactory(Mock<IEmployeeService>? employeeService = null) =>
+    private static WebApplicationFactory<Program> CreateFactory(Mock<IEmployeeRepository>? employees = null,
+        Mock<IAuditLogRepository>? auditLog = null) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Auth:SecureJwtKey", SigningKey);
             builder.UseSetting("Auth:JwtIssuer", Issuer);
             builder.UseSetting("Auth:JwtAudience", Audience);
-            if (employeeService is not null)
-                builder.ConfigureTestServices(services => services.AddScoped(_ => employeeService.Object));
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton((employees ?? new Mock<IEmployeeRepository>()).Object);
+                services.AddSingleton((auditLog ?? new Mock<IAuditLogRepository>()).Object);
+            });
         });
 
     private static string CreateToken(string role, string issuer = Issuer) =>
@@ -108,47 +113,47 @@ public class EndpointAuthorizationTests
     [InlineData("1802")]
     public async Task DeletingTheWholeAuditLog_IsForbidden_WithoutTheEmployerRole(string role)
     {
-        var employeeService = new Mock<IEmployeeService>();
-        await using var factory = CreateFactory(employeeService);
+        var auditLog = new Mock<IAuditLogRepository>();
+        await using var factory = CreateFactory(auditLog: auditLog);
 
         var response = await CreateClient(factory).SendAsync(
             Request($"DELETE {DeleteAllAuditLogUrl}", CreateToken(role)), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        employeeService.Verify(s => s.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()), Times.Never);
+        auditLog.Verify(a => a.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DeletingTheWholeAuditLog_IsAllowed_WithTheEmployerRole()
     {
-        var employeeService = new Mock<IEmployeeService>();
-        employeeService.Setup(s => s.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()))
+        var auditLog = new Mock<IAuditLogRepository>();
+        auditLog.Setup(a => a.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Audit log cleared."));
-        await using var factory = CreateFactory(employeeService);
+        await using var factory = CreateFactory(auditLog: auditLog);
 
         var response = await CreateClient(factory).SendAsync(
             Request($"DELETE {DeleteAllAuditLogUrl}", CreateToken(((short)EmployerRole.Employer).ToString(CultureInfo.InvariantCulture))),
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        employeeService.Verify(s => s.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
+        auditLog.Verify(a => a.DeleteAllEmployeeAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task TheSignedInUsername_IsRecordedAsWhoMadeTheChange()
     {
-        var employeeService = new Mock<IEmployeeService>();
-        employeeService.Setup(s => s.DeleteEmployeeAsync(It.IsAny<Guid>(), It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
+        var employees = new Mock<IEmployeeRepository>();
+        employees.Setup(c => c.DeleteEmployeeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Employee deleted successfully."));
-        await using var factory = CreateFactory(employeeService);
+        var auditLog = new Mock<IAuditLogRepository>();
+        await using var factory = CreateFactory(employees, auditLog);
         var employeeId = Guid.NewGuid();
 
         await CreateClient(factory).SendAsync(
             Request($"DELETE /api/employee/delete?employeeId={employeeId}", CreateToken("1801")),
             TestContext.Current.CancellationToken);
 
-        employeeService.Verify(s => s.DeleteEmployeeAsync(employeeId, "TestEmployer", It.IsAny<CancellationToken>()),
-            Times.Once);
+        auditLog.Verify(a => a.LogEmployeeAuditAsync(employeeId, "TestEmployer", AuditAction.Deleted, It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

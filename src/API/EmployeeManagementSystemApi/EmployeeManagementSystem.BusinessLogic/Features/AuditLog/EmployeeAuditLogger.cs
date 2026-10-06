@@ -1,0 +1,26 @@
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
+using EmployeeManagementSystem.Domain.Models;
+using Microsoft.Extensions.Logging;
+
+namespace EmployeeManagementSystem.BusinessLogic.Features.AuditLog;
+
+public partial class EmployeeAuditLogger(IAuditLogRepository auditLog, ILogger<EmployeeAuditLogger> logger) : IEmployeeAuditLogger
+{
+    public async Task LogAsync(Guid employeeId, string performedBy, AuditAction action, string? details = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await auditLog.LogEmployeeAuditAsync(employeeId, performedBy, action, details, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            LogAuditWriteFailed(logger, ex, employeeId, action);
+        }
+    }
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Error,
+        Message = "Failed to write audit log entry for employee {EmployeeId}, action {Action}")]
+    private static partial void LogAuditWriteFailed(ILogger logger, Exception exception, Guid employeeId,
+        AuditAction action);
+}

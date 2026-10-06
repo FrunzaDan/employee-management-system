@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Threading.RateLimiting;
 using EmployeeManagementSystem.BusinessLogic;
-using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
 using EmployeeManagementSystem.BusinessLogic.Configuration;
+using EmployeeManagementSystem.BusinessLogic.Features.Auth;
 using EmployeeManagementSystem.DataAccess;
 using EmployeeManagementSystem.DataAccess.Configuration;
 using EmployeeManagementSystem.WebAPI.ErrorHandling;

@@ -1,5 +1,5 @@
-using EmployeeManagementSystem.BusinessLogic.Services;
-using EmployeeManagementSystem.Domain.Models;
+using EmployeeManagementSystem.BusinessLogic.Contracts;
+using EmployeeManagementSystem.BusinessLogic.Features.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -8,13 +8,14 @@ namespace EmployeeManagementSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthenticationController(IAuthService authService) : ApiControllerBase
+public class AuthenticationController : ApiControllerBase
 {
     [HttpPost("access-token")]
     [EnableRateLimiting("login")]
     public async Task<ActionResult<ResponseModel<AccessTokenResponse>>> GetAccessToken(
-        [FromBody] EmployerCredentials employerCredentials, CancellationToken cancellationToken) =>
-        Reply(await authService.GetAccessTokenAsync(employerCredentials, cancellationToken));
+        [FromBody] EmployerCredentials employerCredentials, [FromServices] GetAccessTokenHandler handler,
+        CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(employerCredentials, cancellationToken));
 
     [Authorize]
     [HttpGet("verify-token")]

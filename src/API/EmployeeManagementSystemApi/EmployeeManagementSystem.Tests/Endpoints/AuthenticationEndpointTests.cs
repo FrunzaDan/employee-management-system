@@ -1,6 +1,6 @@
 using System.Net;
 using EmployeeManagementSystem.Domain.Models;
-using EmployeeManagementSystem.Tests.AuthFunctions;
+using EmployeeManagementSystem.Tests.Features.Auth;
 using Moq;
 
 namespace EmployeeManagementSystem.Tests.Endpoints;
@@ -11,7 +11,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_IssuesATokenThatTheApiThenAccepts()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.SetupEmployer("secret");
+        api.Employers.SetupEmployer("secret");
 
         var login = await api.PostAsync("/api/authentication/access-token",
             new { username = "employer", password = "secret" });
@@ -25,7 +25,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_WrongCredentials_IsA401Problem()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.SetupEmployer("secret");
+        api.Employers.SetupEmployer("secret");
 
         var response = await api.PostAsync("/api/authentication/access-token",
             new { username = "employer", password = "wrong" });

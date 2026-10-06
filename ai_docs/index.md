@@ -26,9 +26,10 @@ Browser ──► Angular dev server :4205 (SSR via Express in Node)
               ▼
            ASP.NET Core API :7146
              WebAPI (controllers, ApiControllerBase.Reply, GlobalExceptionHandler)
-               → BusinessLogic (services → EmployeeFunctions / OrgFunctions, validation, JWT)
-               → IDbUtils (declared in BusinessLogic, implemented by DataAccess: DbUtils/DbHelper, ADO.NET, typed SqlParameters)
-             Domain (models, options, constants) is shared by all three
+               → BusinessLogic (Features/*: one handler per action; Contracts; validation; JWT)
+               → I*Repository (declared in BusinessLogic, implemented by DataAccess/Repositories:
+                 StoredProcedureExecutor, ADO.NET, typed SqlParameters)
+             Domain (read models, enums, field lengths) is shared by all three
               │  stored procedures only
               ▼
            SQL Server (Azure SQL Edge container "sqlserver" :1433, database EmployeeManagement)
@@ -41,7 +42,7 @@ Browser ──► Angular dev server :4205 (SSR via Express in Node)
 ### A request end to end (adding a raise)
 
 1. `employee-details` → `SalaryHistoryService` → `POST api/employee/salary-history`.
-2. `EmployeeController` → `IEmployeeService` → `EmployeeSalary` validates the amount → `IDbUtils` calls `EmployeeSalary_Create` (append-only).
+2. `EmployeeController` → `CreateEmployeeSalaryHandler` validates the amount → `ISalaryRepository` calls `EmployeeSalary_Create` (append-only).
 3. The proc's `(Result, Message)` row becomes a `ResponseModel`; `Reply()` returns it, or Problem Details for a non-success.
 4. `EmployeeAuditLogger` writes a `SalaryChanged` row (best-effort). The details page reloads the employee, whose current salary is the latest entry already in effect.
 

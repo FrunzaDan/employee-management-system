@@ -1,4 +1,5 @@
 using System.Net;
+using EmployeeManagementSystem.BusinessLogic.Contracts;
 using EmployeeManagementSystem.Domain.Models;
 using Moq;
 
@@ -26,7 +27,7 @@ public class OrgEndpointTests
     public async Task Office_GetAll_ReturnsTheOfficesWithTheirTotals()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetOfficesAsync(It.IsAny<CancellationToken>()))
+        api.Offices.Setup(d => d.GetOfficesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<OfficeModel>>(200, "", [
                 new OfficeModel { OfficeId = OrgId, Name = "Cluj HQ", City = "Cluj-Napoca", EmployeeCount = 3, TotalGrossSalary = 12000m }
             ]));
@@ -43,7 +44,7 @@ public class OrgEndpointTests
     public async Task Office_GetGet_ReturnsThatOffice()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetOfficeAsync(OrgId, It.IsAny<CancellationToken>()))
+        api.Offices.Setup(d => d.GetOfficeAsync(OrgId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<OfficeModel>(200, "", new OfficeModel { OfficeId = OrgId, Name = "Cluj HQ" }));
 
         var response = await api.GetAsync($"/api/office/get?officeId={OrgId}");
@@ -56,7 +57,7 @@ public class OrgEndpointTests
     {
         await using var api = new ApiHost();
         CreateOfficeRequest? sent = null;
-        api.Db.Setup(d => d.CreateOfficeAsync(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()))
+        api.Offices.Setup(d => d.CreateOfficeAsync(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()))
             .Callback<CreateOfficeRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(new ResponseModel<Guid?>(200, "", OrgId));
 
@@ -78,7 +79,7 @@ public class OrgEndpointTests
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal("Office name is required.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.CreateOfficeAsync(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        api.Offices.Verify(d => d.CreateOfficeAsync(It.IsAny<CreateOfficeRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -86,7 +87,7 @@ public class OrgEndpointTests
     {
         await using var api = new ApiHost();
         UpdateOfficeRequest? sent = null;
-        api.Db.Setup(d => d.UpdateOfficeAsync(It.IsAny<UpdateOfficeRequest>(), It.IsAny<CancellationToken>()))
+        api.Offices.Setup(d => d.UpdateOfficeAsync(It.IsAny<UpdateOfficeRequest>(), It.IsAny<CancellationToken>()))
             .Callback<UpdateOfficeRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(Ok());
 
@@ -101,18 +102,18 @@ public class OrgEndpointTests
     public async Task Office_DeleteDelete_DeletesThatOffice()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteOfficeAsync(OrgId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Offices.Setup(d => d.DeleteOfficeAsync(OrgId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         await ApiHost.ReadEnvelopeAsync(await api.DeleteAsync($"/api/office/delete?officeId={OrgId}"));
 
-        api.Db.Verify(d => d.DeleteOfficeAsync(OrgId, It.IsAny<CancellationToken>()), Times.Once);
+        api.Offices.Verify(d => d.DeleteOfficeAsync(OrgId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Office_DeleteDelete_AnOfficeInUse_IsA409Problem()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteOfficeAsync(OrgId, It.IsAny<CancellationToken>()))
+        api.Offices.Setup(d => d.DeleteOfficeAsync(OrgId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(409, "The office still has employees."));
 
         var response = await api.DeleteAsync($"/api/office/delete?officeId={OrgId}");
@@ -125,7 +126,7 @@ public class OrgEndpointTests
     public async Task Office_GetEmployees_ReturnsWhoWorksThere()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeesByOfficeAsync(OrgId, It.IsAny<CancellationToken>()))
+        api.Offices.Setup(d => d.GetEmployeesByOfficeAsync(OrgId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<EmployeeSummaryModel>>(200, "", OneEmployee()));
 
         var response = await api.GetAsync($"/api/office/employees?officeId={OrgId}");
@@ -141,7 +142,7 @@ public class OrgEndpointTests
     public async Task Department_GetAll_ReturnsTheDepartments()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetDepartmentsAsync(It.IsAny<CancellationToken>()))
+        api.Departments.Setup(d => d.GetDepartmentsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<DepartmentModel>>(200, "", [
                 new DepartmentModel { DepartmentId = OrgId, Name = "IT", EmployeeCount = 2 }
             ]));
@@ -156,7 +157,7 @@ public class OrgEndpointTests
     public async Task Department_GetGet_ReturnsThatDepartment()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetDepartmentAsync(OrgId, It.IsAny<CancellationToken>()))
+        api.Departments.Setup(d => d.GetDepartmentAsync(OrgId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<DepartmentModel>(200, "", new DepartmentModel { DepartmentId = OrgId, Name = "IT" }));
 
         var response = await api.GetAsync($"/api/department/get?departmentId={OrgId}");
@@ -168,7 +169,7 @@ public class OrgEndpointTests
     public async Task Department_PostCreate_SendsTheName_AndReturnsTheNewId()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.CreateDepartmentAsync(It.Is<CreateDepartmentRequest>(r => r.Name == "IT"),
+        api.Departments.Setup(d => d.CreateDepartmentAsync(It.Is<CreateDepartmentRequest>(r => r.Name == "IT"),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<Guid?>(200, "", OrgId));
 
@@ -181,7 +182,7 @@ public class OrgEndpointTests
     public async Task Department_PatchUpdate_SendsTheBody()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.UpdateDepartmentAsync(
+        api.Departments.Setup(d => d.UpdateDepartmentAsync(
                 It.Is<UpdateDepartmentRequest>(r => r.DepartmentId == OrgId && r.Name == "HR"),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Ok());
@@ -189,7 +190,7 @@ public class OrgEndpointTests
         var response = await api.PatchAsync("/api/department/update", new { departmentId = OrgId, name = "HR" });
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.UpdateDepartmentAsync(It.IsAny<UpdateDepartmentRequest>(), It.IsAny<CancellationToken>()),
+        api.Departments.Verify(d => d.UpdateDepartmentAsync(It.IsAny<UpdateDepartmentRequest>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -197,18 +198,18 @@ public class OrgEndpointTests
     public async Task Department_DeleteDelete_DeletesThatDepartment()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteDepartmentAsync(OrgId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Departments.Setup(d => d.DeleteDepartmentAsync(OrgId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         await ApiHost.ReadEnvelopeAsync(await api.DeleteAsync($"/api/department/delete?departmentId={OrgId}"));
 
-        api.Db.Verify(d => d.DeleteDepartmentAsync(OrgId, It.IsAny<CancellationToken>()), Times.Once);
+        api.Departments.Verify(d => d.DeleteDepartmentAsync(OrgId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Department_GetEmployees_ReturnsWhoWorksThere()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeesByDepartmentAsync(OrgId, It.IsAny<CancellationToken>()))
+        api.Departments.Setup(d => d.GetEmployeesByDepartmentAsync(OrgId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<EmployeeSummaryModel>>(200, "", OneEmployee()));
 
         var response = await api.GetAsync($"/api/department/employees?departmentId={OrgId}");
@@ -222,7 +223,7 @@ public class OrgEndpointTests
     public async Task CostCenter_GetAll_ReturnsTheCostCenters()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCostCentersAsync(It.IsAny<CancellationToken>()))
+        api.CostCenters.Setup(d => d.GetCostCentersAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<CostCenterModel>>(200, "", [
                 new CostCenterModel { CostCenterId = OrgId, Code = "CC-01", Name = "Engineering" }
             ]));
@@ -237,7 +238,7 @@ public class OrgEndpointTests
     public async Task CostCenter_GetGet_ReturnsThatCostCenter()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCostCenterAsync(OrgId, It.IsAny<CancellationToken>()))
+        api.CostCenters.Setup(d => d.GetCostCenterAsync(OrgId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<CostCenterModel>(200, "", new CostCenterModel { CostCenterId = OrgId, Code = "CC-01" }));
 
         var response = await api.GetAsync($"/api/cost-center/get?costCenterId={OrgId}");
@@ -249,7 +250,7 @@ public class OrgEndpointTests
     public async Task CostCenter_PostCreate_SendsTheBody_AndReturnsTheNewId()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.CreateCostCenterAsync(
+        api.CostCenters.Setup(d => d.CreateCostCenterAsync(
                 It.Is<CreateCostCenterRequest>(r => r.Code == "CC-01" && r.Name == "Engineering"),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<Guid?>(200, "", OrgId));
@@ -263,7 +264,7 @@ public class OrgEndpointTests
     public async Task CostCenter_PatchUpdate_SendsTheBody()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.UpdateCostCenterAsync(
+        api.CostCenters.Setup(d => d.UpdateCostCenterAsync(
                 It.Is<UpdateCostCenterRequest>(r => r.CostCenterId == OrgId && r.Code == "CC-02"),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Ok());
@@ -271,7 +272,7 @@ public class OrgEndpointTests
         var response = await api.PatchAsync("/api/cost-center/update", new { costCenterId = OrgId, code = "CC-02" });
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.UpdateCostCenterAsync(It.IsAny<UpdateCostCenterRequest>(), It.IsAny<CancellationToken>()),
+        api.CostCenters.Verify(d => d.UpdateCostCenterAsync(It.IsAny<UpdateCostCenterRequest>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -279,18 +280,18 @@ public class OrgEndpointTests
     public async Task CostCenter_DeleteDelete_DeletesThatCostCenter()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteCostCenterAsync(OrgId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.CostCenters.Setup(d => d.DeleteCostCenterAsync(OrgId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         await ApiHost.ReadEnvelopeAsync(await api.DeleteAsync($"/api/cost-center/delete?costCenterId={OrgId}"));
 
-        api.Db.Verify(d => d.DeleteCostCenterAsync(OrgId, It.IsAny<CancellationToken>()), Times.Once);
+        api.CostCenters.Verify(d => d.DeleteCostCenterAsync(OrgId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task CostCenter_GetEmployees_ReturnsWhoIsBookedThere()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetEmployeesByCostCenterAsync(OrgId, It.IsAny<CancellationToken>()))
+        api.CostCenters.Setup(d => d.GetEmployeesByCostCenterAsync(OrgId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<EmployeeSummaryModel>>(200, "", OneEmployee()));
 
         var response = await api.GetAsync($"/api/cost-center/employees?costCenterId={OrgId}");

@@ -1,6 +1,6 @@
+using EmployeeManagementSystem.BusinessLogic.Contracts;
 using EmployeeManagementSystem.BusinessLogic.Validations;
 using EmployeeManagementSystem.Domain.Constants;
-using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.Tests.Validations;
 

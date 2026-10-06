@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using EmployeeManagementSystem.BusinessLogic.Constants;
+using EmployeeManagementSystem.BusinessLogic.Contracts;
 using EmployeeManagementSystem.Domain.Constants;
-using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.Validations;
 

@@ -1,5 +1,6 @@
 using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.DataAccess.DBConnection;
+using EmployeeManagementSystem.DataAccess.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EmployeeManagementSystem.DataAccess;
@@ -10,6 +11,13 @@ public static class DataAccessDependencyInjection
     public static void AddDataAccess(this IServiceCollection services)
     {
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
-        services.AddSingleton<IDbUtils, DbUtils>();
+        services.AddSingleton<StoredProcedureExecutor>();
+        services.AddSingleton<IEmployeeRepository, EmployeeRepository>();
+        services.AddSingleton<ISalaryRepository, SalaryRepository>();
+        services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
+        services.AddSingleton<IEmployerRepository, EmployerRepository>();
+        services.AddSingleton<IOfficeRepository, OfficeRepository>();
+        services.AddSingleton<IDepartmentRepository, DepartmentRepository>();
+        services.AddSingleton<ICostCenterRepository, CostCenterRepository>();
     }
 }

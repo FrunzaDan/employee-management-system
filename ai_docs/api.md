@@ -9,16 +9,22 @@ The ASP.NET Core Web API (.NET 10) under `src/API/EmployeeManagementSystemApi/`.
 - `EmployeeManagementSystem.WebAPI/Program.cs` — options, pipeline, JwtBearer, CORS, rate limiter.
 - `WebAPI/Controllers/` — `AuthenticationController`, `EmployeeController`, `OfficeController`, `DepartmentController`, `CostCenterController`, all deriving from `ApiControllerBase`.
 - `WebAPI/ErrorHandling/GlobalExceptionHandler.cs` — the one place unhandled exceptions are logged.
-- `BusinessLogic/EmployeeFunctions/` — `EmployeeCreation`, `EmployeeUpdating`, `EmployeeGetting`, `EmployeeActivation`, `EmployeeDeletion`, `EmployeeSalary`, `EmployeeAuditLogger`.
-- `BusinessLogic/OrgFunctions/` — `OfficeFunctions`, `DepartmentFunctions`, `CostCenterFunctions`.
-- `BusinessLogic/AuthFunctions/` — `JwtCreation` (also the password and role check), `JwtSigningKey`, `PasswordHasher`.
-- `BusinessLogic/Abstractions/IDbUtils.cs` — the persistence interface BusinessLogic needs (plus `EmployerAuthData`); `DataAccess` implements it.
+- `BusinessLogic/Features/` — one `<Action>Handler` per endpoint, grouped by area:
+  - `Employees/` — create, get, get list, export, update, deactivate, reactivate, delete, insights; plus `EmployeeListQuery` (sort/search checks shared by list and export) and `EmployeeCsvExporter`.
+  - `Salaries/` — `CreateEmployeeSalaryHandler`, `GetEmployeeSalaryHistoryHandler`.
+  - `AuditLog/` — `IEmployeeAuditLogger`/`EmployeeAuditLogger` and the get, get-all and delete-all handlers.
+  - `Offices/`, `Departments/`, `CostCenters/` — six handlers each: get list, get, create, update, delete, get employees.
+  - `Auth/` — `GetAccessTokenHandler`, `JwtCreation` (also the password and role check), `JwtSigningKey`, `PasswordHasher`.
+- `BusinessLogic/Contracts/` — requests (`EmployeeRequests`, `SalaryRequests`, `OfficeRequests`, `DepartmentRequests`, `CostCenterRequests`, `GetEmployeesRequest`, `EmployerCredentials`), `ResponseModel<T>`, `PagedResponse<T>`, `AccessTokenResponse`.
+- `BusinessLogic/Abstractions/` — the repository interfaces BusinessLogic needs: `IEmployeeRepository` (+ `EmployeeLookup`), `ISalaryRepository`, `IAuditLogRepository`, `IEmployerRepository` (+ `EmployerAuthData`), `IOfficeRepository`, `IDepartmentRepository`, `ICostCenterRepository`; `DataAccess` implements them.
+- `BusinessLogic/Constants/` — `RegexConstants`, `PagingConstants` (max page size).
 - `BusinessLogic/Configuration/` — `AuthOptions`.
 - `BusinessLogic/Validations/` — email, phone number and address rules.
-- `DataAccess/DBConnection/` — `SqlConnectionFactory`, `DbUtils`, `DbHelper`, `SqlExtensions`.
+- `DataAccess/Repositories/` — one class per interface, each owning its parameter builders and row mappers; `EmployeeSummaryResults` holds the employee-summary reader the three org repositories share.
+- `DataAccess/DBConnection/` — `SqlConnectionFactory`, `StoredProcedureExecutor` (runs one procedure per call), `StoredProcedureResults` (shared `(Result, Message)` readers), `SqlExtensions`.
 - `DataAccess/Configuration/` — `DatabaseOptions`. `DataAccess/DataAccessDependencyInjection.cs` — `AddDataAccess()`.
 - Project references (Clean Architecture): `Domain` ← `BusinessLogic` ← `DataAccess`; `WebAPI` → `BusinessLogic` + `DataAccess` (composition root only). BusinessLogic references no ASP.NET or SQL package.
-- `Domain/Models/`, `Domain/Constants/FieldLengthConstants.cs`.
+- `Domain/Models/` (read models and enums only), `Domain/Constants/FieldLengthConstants.cs`.
 - `Directory.Build.props`, `Directory.Packages.props` — shared settings and central package versions.
 - `EmployeeManagementSystem.Tests/` — xUnit v3 tests.
 
@@ -67,7 +73,7 @@ Other settings:
 - **Successes** use the `ResponseModel<T>` envelope. **Every error** is Problem Details.
 - **`400`:**
   - binding failures come from `[ApiController]`;
-  - business-rule failures come from the logic classes, and `Reply()` turns them into Problem Details.
+  - business-rule failures come from the handlers, and `Reply()` turns them into Problem Details.
 - **`401`/`403`:** bad credentials or role, or a missing or expired token.
 - **`404`/`409`:** from the proc's `(Result, Message)` row, for example a duplicate email or cost-center code, or an office still assigned to employees.
 - **`429`:** the login rate limit.
@@ -101,14 +107,15 @@ Other settings:
 
 ### Naming
 
-- Every async method ends in `Async`, in the services, the logic classes and the data layer. Controller actions are the exception, since their routes are explicit.
-- **Logic classes:** the main entity has one class per action (`EmployeeCreation`, `EmployeeGetting`, …). Each secondary entity has one class for all its operations (`OfficeFunctions`, `DepartmentFunctions`, `CostCenterFunctions`, like the customer app's `ProductFunctions`). A logic method has the same name as the service method it backs.
+- Every async method ends in `Async`, in the handlers and the data layer. Controller actions are the exception, since their routes are explicit.
+- **Handlers:** one class per endpoint, named `<Action>Handler` (`CreateEmployeeHandler`, `GetOfficesHandler`, `CreateEmployeeSalaryHandler`, …), with a single `HandleAsync`; the org units use the same granularity as employees. Its constructor takes only the repository it uses (and `IEmployeeAuditLogger` for audited writes). Controllers take the handler as an action parameter with `[FromServices]`; register new handlers in `BusinessLogicDependencyInjection`.
+- **Repositories:** one interface per area in `BusinessLogic/Abstractions`, one method per stored procedure, implemented in `DataAccess/Repositories`.
 - Collections are returned as `IReadOnlyList<T>`.
 
 ### Validation and data types
 
 - **Requests and responses are separate models.**
-  - Requests are all-nullable, and the logic classes return a `400` per field.
+  - Requests are all-nullable, and the handlers return a `400` per field.
   - Responses are `sealed record`s with `required` members.
 - **Types:**
   - IDs are `Guid`, except `EmployeeSalaryId`, which is an `int`.
@@ -126,7 +133,7 @@ Other settings:
 
 ### Auth
 
-- **Login:** `DbUtils.GetEmployerAuthDataAsync` reads the hash, salt and role (`Employer_GetAuthData`); `JwtCreation` verifies PBKDF2-SHA256 with `PasswordHasher`: 100k iterations, a 16-byte salt, and `FixedTimeEquals`. An unknown username is hashed against a dummy salt, so it takes as long as a wrong password. Only a successful login updates `LastInteractionAt` (`Employer_RecordLogin`).
+- **Login:** `IEmployerRepository.GetEmployerAuthDataAsync` reads the hash, salt and role (`Employer_GetAuthData`); `JwtCreation` verifies PBKDF2-SHA256 with `PasswordHasher`: 100k iterations, a 16-byte salt, and `FixedTimeEquals`. An unknown username is hashed against a dummy salt, so it takes as long as a wrong password. Only a successful login updates `LastInteractionAt` (`Employer_RecordLogin`).
 - **Token:** `JwtCreation` signs an HMAC-SHA256 JWT with these claims: `sub` and `unique_name` (both the username), `role`, `amr` (`pwd`), `jti` and `iat`. The expiry comes from `AccessTokenTimeoutMinutes`.
 - **Validation:** only `AddJwtBearer`, which checks the signature, issuer, audience and lifetime with `ClockSkew = 0`.
 
@@ -136,13 +143,14 @@ Other settings:
   - `xunit.v3.mtp-v2` on Microsoft Testing Platform, selected by the repo-root `global.json`.
   - `Moq` for mocks and `FakeLogger` for log assertions.
   - `dotnet test --coverage` for coverage.
-- **Covered:** validations, the business-logic and org classes, `JwtCreation`, `PasswordHasher` and `SqlConnectionFactory` (with a faked probe).
+- **Covered:** validations, every employee, salary and audit-log handler (`Tests/Features/<Area>/<Handler>Tests.cs`), the 18 org handlers in one table-driven `Features/OrgHandlersTests`, `JwtCreation`, `PasswordHasher` and `SqlConnectionFactory` (with a faked probe).
 - **In-memory pipeline tests** (`WebApplicationFactory`):
   - `ErrorResponseTests` and `GlobalExceptionHandlerTests`;
   - `StartupValidationTests`;
   - `Security/EndpointAuthorizationTests`: every `api/` route in the live route table must answer 401 without a token (only the login is allow-listed), and `DELETE audit-log/all` needs role `1801`. Tokens are minted in the test with the same signing key. Use an `https://localhost` client, because following the HTTPS redirect drops the `Authorization` header.
-  - `Endpoints/EmployeeEndpointTests`, `OrgEndpointTests` (office, department, cost center) and `AuthenticationEndpointTests`: every endpoint called the way the UI calls it (URL, method, query/body), through the real controller, service and business logic, with only `IDbUtils` replaced by a Moq (`Endpoints/ApiHost`). Each test checks the call that reaches `IDbUtils`, the response (the `ResponseModel` envelope or a Problem Details error) and the audit entry with the signed-in user.
-- No test needs a database, so the stored procedures and `DbUtils`/`DbHelper` (parameters and reader mapping) are not covered by any test.
+  - `Endpoints/EmployeeEndpointTests`, `OrgEndpointTests` (office, department, cost center) and `AuthenticationEndpointTests`: every endpoint called the way the UI calls it (URL, method, query/body), through the real controller and handler, with only the seven repositories replaced by Moqs (`Endpoints/ApiHost`: `Employees`, `Salaries`, `AuditLog`, `Employers`, `Offices`, `Departments`, `CostCenters`). Each test checks the call that reaches the repository, the response (the `ResponseModel` envelope or a Problem Details error) and the audit entry with the signed-in user.
+- **Architecture:** `Architecture/LayerDependencyTests` (NetArchTest): Domain references no other layer, ASP.NET Core or SqlClient; BusinessLogic references neither DataAccess, WebAPI, ASP.NET Core nor SqlClient; DataAccess references neither WebAPI nor ASP.NET Core; controllers reference neither DataAccess nor SqlClient.
+- No test needs a database, so the stored procedures and the repositories (parameters and reader mapping) are not covered by any test.
 
 ## Gotchas / conventions
 

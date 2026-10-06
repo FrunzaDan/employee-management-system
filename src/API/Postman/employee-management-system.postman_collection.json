@@ -398,7 +398,7 @@
 								}
 							]
 						},
-						"description": "`GetEmployee` auto-detects the search type \u2014 GUID shape, then phone number shape, then email shape (`EmployeeGetting.DetermineLookup`) \u2014 so searching by the email from step 1 is enough to find the employee and read back its server-generated GUID."
+						"description": "`GetEmployee` auto-detects the search type \u2014 GUID shape, then phone number shape, then email shape (`GetEmployeeHandler.DetermineLookup`) \u2014 so searching by the email from step 1 is enough to find the employee and read back its server-generated GUID."
 					},
 					"response": [],
 					"event": [
