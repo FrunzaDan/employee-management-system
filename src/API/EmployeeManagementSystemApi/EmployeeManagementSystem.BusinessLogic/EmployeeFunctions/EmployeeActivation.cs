@@ -1,4 +1,4 @@
-using EmployeeManagementSystem.DataAccess.DBConnection;
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.Domain.Models;
 
 namespace EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;

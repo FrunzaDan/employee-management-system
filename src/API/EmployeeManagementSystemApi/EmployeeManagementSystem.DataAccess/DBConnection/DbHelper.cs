@@ -1,10 +1,9 @@
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.Domain.Models;
 using Microsoft.Data.SqlClient;
 
 namespace EmployeeManagementSystem.DataAccess.DBConnection;
-
-public sealed record EmployerAuthData(byte[] PasswordHash, byte[] PasswordSalt, EmployerRole EmployerRole);
 
 public static class DbHelper
 {

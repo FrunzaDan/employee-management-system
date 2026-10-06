@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace EmployeeManagementSystem.Domain.Configuration;
+namespace EmployeeManagementSystem.DataAccess.Configuration;
 
 public sealed class DatabaseOptions
 {

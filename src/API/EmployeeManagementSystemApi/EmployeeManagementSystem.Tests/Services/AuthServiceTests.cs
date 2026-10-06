@@ -1,8 +1,9 @@
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
+using EmployeeManagementSystem.BusinessLogic.Configuration;
 using EmployeeManagementSystem.BusinessLogic.Services.Implementation;
-using EmployeeManagementSystem.DataAccess.DBConnection;
-using EmployeeManagementSystem.Domain.Configuration;
 using EmployeeManagementSystem.Domain.Models;
+using EmployeeManagementSystem.Tests.AuthFunctions;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -25,8 +26,7 @@ public class AuthServiceTests
     public async Task GetAccessTokenAsync_ReturnsAToken_WhenCredentialsAreValid()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
+        dbUtils.SetupEmployer("Employer123");
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessTokenAsync(new EmployerCredentials
@@ -56,7 +56,7 @@ public class AuthServiceTests
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(
-            d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
+            d => d.GetEmployerAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -78,16 +78,15 @@ public class AuthServiceTests
         Assert.Equal(400, result.Status);
         Assert.Equal("Username and password are required.", result.ResponseMessage);
         dbUtils.Verify(
-            d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()),
+            d => d.GetEmployerAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task GetAccessTokenAsync_PropagatesTheDbRejection_WhenCredentialsAreWrong()
+    public async Task GetAccessTokenAsync_ReturnsUnauthorized_WhenThePasswordIsWrong()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(401, "Invalid username or password."));
+        dbUtils.SetupEmployer("Employer123");
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessTokenAsync(new EmployerCredentials

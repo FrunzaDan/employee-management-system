@@ -1,4 +1,4 @@
-using EmployeeManagementSystem.Domain.Configuration;
+using EmployeeManagementSystem.DataAccess.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

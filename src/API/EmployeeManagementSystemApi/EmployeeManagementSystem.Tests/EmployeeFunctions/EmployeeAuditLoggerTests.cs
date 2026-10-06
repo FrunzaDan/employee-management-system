@@ -1,5 +1,5 @@
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.BusinessLogic.EmployeeFunctions;
-using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;

@@ -1,5 +1,5 @@
+using EmployeeManagementSystem.DataAccess.Configuration;
 using EmployeeManagementSystem.DataAccess.DBConnection;
-using EmployeeManagementSystem.Domain.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 

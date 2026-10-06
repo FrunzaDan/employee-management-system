@@ -1,4 +1,5 @@
 using System.Data;
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.Domain.Models;
 using Microsoft.Data.SqlClient;
@@ -7,9 +8,6 @@ namespace EmployeeManagementSystem.DataAccess.DBConnection;
 
 public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
 {
-    private static readonly byte[] UnknownUserHash = new byte[32];
-    private static readonly byte[] UnknownUserSalt = new byte[16];
-
     public Task<ResponseModel<Guid?>> CreateEmployeeAsync(CreateEmployeeRequest employee,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
@@ -83,37 +81,20 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public async Task<ResponseModel<EmployerRole?>> CheckEmployerCredentialsFromDbAsync(
-        EmployerCredentials employerCredentials, CancellationToken cancellationToken = default)
-    {
-        var authData = await ExecuteStoredProcedureAsync(
+    public Task<EmployerAuthData?> GetEmployerAuthDataAsync(string username,
+        CancellationToken cancellationToken = default) =>
+        ExecuteStoredProcedureAsync(
             "dbo.Employer_GetAuthData",
-            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username,
-                employerCredentials.Username),
+            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username, username),
             DbHelper.HandleEmployerAuthDataResponseAsync,
-            cancellationToken
-        );
-
-        var passwordMatches = PasswordHasher.VerifyPassword(employerCredentials.Password ?? string.Empty,
-            authData?.PasswordHash ?? UnknownUserHash, authData?.PasswordSalt ?? UnknownUserSalt);
-
-        if (authData is null || !passwordMatches)
-            return new ResponseModel<EmployerRole?>(401, "Invalid username or password.");
-
-        var roleCode = (short)authData.EmployerRole;
-        if (authData.EmployerRole != EmployerRole.Employer)
-            return new ResponseModel<EmployerRole?>(403, $"The provided employer role ({roleCode}) is not valid.");
-
-        await ExecuteStoredProcedureAsync(
-            "dbo.Employer_RecordLogin",
-            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username,
-                employerCredentials.Username),
-            _ => Task.FromResult(true),
             cancellationToken);
 
-        return new ResponseModel<EmployerRole?>(200, $"Credentials validated successfully. Role: {roleCode}.",
-            authData.EmployerRole);
-    }
+    public Task RecordEmployerLoginAsync(string username, CancellationToken cancellationToken = default) =>
+        ExecuteStoredProcedureAsync(
+            "dbo.Employer_RecordLogin",
+            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username, username),
+            _ => Task.FromResult(true),
+            cancellationToken);
 
     public Task<ResponseModel<object>> LogEmployeeAuditAsync(Guid employeeId, string performedBy, AuditAction action,
         string? details, CancellationToken cancellationToken = default) =>

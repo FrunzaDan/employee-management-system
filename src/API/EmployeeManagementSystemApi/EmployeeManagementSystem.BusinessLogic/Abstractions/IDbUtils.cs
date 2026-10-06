@@ -1,7 +1,11 @@
 using EmployeeManagementSystem.Domain.Models;
 
-namespace EmployeeManagementSystem.DataAccess.DBConnection;
+namespace EmployeeManagementSystem.BusinessLogic.Abstractions;
 
+/// <summary>An employer's stored login data; the password check itself happens in BusinessLogic.</summary>
+public sealed record EmployerAuthData(byte[] PasswordHash, byte[] PasswordSalt, EmployerRole EmployerRole);
+
+/// <summary>The persistence operations BusinessLogic needs. Implemented by DataAccess (stored procedures).</summary>
 public interface IDbUtils
 {
     Task<ResponseModel<Guid?>> CreateEmployeeAsync(CreateEmployeeRequest employee, CancellationToken cancellationToken = default);
@@ -11,7 +15,8 @@ public interface IDbUtils
     Task<ResponseModel<object>> DeactivateEmployeeAsync(Guid employeeId, CancellationToken cancellationToken = default);
     Task<ResponseModel<object>> ReactivateEmployeeAsync(Guid employeeId, CancellationToken cancellationToken = default);
     Task<ResponseModel<object>> DeleteEmployeeAsync(Guid employeeId, CancellationToken cancellationToken = default);
-    Task<ResponseModel<EmployerRole?>> CheckEmployerCredentialsFromDbAsync(EmployerCredentials employerCredentials, CancellationToken cancellationToken = default);
+    Task<EmployerAuthData?> GetEmployerAuthDataAsync(string username, CancellationToken cancellationToken = default);
+    Task RecordEmployerLoginAsync(string username, CancellationToken cancellationToken = default);
     Task<ResponseModel<object>> LogEmployeeAuditAsync(Guid employeeId, string performedBy, AuditAction action, string? details, CancellationToken cancellationToken = default);
     Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetEmployeeAuditLogAsync(Guid employeeId, CancellationToken cancellationToken = default);
     Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllEmployeeAuditLogAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);

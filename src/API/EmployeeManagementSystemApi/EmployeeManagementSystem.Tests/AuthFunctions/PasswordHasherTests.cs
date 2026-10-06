@@ -1,6 +1,6 @@
-using EmployeeManagementSystem.DataAccess.DBConnection;
+using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
 
-namespace EmployeeManagementSystem.Tests.DataAccess;
+namespace EmployeeManagementSystem.Tests.AuthFunctions;
 
 public class PasswordHasherTests
 {

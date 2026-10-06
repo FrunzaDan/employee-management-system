@@ -1,5 +1,5 @@
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.BusinessLogic.Validations;
-using EmployeeManagementSystem.DataAccess.DBConnection;
 using EmployeeManagementSystem.Domain.Constants;
 using EmployeeManagementSystem.Domain.Models;
 

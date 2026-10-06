@@ -1,9 +1,8 @@
 using System.Globalization;
 using System.Security.Claims;
-using EmployeeManagementSystem.DataAccess.DBConnection;
-using EmployeeManagementSystem.Domain.Configuration;
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
+using EmployeeManagementSystem.BusinessLogic.Configuration;
 using EmployeeManagementSystem.Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +11,10 @@ namespace EmployeeManagementSystem.BusinessLogic.AuthFunctions;
 
 public class JwtCreation
 {
+    // Verified against when the username is unknown, so a miss takes as long as a wrong password.
+    private static readonly byte[] UnknownUserHash = new byte[32];
+    private static readonly byte[] UnknownUserSalt = new byte[16];
+
     private readonly AuthOptions _authOptions;
     private readonly IDbUtils _dbUtils;
     private readonly SymmetricSecurityKey _signingKey;
@@ -29,16 +32,38 @@ public class JwtCreation
         if (string.IsNullOrWhiteSpace(employerCredentials.Username))
             return new ResponseModel<AccessTokenResponse>(400, "Username and password are required.");
 
-        var credentialsCheck = await _dbUtils.CheckEmployerCredentialsFromDbAsync(employerCredentials, cancellationToken);
+        var credentialsCheck = await CheckCredentialsAsync(employerCredentials.Username,
+            employerCredentials.Password, cancellationToken);
 
-        if (credentialsCheck.Status != StatusCodes.Status200OK)
+        if (credentialsCheck.Status != 200)
             return new ResponseModel<AccessTokenResponse>(credentialsCheck.Status, credentialsCheck.ResponseMessage);
 
         var expires = DateTime.UtcNow.AddMinutes(_authOptions.AccessTokenTimeoutMinutes);
         var token = GenerateJwtToken(employerCredentials.Username, credentialsCheck.Data, expires);
 
-        return new ResponseModel<AccessTokenResponse>(StatusCodes.Status200OK, "Success!",
+        return new ResponseModel<AccessTokenResponse>(200, "Success!",
             new AccessTokenResponse { AccessToken = token, ExpiresAt = expires });
+    }
+
+    private async Task<ResponseModel<EmployerRole?>> CheckCredentialsAsync(string username, string? password,
+        CancellationToken cancellationToken)
+    {
+        var authData = await _dbUtils.GetEmployerAuthDataAsync(username, cancellationToken);
+
+        var passwordMatches = PasswordHasher.VerifyPassword(password ?? string.Empty,
+            authData?.PasswordHash ?? UnknownUserHash, authData?.PasswordSalt ?? UnknownUserSalt);
+
+        if (authData is null || !passwordMatches)
+            return new ResponseModel<EmployerRole?>(401, "Invalid username or password.");
+
+        var roleCode = (short)authData.EmployerRole;
+        if (authData.EmployerRole != EmployerRole.Employer)
+            return new ResponseModel<EmployerRole?>(403, $"The provided employer role ({roleCode}) is not valid.");
+
+        await _dbUtils.RecordEmployerLoginAsync(username, cancellationToken);
+
+        return new ResponseModel<EmployerRole?>(200, $"Credentials validated successfully. Role: {roleCode}.",
+            authData.EmployerRole);
     }
 
     private string GenerateJwtToken(string username, EmployerRole? employerRole, DateTime expires)

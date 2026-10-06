@@ -1,6 +1,6 @@
+using EmployeeManagementSystem.BusinessLogic.Abstractions;
 using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
-using EmployeeManagementSystem.DataAccess.DBConnection;
-using EmployeeManagementSystem.Domain.Configuration;
+using EmployeeManagementSystem.BusinessLogic.Configuration;
 using EmployeeManagementSystem.Domain.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -28,8 +28,7 @@ public class JwtCreationTests
     public async Task GenerateBearerJwtAsync_ReturnsAToken_WhenCredentialsAreValid()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
+        dbUtils.SetupEmployer("Employer123");
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
@@ -45,8 +44,7 @@ public class JwtCreationTests
     public async Task GenerateBearerJwtAsync_WritesIatAsANumericDate_AndTheRoleAsItsNumericCode()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "Success!", EmployerRole.Employer));
+        dbUtils.SetupEmployer("Employer123");
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
@@ -57,11 +55,10 @@ public class JwtCreationTests
     }
 
     [Fact]
-    public async Task GenerateBearerJwtAsync_PassesOnTheDbRejection_WhenCredentialsAreWrong()
+    public async Task GenerateBearerJwtAsync_ReturnsUnauthorized_WhenThePasswordIsWrong()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(401, "Invalid username or password."));
+        dbUtils.SetupEmployer("SomeOtherPassword");
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
@@ -83,7 +80,7 @@ public class JwtCreationTests
         var result = await jwtCreation.GenerateBearerJwtAsync(credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.GetEmployerAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -91,12 +88,53 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var failure = new InvalidOperationException("The database is unreachable.");
-        dbUtils.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.GetEmployerAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(failure);
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken));
         Assert.Same(failure, exception);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwtAsync_ReturnsUnauthorized_WhenTheUsernameIsUnknown()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.Setup(d => d.GetEmployerAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmployerAuthData?)null);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
+
+        var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
+
+        Assert.Equal(401, result.Status);
+        Assert.Equal("Invalid username or password.", result.ResponseMessage);
+        dbUtils.Verify(d => d.RecordEmployerLoginAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwtAsync_ReturnsForbidden_WhenTheRoleIsNotEmployer()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.SetupEmployer("Employer123", role: (EmployerRole)1802);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
+
+        var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
+
+        Assert.Equal(403, result.Status);
+        Assert.Equal("The provided employer role (1802) is not valid.", result.ResponseMessage);
+        dbUtils.Verify(d => d.RecordEmployerLoginAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwtAsync_RecordsTheLogin_OnlyWhenItSucceeds()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.SetupEmployer("Employer123");
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
+
+        await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
+
+        dbUtils.Verify(d => d.RecordEmployerLoginAsync("TestEmployer", It.IsAny<CancellationToken>()), Times.Once);
     }
 }

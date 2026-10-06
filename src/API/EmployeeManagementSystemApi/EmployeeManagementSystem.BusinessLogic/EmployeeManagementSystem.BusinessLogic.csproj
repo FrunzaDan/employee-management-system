@@ -1,15 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    </ItemGroup>
-
-    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Options" />
         <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\EmployeeManagementSystem.DataAccess\EmployeeManagementSystem.DataAccess.csproj" />
         <ProjectReference Include="..\EmployeeManagementSystem.Domain\EmployeeManagementSystem.Domain.csproj" />
     </ItemGroup>
 

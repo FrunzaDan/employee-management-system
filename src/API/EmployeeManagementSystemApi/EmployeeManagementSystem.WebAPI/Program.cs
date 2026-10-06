@@ -2,7 +2,9 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using EmployeeManagementSystem.BusinessLogic;
 using EmployeeManagementSystem.BusinessLogic.AuthFunctions;
-using EmployeeManagementSystem.Domain.Configuration;
+using EmployeeManagementSystem.BusinessLogic.Configuration;
+using EmployeeManagementSystem.DataAccess;
+using EmployeeManagementSystem.DataAccess.Configuration;
 using EmployeeManagementSystem.WebAPI.ErrorHandling;
 using EmployeeManagementSystem.WebAPI.OpenApi;
 using EmployeeManagementSystem.WebAPI.Routing;
@@ -26,6 +28,7 @@ builder.Services.AddOptions<DatabaseOptions>()
     .ValidateOnStart();
 
 builder.Services.AddBusinessLogic();
+builder.Services.AddDataAccess();
 
 builder.Services.AddControllers(options =>
     options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())));

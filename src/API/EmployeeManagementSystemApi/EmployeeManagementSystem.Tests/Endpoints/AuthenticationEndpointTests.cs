@@ -1,5 +1,6 @@
 using System.Net;
 using EmployeeManagementSystem.Domain.Models;
+using EmployeeManagementSystem.Tests.AuthFunctions;
 using Moq;
 
 namespace EmployeeManagementSystem.Tests.Endpoints;
@@ -10,10 +11,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_IssuesATokenThatTheApiThenAccepts()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.Setup(d => d.CheckEmployerCredentialsFromDbAsync(
-                It.Is<EmployerCredentials>(c => c.Username == "employer" && c.Password == "secret"),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(200, "", EmployerRole.Employer));
+        api.Db.SetupEmployer("secret");
 
         var login = await api.PostAsync("/api/authentication/access-token",
             new { username = "employer", password = "secret" });
@@ -27,9 +25,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_WrongCredentials_IsA401Problem()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.Setup(d => d.CheckEmployerCredentialsFromDbAsync(It.IsAny<EmployerCredentials>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<EmployerRole?>(401, "Invalid username or password."));
+        api.Db.SetupEmployer("secret");
 
         var response = await api.PostAsync("/api/authentication/access-token",
             new { username = "employer", password = "wrong" });
